@@ -1,0 +1,132 @@
+2024-11-05 23:55:48 - No se encontró ningún registro en fechas_mesas_finales para idfechas_mesas_finales: 30
+2024-11-05 23:57:17 - Registro encontrado en fechas_mesas_finales: {"idtandas":30,"tanda":1,"fecha":"2024-11-05 20:22:00","llamado":1,"cupo":39}
+2024-11-05 23:57:17 - No se encontró el registro de tandas para la mesa seleccionada con ID: 30
+2024-11-05 23:57:35 - Registro encontrado en fechas_mesas_finales: {"idtandas":30,"tanda":1,"fecha":"2024-11-05 20:22:00","llamado":1,"cupo":39}
+2024-11-05 23:57:35 - No se encontró el registro de tandas para la mesa seleccionada con ID: 30
+2024-11-05 23:58:48 - Registro encontrado en fechas_mesas_finales: {"idtandas":30,"tanda":1,"fecha":"2024-11-05 20:22:00","llamado":1,"cupo":39}
+2024-11-05 23:58:48 - No se encontró el registro de tandas para la mesa seleccionada con ID: 30
+2024-11-05 23:59:26 - Registro encontrado en fechas_mesas_finales: {"idtandas":30,"tanda":1,"fecha":"2024-11-05 20:22:00","llamado":1,"cupo":39}
+2024-11-05 23:59:26 - No se encontró el registro de tandas para la mesa seleccionada con ID: 30
+2024-11-06 00:01:02 - No se encontró ningún registro en fechas_mesas_finales para idfechas_mesas_finales: 30
+2024-11-06 00:01:45 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 30
+2024-11-06 00:01:45 - Mesa actualizada correctamente para idtandas: 30
+2024-11-06 00:02:00 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 38
+2024-11-06 00:02:00 - Mesa actualizada correctamente para idtandas: 38
+2024-11-06 00:03:39 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 30
+2024-11-06 00:03:39 - Mesa actualizada correctamente para idtandas: 30
+2024-11-06 00:06:24 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 30
+2024-11-06 00:06:24 - Mesa actualizada correctamente para idtandas: 30
+2024-11-06 00:06:34 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 30
+2024-11-06 00:06:34 - Mesa actualizada correctamente para idtandas: 30
+2024-11-06 00:06:48 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 38
+2024-11-06 00:06:48 - Mesa actualizada correctamente para idtandas: 38
+2024-11-06 00:53:20 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 53
+2024-11-06 00:53:20 - Mesa actualizada correctamente para idtandas: 53
+2024-11-06 00:53:34 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 45
+2024-11-06 00:53:34 - Mesa actualizada correctamente para idtandas: 45
+2024-11-06 01:23:03 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 62
+2024-11-06 01:23:03 - Mesa actualizada correctamente para idtandas: 62
+2024-11-06 23:09:53 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 70
+2024-11-06 23:09:53 - Mesa actualizada correctamente para idtandas: 70
+2024-11-06 23:09:58 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 71
+2024-11-06 23:09:58 - Mesa actualizada correctamente para idtandas: 71
+2024-11-06 23:10:03 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 71
+2024-11-06 23:10:03 - Mesa actualizada correctamente para idtandas: 71
+2024-11-06 23:20:08 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 70
+2024-11-06 23:20:08 - Mesa actualizada correctamente para idtandas: 70
+2024-11-06 23:23:14 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 70
+2024-11-06 23:23:14 - Mesa actualizada correctamente para idtandas: 70
+2024-11-06 23:25:57 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 70
+2024-11-06 23:25:57 - Mesa actualizada correctamente para idtandas: 70
+2024-11-06 23:29:02 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 70
+2024-11-06 23:29:02 - Mesa actualizada correctamente para idtandas: 70
+2024-11-06 23:33:51 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 70
+2024-11-06 23:33:51 - Mesa actualizada correctamente para idtandas: 70
+2024-11-06 23:49:52 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 71
+2024-11-06 23:49:52 - Mesa actualizada correctamente para idtandas: 71
+2024-11-06 23:58:56 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 70
+2024-11-06 23:58:56 - Mesa actualizada correctamente para idtandas: 70
+2024-11-07 00:07:52 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 70
+2024-11-07 00:07:52 - Mesa actualizada correctamente para idtandas: 70
+2024-11-07 00:07:56 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 71
+2024-11-07 00:07:56 - Mesa actualizada correctamente para idtandas: 71
+2024-11-07 00:54:56 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 72
+2024-11-07 00:54:56 - Mesa actualizada correctamente para idtandas: 72
+2024-11-07 23:01:50 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 70
+2024-11-07 23:01:50 - Mesa actualizada correctamente para idtandas: 70
+2024-11-07 23:01:55 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 71
+2024-11-07 23:01:55 - Mesa actualizada correctamente para idtandas: 71
+2024-11-07 23:02:06 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 78
+2024-11-07 23:02:06 - Mesa actualizada correctamente para idtandas: 78
+2024-11-07 23:22:58 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 77
+2024-11-07 23:22:58 - Mesa actualizada correctamente para idtandas: 77
+2024-11-07 23:23:05 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 71
+2024-11-07 23:23:05 - Mesa actualizada correctamente para idtandas: 71
+2024-11-07 23:23:11 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 70
+2024-11-07 23:23:11 - Mesa actualizada correctamente para idtandas: 70
+2024-11-07 23:34:52 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 70
+2024-11-07 23:34:52 - Mesa actualizada correctamente para idtandas: 70
+2024-11-07 23:34:56 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 71
+2024-11-07 23:34:56 - Mesa actualizada correctamente para idtandas: 71
+2024-11-07 23:34:56 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 71
+2024-11-07 23:34:56 - Mesa actualizada correctamente para idtandas: 71
+2024-11-08 00:35:29 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 70
+2024-11-08 00:35:29 - Mesa actualizada correctamente para idtandas: 70
+2024-11-08 00:35:33 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 71
+2024-11-08 00:35:33 - Mesa actualizada correctamente para idtandas: 71
+2024-11-08 00:47:20 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 71
+2024-11-08 00:47:20 - Mesa actualizada correctamente para idtandas: 71
+2024-11-08 00:47:24 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 70
+2024-11-08 00:47:24 - Mesa actualizada correctamente para idtandas: 70
+2024-11-08 01:00:18 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 71
+2024-11-08 01:00:18 - Mesa actualizada correctamente para idtandas: 71
+2024-11-08 01:00:23 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 70
+2024-11-08 01:00:23 - Mesa actualizada correctamente para idtandas: 70
+2024-11-08 01:00:30 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 77
+2024-11-08 01:00:30 - Mesa actualizada correctamente para idtandas: 77
+2024-11-08 01:00:34 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 78
+2024-11-08 01:00:34 - Mesa actualizada correctamente para idtandas: 78
+2024-11-08 01:00:38 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 79
+2024-11-08 01:00:38 - Mesa actualizada correctamente para idtandas: 79
+2024-11-08 01:00:42 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 80
+2024-11-08 01:00:42 - Mesa actualizada correctamente para idtandas: 80
+2024-11-08 12:18:06 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 41
+2024-11-08 12:18:06 - Mesa actualizada correctamente para idtandas: 41
+2024-11-08 12:18:30 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 42
+2024-11-08 12:18:30 - Mesa actualizada correctamente para idtandas: 42
+2024-11-08 12:18:45 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 45
+2024-11-08 12:18:45 - Mesa actualizada correctamente para idtandas: 45
+2024-11-08 12:19:26 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 52
+2024-11-08 12:19:26 - Mesa actualizada correctamente para idtandas: 52
+2024-11-08 12:19:56 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 54
+2024-11-08 12:19:56 - Mesa actualizada correctamente para idtandas: 54
+2024-11-08 12:20:12 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 56
+2024-11-08 12:20:12 - Mesa actualizada correctamente para idtandas: 56
+2024-11-11 23:04:43 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 75
+2024-11-11 23:04:43 - Mesa actualizada correctamente para idtandas: 75
+2024-11-12 01:18:54 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 120
+2024-11-12 01:18:54 - Mesa actualizada correctamente para idtandas: 120
+2024-11-12 01:19:10 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 121
+2024-11-12 01:19:10 - Mesa actualizada correctamente para idtandas: 121
+2024-11-12 01:27:11 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 123
+2024-11-12 01:27:11 - Mesa actualizada correctamente para idtandas: 123
+2024-11-12 01:27:24 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 124
+2024-11-12 01:27:24 - Mesa actualizada correctamente para idtandas: 124
+2024-11-12 01:27:39 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 125
+2024-11-12 01:27:39 - Mesa actualizada correctamente para idtandas: 125
+2024-11-12 01:30:46 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 127
+2024-11-12 01:30:46 - Mesa actualizada correctamente para idtandas: 127
+2024-11-12 01:30:56 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 128
+2024-11-12 01:30:56 - Mesa actualizada correctamente para idtandas: 128
+2024-11-13 21:11:19 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 137
+2024-11-13 21:11:19 - Mesa actualizada correctamente para idtandas: 137
+2024-11-14 12:24:44 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 135
+2024-11-14 12:24:44 - Mesa actualizada correctamente para idtandas: 135
+2024-11-27 00:16:24 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 148
+2024-11-27 00:16:24 - Mesa actualizada correctamente para idtandas: 148
+2024-11-27 00:16:41 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 148
+2024-11-27 00:16:41 - Mesa actualizada correctamente para idtandas: 148
+2024-11-27 00:16:51 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 148
+2024-11-27 00:16:51 - Mesa actualizada correctamente para idtandas: 148
+2024-12-06 22:59:55 - Registro encontrado en fechas_mesas_finales con tandas_idtandas: 208
+2024-12-06 22:59:55 - Mesa actualizada correctamente para idtandas: 208

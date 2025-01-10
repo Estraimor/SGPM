@@ -1,0 +1,224 @@
+.contenido-profe {
+    position: absolute;
+    top: 55px;
+    left: 270px;
+    width: calc(100% - 270px);
+    background-color: #ffffff;
+    background-image: url(../../assets/img/fondo.png);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: local;
+    padding: 20px;
+}
+
+.container {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 10px;
+    background-color: #f8f8f8;
+    border-radius: 10px;
+    width: calc(100% - 40px);
+    margin: 0 auto;
+    box-sizing: border-box;
+    min-height: 650px;
+    
+}
+
+.left-box, .middle-box, .right-box {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+    
+    overflow-x: auto;
+}
+
+.left-box {
+    width: 30%;
+    min-height: 400px;
+    background-color: #ffdddd;
+}
+
+.middle-box {
+    width: 54%;
+     position: relative;
+    padding-bottom: 60px; /* Asegura espacio para el botón */
+    /* Otros estilos para .middle-box */
+    overflow: auto;
+    min-height: 400px;
+    background-color: #ffffff;
+    padding: 5px !important;
+}
+
+.right-box {
+    width: 20%;
+    min-height: 400px;
+    background-color: #ffdddd;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto; /* Permite a las columnas ajustarse al contenido */
+}
+
+th, td {
+    text-align: left;
+    padding: 8px;
+    word-wrap: break-word;
+}
+
+th {
+    background-color: #f2f2f2;
+    color: #333;
+}
+
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+button, select {
+    background-color: #ff0000;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+button:hover, select:hover {
+    background-color: #cc0000;
+}
+
+select {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.input-hora {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-sizing: border-box;
+    appearance: none; /* Elimina estilos por defecto en algunos navegadores */
+    -webkit-appearance: none; /* Safari/Chrome */
+    -moz-appearance: textfield; /* Firefox */
+    background-color: #fff;
+    color: #333;
+    font-size: 12px;
+}
+
+.input-hora::-webkit-inner-spin-button,
+.input-hora::-webkit-calendar-picker-indicator {
+    display: none;
+    -webkit-appearance: none;
+}
+
+.input-hora:focus {
+    border-color: #ff0000;
+    outline: none;
+}
+
+/* Ajuste específico para la columna "#" */
+th.numero, td.numero {
+    width: 1%; /* Ajuste según sea necesario para el contenido */
+    white-space: nowrap; /* Evita que el texto se ajuste en múltiples líneas */
+}
+.button-container {
+    position: -webkit-sticky; /* Safari */
+    position: sticky;
+    top: 350px; /* Mantiene el botón a 20px del fondo del contenedor visible */
+    right: 20px; /* Espacio desde el borde derecho */
+    z-index: 1000;
+    display: flex;
+    justify-content: flex-end;
+}
+.botonguardar {
+    padding: 10px 20px;
+    background-color: #ff0000;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease;
+}
+
+
+
+#botonguardar:hover {
+    background-color: #cc0000; /* Color al pasar el mouse */
+}
+
+
+/* Estiliza el checkbox sin reemplazarlo completamente */
+input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none; /* Safari y Chrome */
+    -moz-appearance: none; /* Firefox */
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ff0000; /* Borde rojo */
+    border-radius: 4px; /* Bordes redondeados */
+    outline: none;
+    cursor: pointer;
+    background-color: #fff; /* Fondo blanco */
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+/* Estilo del checkbox cuando está marcado */
+input[type="checkbox"]:checked {
+    background-color: #ff0000; /* Fondo rojo */
+    border-color: #ff0000; /* Borde rojo */
+}
+
+/* Estilo para el checkmark (marca de verificación) */
+input[type="checkbox"]:checked::after {
+    content: "";
+    display: block;
+    position: relative;
+    top: 3px;
+    left: 6px;
+    width: 6px;
+    height: 12px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+#inscribirMateriasBtn {
+    background-color: rgba(255, 255, 255, 0.2) !important; /* Fondo semitransparente */
+    border: none !important; /* Sin borde */
+    color: #ff0000 !important; /* Color de la flecha */
+    padding: 10px !important; /* Espaciado interno */
+    border-radius: 50% !important; /* Bordes redondeados */
+    cursor: pointer !important; /* Cambia el cursor al pasar el mouse */
+    transition: background-color 0.3s ease !important; /* Transición suave para el fondo */
+    width: auto !important; /* Ajusta el ancho al contenido */
+    height: auto !important; /* Ajusta la altura al contenido */
+    display: flex !important; /* Centrar el icono */
+    justify-content: center !important; /* Centrar el icono horizontalmente */
+    align-items: center !important; /* Centrar el icono verticalmente */
+}
+
+#inscribirMateriasBtn:hover {
+    background-color: rgba(255, 255, 255, 0.5) !important; /* Fondo más visible al pasar el mouse */
+}
+
+#inscribirMateriasBtn i {
+    font-size: 24px !important; /* Tamaño del icono */
+    color: #ff0000 !important; /* Color de la flecha */
+}
+
+
+
+
+

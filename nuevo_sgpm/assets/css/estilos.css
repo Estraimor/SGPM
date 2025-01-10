@@ -1,0 +1,771 @@
+.contenido {
+    position: absolute;
+    top: 55px;
+    left: 270px;
+    width: calc(100% - 270px);
+    background-color: #ffffff;
+    background-image: url(../../assets/img/fondo.png);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: local;
+    padding: 20px;
+    min-height: 100%;
+    background-attachment: local; /* Hace que el fondo se mueva con el contenido */
+}
+@media (max-width: 768px) {
+    .contenido {
+        width: 100%;
+        left: 0;
+    }
+ }
+
+
+.form-container__h2 {
+    font-size: 24px;
+    color: #000000;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.form-container {
+    max-width: 600px;
+    margin: auto;
+    padding: 20px;
+}
+
+.form-container__input {
+    display: block;
+    width: calc(50% - 4px); /* Ajuste para mantener el espaciado correcto */
+    margin-bottom: 10px;
+    padding: 8px;
+    font-size: 16px;
+    border: 1px solid #000000;
+    border-radius: 4px;
+}
+
+.form-container__input:focus {
+    outline: none;
+    border-color: #b71c1c;
+    box-shadow: 0 0 8px #ef9a9a;
+}
+
+input[type="submit"] {
+    background-color: #d32f2f;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    width: 100%;
+}
+
+input[type="submit"]:hover {
+    background-color: #b71c1c;
+}
+
+select.form-container__input {
+    background-color: white;
+    color: #333;
+    width: 100%; /* Ajuste para que el select ocupe toda la línea */
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.half {
+    width: 49%;
+}
+
+.full {
+    width: 100%; /* Para que el select de carrera ocupe toda la fila */
+}
+
+::placeholder {
+    color: #999;
+}
+
+/* Título del formulario */
+h2 {
+    font-size: 24px;
+    color: #f3545d; /* Tono rojo */
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* Estilos generales de los inputs */
+.form-container__input_FP {
+    display: block;
+    width: 50%;
+    margin: 3px auto;
+    padding: 8px;
+    font-size: 16px;
+    border: 1px solid #000000; /* Borde rojo */
+    border-radius: 4px; /* Bordes redondeados */
+    background-color: white;
+    color: #333;
+}
+
+.form-container__input_FP:focus {
+    outline: none;
+    border-color: #000000; /* Un rojo más oscuro al enfocar */
+    box-shadow: 0 0 8px #ef9a9a; /* Sombra suave */
+}
+
+input[type="submit"].form-container__input_FP {
+    background-color: #f3545d; /* Fondo rojo para el botón de enviar */
+    color: white;
+    cursor: pointer; /* Cursor de mano al pasar sobre el botón */
+    transition: background-color 0.3s;
+}
+
+input[type="submit"].form-container__input_FP:hover {
+    background-color: #b71c1c; /* Rojo oscuro al pasar el mouse */
+}
+
+select.form-container__input_FP {
+    background-color: white;
+    color: #333;
+}
+
+#tablaContainerEstudiantes {
+    width: 100%;
+    overflow-x: auto; /* Permite el desplazamiento horizontal si es necesario */
+    margin: 10px 0; /* Margen mínimo superior e inferior */
+}
+
+#tabla {
+    width: 100%;
+    border-collapse: collapse; /* Elimina el espacio entre las celdas */
+    table-layout: fixed; /* Ayuda a manejar mejor la disposición de columnas anchas */
+}
+
+#tabla th, #tabla td {
+    text-align: left;
+    padding: 4px; /* Reducir el padding para disminuir la altura de las celdas */
+    border-bottom: 1px solid #ddd; /* Línea sutil entre filas */
+    font-size: 14px; /* Reducir el tamaño de fuente para compactar más */
+}
+
+#tabla th {
+    background-color: #f3545d; /* Rojo como el tema de la página */
+    color: white;
+    font-weight: bold;
+}
+
+#tabla tbody tr:hover {
+    background-color: #f2f2f2; /* Resalta la fila al pasar el mouse */
+}
+#tabla .legajo{
+    width: 5% !important; 
+}
+#tabla .dni{
+    width: 8%; 
+    white-space: nowrap;
+}
+#tabla .celular{
+    width: 12%;
+}
+#tabla .carrera{
+    width: 25%;
+}
+#tabla .nombre{
+    width: 20%;
+}
+#tabla .apellido{
+    width: 12%;
+}
+#tabla .acciones{
+    width: 9%;
+}
+
+
+/* Especifica un ancho mínimo y máximo para la columna de Legajo */
+#tabla td:first-child, #tabla th:first-child {
+    width: 6%;
+    white-space: nowrap; /* Asegura que el contenido no se ajuste en múltiples líneas */
+}
+/* Estilos comunes para todos los botones */
+.modificar-button, .borrar-button, .accion-button {
+    text-decoration: none;
+    color: #333; /* Color del texto */
+    padding: 5px 10px; /* Padding modificado para que parezcan más botones */
+    margin-right: 3px; /* Espacio entre botones */
+    border-radius: 5px; /* Bordes redondeados */
+    display: inline-block; /* Para aplicar padding y border-radius */
+}
+
+/* Estilos específicos para los íconos dentro de los botones */
+.modificar-button i, .borrar-button i, .accion-button i {
+    font-size: 14px; /* Tamaño del ícono */
+}
+
+/* Colores y fondos específicos por botón */
+.modificar-button {
+    background-color: #e0f2f1; /* Fondo claro para el botón del lápiz */
+}
+
+.modificar-button i {
+    color: #2e7d32; /* Color verde para el ícono del lápiz */
+}
+
+.borrar-button {
+    background-color: #ffebee; /* Fondo claro para el botón del basurero */
+}
+
+.borrar-button i {
+    color: #d32f2f; /* Color rojo para el ícono del basurero */
+}
+
+.accion-button {
+    background-color: #e3f2fd; /* Fondo claro para el botón de exclamación */
+}
+
+.accion-button i {
+    color: #0277bd; /* Color celeste para el ícono de exclamación */
+}
+
+/* Estilos para cuando el mouse pasa sobre cualquiera de los botones */
+.modificar-button:hover, .borrar-button:hover, .accion-button:hover {
+    color: #212121; /* Color de texto al pasar el mouse */
+    background-color: #c8e6c9; /* Fondo más oscuro al pasar el mouse */
+} 
+
+.welcome-box {
+    position: relative;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 600px;
+    padding: 20px;
+    background-color: #f9f9f997;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    text-align: center;
+    z-index: 1;
+}
+
+
+
+.welcome-box h2 {
+    margin-top: 0;
+    color: #333;
+}
+
+.welcome-box p {
+    color: #666;
+    font-size: 16px;
+}
+
+/*Tabla de estudiantes FP*/
+#tablaContainerEstudiantesFP {
+    width: 100%;
+    overflow-x: auto; /* Permite el desplazamiento horizontal si es necesario */
+    margin: 10px 0; /* Margen mínimo superior e inferior */
+}
+
+#tablaFP {
+    width: 100%;
+    border-collapse: collapse; /* Elimina el espacio entre las celdas */
+    table-layout: fixed; /* Ayuda a manejar mejor la disposición de columnas anchas */
+}
+
+#tablaFP th, #tablaFP td {
+    
+    padding: 8px;
+    text-align: left;
+    width: 150px; /* Ajusta según tus necesidades */
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+#tablaFP th {
+    background-color: #f3545d; /* Rojo como el tema de la página */
+    color: white;
+    font-weight: bold;
+}
+
+#tablaFP tbody tr:hover {
+    background-color: #f2f2f2; /* Resalta la fila al pasar el mouse */
+}
+#tablaFP .legajoFP{
+    width: 58px;
+}
+#tablaFP .dniFP{
+    width: 10%;
+    white-space: nowrap;
+}
+#tablaFP .celularFP{
+    width: 12%;
+    
+}
+#tablaFP .carrera1FP{
+   
+    
+    white-space: nowrap;
+}
+#tablaFP .carrera2FP{
+    
+   
+    white-space: nowrap;
+}
+#tablaFP .carrera3FP{
+   
+   
+    white-space: nowrap;
+}
+#tablaFP .carrera4FP{
+    
+   
+    white-space: nowrap;
+}
+#tablaFP .nombreFP{
+    width: 20%;
+}
+#tablaFP .apellidoFP{
+    width: 12%;
+}
+#tablaFP .accionesFP{
+    width: 15%;
+}
+
+
+/* Especifica un ancho mínimo y máximo para la columna de Legajo */
+#tabla td:first-child, #tabla th:first-child {
+    width: 6%;
+    white-space: nowrap; /* Asegura que el contenido no se ajuste en múltiples líneas */
+}
+
+
+
+.form-informes {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    box-sizing: border-box; /* Asegura que el padding no afecte el ancho total */
+}
+
+.form-dates {
+    display: flex;
+    justify-content: space-around; /* Cambiado de 'space-between' a 'space-around' para una mejor distribución */
+    margin-bottom: 15px;
+    padding: 0 20px; /* Agrega padding horizontal para que los elementos no estén tan al borde */
+}
+
+.date-field {
+    display: flex;
+    flex-direction: column; /* Organiza los elementos en una columna */
+    flex-basis: 35%; /* Ajusta la base para cada campo de fecha */
+    align-items: center; /* Centra los elementos verticalmente */
+}
+
+.input-fecha, .form-input-informes, .boton-submit-informes {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    width: 100%; /* Asegura que el input use todo el ancho disponible dentro de su contenedor */
+}
+
+.boton-submit-informes {
+    background-color: #4CAF50;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 15px;
+    width: auto; /* Permite que el botón ajuste su tamaño al contenido */
+    align-self: center; /* Alinea el botón verticalmente al centro */
+    margin-top: 10px; /* Espacio superior */
+}
+
+.boton-submit-informes:hover {
+    background-color: #ff0000;
+}
+
+label {
+    font-size: 16px;
+    margin-bottom: 5px; /* Espacio entre la etiqueta y el input */
+    text-align: center; /* Centra el texto de las etiquetas */
+}
+
+
+
+
+
+#miFormularioRetirados {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+.form-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+#miFormularioRetirados select,
+#miFormularioRetirados input[type="text"],
+#miFormularioRetirados input[type="datetime-local"] {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+#miFormularioRetirados select,
+#miFormularioRetirados input[type="text"] {
+    flex-grow: 1;
+    margin-right: 10px; /* Espacio entre los inputs */
+}
+
+#fechaRetirados { /* input de fecha/hora específicamente */
+    flex-grow: 0; /* No crecerá más allá de su contenido */
+    width: 180px; /* Ancho fijo para la fecha */
+}
+
+input[name="motivo"] { /* input de motivo de retirado */
+    flex-grow: 1; /* Ocupará todo el espacio restante */
+}
+
+#miFormularioRetirados input[type="submit"] {
+    width: 100%;
+    background-color: #d32f2f; /* Rojo oscuro para el botón */
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#miFormularioRetirados input[type="submit"]:hover {
+    background-color: #b71c1c; /* Rojo más oscuro para el hover */
+}
+
+/* Estilos para la tabla */
+#tablaRetiradosTiempo {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-size: 0.9em;
+    font-family: sans-serif;
+    min-width: 400px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+#tablaRetiradosTiempo thead tr {
+    background-color: #f3545d; /* Rojo oscuro para el encabezado */
+    color: #ffffff;
+    text-align: left;
+}
+
+#tablaRetiradosTiempo th,
+#tablaRetiradosTiempo td {
+    padding: 12px 15px;
+}
+
+#tablaRetiradosTiempo tbody tr {
+    border-bottom: 1px solid #dddddd;
+}
+
+#tablaRetiradosTiempo tbody tr:nth-of-type(even) {
+    background-color: #f3f3f3;
+}
+
+#tablaRetiradosTiempo tbody tr:last-of-type {
+    border-bottom: 2px solid #d32f2f; /* Rojo oscuro para el borde inferior */
+}
+
+#tablaRetiradosTiempo tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
+
+.titulo-informe {
+    color: #d9534f;
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+.seleccionar_carrera {
+    width: 35%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #d9534f;
+    border-radius: 4px;
+    font-size: 16px;
+    color: #333;
+    max-width: 100%;
+    margin-left: 250px;
+}
+.Generar-lista {
+    background-color: #d9534f;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 25%;
+   
+}
+.Generar-lista:hover {
+    background-color: #c9302c;
+}
+
+
+
+
+
+.carrera-container {
+    padding: 20px;
+    background-color: #f9f9f956; /* Fondo suave para el contenedor */
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra para darle profundidad */
+    margin: 15px;
+}
+
+.carrera-title {
+    font-size: 24px;
+    color: #2d0201; /* Color rojo para el título */
+    margin-bottom: 20px; /* Espacio debajo del título */
+    text-align: center; /* Centrar el título */
+}
+
+.carrera-list {
+    list-style: none; /* Eliminar puntos de lista */
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Diseño de cuadrícula adaptable */
+    gap: 10px;
+}
+
+.carrera-item {
+    transition: transform 0.2s, background-color 0.2s; /* Agregar transición para animaciones suaves */
+}
+
+.carrera-link {
+    text-decoration: none; /* Eliminar subrayado */
+    color: #fff; /* Color del texto */
+    background-color: #d9534f; /* Color de fondo rojo */
+    padding: 10px; /* Relleno interno */
+    border-radius: 5px; /* Bordes redondeados */
+    display: block;
+    text-align: center; /* Centramos el texto */
+    transition: background-color 0.3s, box-shadow 0.3s; /* Transiciones suaves */
+    font-size: 12px; /* Tamaño de texto ajustado */
+}
+
+.carrera-link:hover {
+    background-color: #c9302c; /* Color de fondo al pasar el mouse */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra al pasar el mouse */
+    transform: scale(1.05); /* Ligeramente más grande al pasar el mouse */
+    text-decoration: none;
+    color: black;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/*tabla de asistencia*/
+
+.table-container {
+    width: 100%;
+    max-width: 800px; /* Ajusta el tamaño máximo del contenedor */
+    max-height: 560px; /* Ajusta el tamaño máximo en altura del contenedor */
+    overflow: auto; /* Permite el desbordamiento tanto horizontal como vertical */
+    margin: 0 auto; /* Centra el contenedor */
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra para el contenedor */
+}
+
+.table-comision-a {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.table-comision-a th,
+.table-comision-a td {
+    padding: 10px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+}
+
+.table-comision-a th {
+    background-color: #d9534f;
+    color: white;
+    font-weight: bold;
+    vertical-align: middle;
+}
+
+.table-comision-a tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.table-comision-a tr:hover {
+    background-color: #ddd;
+}
+
+.checkbox-cell {
+    text-align: center;
+}
+
+
+.btn-container {
+    text-align: center; /* Centra el botón */
+    margin-top: 10px;
+}
+
+.boton-enviar {
+    background-color: #d9534f;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s, transform 0.3s;
+    width: auto; /* Ajusta el tamaño del botón */
+    display: inline-block; /* Evita que ocupe todo el ancho */
+}
+
+.boton-enviar:hover {
+    background-color: #c9302c;
+    transform: scale(1.05);
+}
+
+.custom-checkbox {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background-color: #eee;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+}
+
+.custom-checkbox:checked {
+    background-color: #d9534f;
+    border-color: #d9534f;
+}
+
+.custom-checkbox:checked::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 7px;
+    width: 4px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+
+
+/*Ver asistencia*/
+/* Estilo para el contenedor de la fecha */
+.date-container {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+ 
+/* Estilo para la etiqueta de fecha */
+label.fecha {
+    font-weight: bold;
+    font-size: 1.2em;
+    color: #333;
+    display: block;
+    margin-bottom: 10px;
+    text-align: left; /* Alineación a la izquierda */
+}
+
+/* Estilo para el campo de fecha */
+input[type="date"] {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+    color: #333;
+}
+
+
+.email-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    width: 100%; /* Puedes ajustar este valor según el diseño de tu contenedor */
+}
+
+
+
+
+
+.section-title {
+    text-align: center;
+    font-size: 20px;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.styled-table {
+    width: 80%;
+    margin: 0 auto;
+    border-collapse: collapse;
+    font-size: 14px;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    overflow: hidden; /* Para que el redondeado funcione bien */
+}
+
+.styled-table th, .styled-table td {
+    padding: 10px;
+    border: 1px solid #ddd;
+}
+
+.styled-table th {
+    background-color: red;
+    color: white;
+    font-weight: bold;
+}
+
+.styled-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.styled-table tr:hover {
+    background-color: #f1f1f1;
+}
+
+
