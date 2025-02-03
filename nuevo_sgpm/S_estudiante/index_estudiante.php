@@ -189,7 +189,7 @@ if ($_SESSION['contraseña'] === '0123456789') {header('Location: cambio_contras
                 			</a>
                 			<div class="collapse" id="takeAttendance">
 								
-                    <ul class="nav nav-collapse">
+                            <ul class="nav nav-collapse">
                         <li>
                             <a href="../ver_asistencia_alumnos.php">
                                 <span class="sub-item">Mis Asistencias</span>
@@ -200,7 +200,27 @@ if ($_SESSION['contraseña'] === '0123456789') {header('Location: cambio_contras
                                 <span class="sub-item">Mis Notas</span>
                             </a>
                         </li>
+
+                        
                     </ul>
+                    <li class="nav-item">
+    <a data-toggle="collapse" href="#menuMatriculacionMaterias">
+        <i class="fas fa-pen-square"></i>
+        <p> Materias</p>
+        <span class="caret"></span>
+    </a>
+    <div class="collapse" id="menuMatriculacionMaterias">
+        <ul class="nav nav-collapse">
+            <li>
+                <a href="./matricular_materia.php">
+                    <span class="sub-item">Matriculacion de Materias</span>
+                </a>
+            </li>
+           
+        </ul>
+    </div>
+</li>
+
                 </div>
             </li>
             

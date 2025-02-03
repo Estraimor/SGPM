@@ -79,16 +79,18 @@ if (isset($_POST['enviar'])) {
                 $_SESSION["contraseña"] = $datos_alumno->pass_alumno;
                 $_SESSION['time'] = time();
 
-                // Consulta para obtener el idCarrera
-                $stmt_carrera = $conexion->prepare("SELECT carreras_idCarrera FROM inscripcion_asignatura WHERE alumno_legajo = ?");
-                $stmt_carrera->bind_param("i", $_SESSION["id"]);
-                $stmt_carrera->execute();
-                $result_carrera = $stmt_carrera->get_result();
+                // Consulta para obtener el idCarrera, idCurso y idComision
+                $stmt_datos = $conexion->prepare("SELECT carreras_idCarrera, Cursos_idCursos, Comisiones_idComisiones FROM inscripcion_asignatura WHERE alumno_legajo = ?");
+                $stmt_datos->bind_param("i", $_SESSION["id"]);
+                $stmt_datos->execute();
+                $result_datos = $stmt_datos->get_result();
 
-                if ($carrera = $result_carrera->fetch_object()) {
-                    $_SESSION["idCarrera"] = $carrera->carreras_idCarrera;
+                if ($datos = $result_datos->fetch_object()) {
+                    $_SESSION["idCarrera"] = $datos->carreras_idCarrera;
+                    $_SESSION["idCurso"] = $datos->Cursos_idCursos;
+                    $_SESSION["idComision"] = $datos->Comisiones_idComisiones;
                 } else {
-                    echo 'No se encontró la carrera del alumno.';
+                    echo 'No se encontró la carrera, curso o comisión del alumno.';
                     exit();
                 }
 

@@ -855,23 +855,24 @@ $conexion->commit();
         </div>
 
         <div class="row">
-            <h3>Matriculación</h3>
-            <label>Carrera:</label>
-            <div>
-                <label>
-                    <input type="checkbox" name="carrera" value="Técnico Superior en Enfermería"> Técnico Superior en Enfermería
-                </label>
-                <label>
-                    <input type="checkbox" name="carrera" value="Técnico Superior en Acompañamiento Terapéutico"> Técnico Superior en Acompañamiento Terapéutico
-                </label>
-                <label>
-                    <input type="checkbox" name="carrera" value="Técnico Superior en Comercialización y Marketing"> Técnico Superior en Comercialización y Marketing
-                </label>
-                <label>
-                    <input type="checkbox" name="carrera" value="Técnico Superior en Automatización y Robótica"> Técnico Superior en Automatización y Robótica
-                </label>
-            </div>
-        </div>
+    <h3>Matriculación</h3>
+    <label>Carrera:</label>
+    <div>
+        <label>
+            <input type="radio" name="carrera" value="Técnico Superior en Enfermería"> Técnico Superior en Enfermería
+        </label>
+        <label>
+            <input type="radio" name="carrera" value="Técnico Superior en Acompañamiento Terapéutico"> Técnico Superior en Acompañamiento Terapéutico
+        </label>
+        <label>
+            <input type="radio" name="carrera" value="Técnico Superior en Comercialización y Marketing"> Técnico Superior en Comercialización y Marketing
+        </label>
+        <label>
+            <input type="radio" name="carrera" value="Técnico Superior en Automatización y Robótica"> Técnico Superior en Automatización y Robótica
+        </label>
+    </div>
+</div>
+
         <div class="row">
     <h3>Requisitos presentados</h3>
 </div>
@@ -916,7 +917,7 @@ $conexion->commit();
 
 
         <?php
-           $sql_mater = "SELECT * FROM carreras";
+           $sql_mater = "SELECT * FROM carreras where idCarrera  in (18,27,55,46)";
            $peticion = mysqli_query($conexion, $sql_mater);
         ?>
         <select name="inscripcion_carrera" class="form-container__input full">
@@ -925,6 +926,31 @@ $conexion->commit();
                 <option value="<?php echo $informacion['idCarrera'] ?>"><?php echo $informacion['nombre_carrera'] ?></option>
             <?php } ?>
         </select>
+
+        <?php
+// Obtener cursos
+$queryCursos = "SELECT * FROM cursos";
+$resultCursos = mysqli_query($conexion, $queryCursos);
+?>
+<select name="curso" class="form-container__input full">
+    <option hidden>Selecciona un Curso</option>
+    <?php while ($curso = mysqli_fetch_assoc($resultCursos)) { ?>
+        <option value="<?php echo $curso['idCursos']; ?>"><?php echo $curso['curso']; ?></option>
+    <?php } ?>
+</select>
+
+<?php
+// Obtener comisiones
+$queryComisiones = "SELECT * FROM comisiones";
+$resultComisiones = mysqli_query($conexion, $queryComisiones);
+?>
+<select name="comision" class="form-container__input full">
+    <option hidden>Selecciona una Comisión</option>
+    <?php while ($comision = mysqli_fetch_assoc($resultComisiones)) { ?>
+        <option value="<?php echo $comision['idComisiones']; ?>"><?php echo $comision['comision']; ?></option>
+    <?php } ?>
+</select>
+
 
         <input type="submit" class="form-container__input" name="enviar" value="Enviar" onclick="mostrarAlertaExitosa(); closeSuccessMessage();">
     </form>

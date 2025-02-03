@@ -222,19 +222,53 @@ while (!$intento_insercion) {
 }
 
 
-        // Continuar con la inscripción en la carrera
-        $alumno_legajo = $legajo;
-        $carrera_id = $_POST['inscripcion_carrera'];
 
-        $sql_insert = "INSERT INTO inscripcion_asignatura (carreras_idCarrera, alumno_legajo, año_inscripcion)
-                       VALUES ('$carrera_id', '$alumno_legajo', '2025')";
+// Obtener el mes actual
+    $mesActual = date('n'); // Devuelve el mes en formato numérico (1-12)
+    $añoActual = date('Y'); // Devuelve el año actual
 
-        if (mysqli_query($conexion, $sql_insert)) {
-            echo "Inscripción realizada exitosamente.";
-        } else {
-            // Captura y muestra el error de MySQL con la consulta fallida
-            echo "Error al inscribir: " . mysqli_error($conexion) . "<br>Consulta SQL: " . $sql_insert;
-        }
+    // Si estamos en noviembre (11) o diciembre (12), usar el siguiente año
+    $añoInscripcion = ($mesActual >= 11) ? $añoActual + 1 : $añoActual;
+
+    // Continuar con la inscripción en la carrera
+    $alumno_legajo = $legajo;
+    $carrera_id = $_POST['inscripcion_carrera'];
+    $curso = $_POST['curso'];
+    $comision = $_POST['comision'];
+
+    $sql_insert = "INSERT INTO inscripcion_asignatura (carreras_idCarrera, alumno_legajo, año_inscripcion, Comisiones_idComisiones, Cursos_idCursos)
+                VALUES ('$carrera_id', '$alumno_legajo', '$añoInscripcion', '$comision', '$curso')";
+
+    if (mysqli_query($conexion, $sql_insert)) {
+        echo "Inscripción realizada exitosamente.";
+    } else {
+        // Captura y muestra el error de MySQL con la consulta fallida
+        echo "Error al inscribir: " . mysqli_error($conexion) . "<br>Consulta SQL: " . $sql_insert;
+    }
+
+    // Obtener todas las materias correspondientes a la carrera, curso y comisión seleccionados
+$sqlMaterias = "SELECT idMaterias FROM materias 
+WHERE carreras_idCarrera = '$carrera_id' 
+AND cursos_idCursos = '$curso' 
+AND comisiones_idComisiones = '$comision'";
+
+$resultMaterias = mysqli_query($conexion, $sqlMaterias);
+
+if (mysqli_num_rows($resultMaterias) > 0) {
+// Insertar cada materia en la tabla de matriculación
+while ($materia = mysqli_fetch_assoc($resultMaterias)) {
+$materia_id = $materia['idMaterias'];
+$sqlInsert = "INSERT INTO matriculacion_materias (alumno_legajo, materias_idMaterias, año_matriculacion)
+      VALUES ('$alumno_legajo', '$materia_id', '$añoInscripcion')";
+mysqli_query($conexion, $sqlInsert);
+}
+
+echo "Inscripción realizada correctamente.";
+} else {
+echo "No hay materias asociadas a esta carrera, curso y comisión.";
+}
+
+
             // Generar el PDF con los datos recibidos por POST
             require './pdf/vendor/setasign/fpdf/fpdf.php';
 
