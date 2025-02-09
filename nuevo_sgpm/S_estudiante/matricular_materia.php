@@ -230,7 +230,9 @@ if ($_SESSION['contraseña'] === '0123456789') {header('Location: cambio_contras
 	</div>
 	
 </div>
+
 <?php
+// Iniciar sesión y conectar a la base de datos
 
 // Obtener datos del estudiante desde la sesión
 $alumno_legajo = $_SESSION['id'];
@@ -238,97 +240,125 @@ $idCarrera = $_SESSION["idCarrera"];
 $idCurso = $_SESSION["idCurso"];
 $idComision = $_SESSION["idComision"];
 
-// 1. Obtener materias de la carrera, curso y comisión del alumno
+// 1. Obtener el año de inscripción en primer año
+$queryInscripcion = "
+    SELECT MIN(año_matriculacion) as año_ingreso 
+    FROM matriculacion_materias 
+    WHERE alumno_legajo = ? 
+    AND materias_idMaterias IN (SELECT idMaterias FROM materias WHERE cursos_idCursos = 1)
+";
+
+$stmt = $conexion->prepare($queryInscripcion);
+$stmt->bind_param("i", $alumno_legajo);
+$stmt->execute();
+$resultInscripcion = $stmt->get_result();
+$row = $resultInscripcion->fetch_assoc();
+$añoIngreso = $row['año_ingreso'] ?? date("Y"); 
+$stmt->close();
+
+// Determinar el año actual de cursada
+$añoActual = date("Y") - $añoIngreso + 1;
+
+// 2. Obtener materias organizadas por nivel
 $queryMaterias = "
     SELECT DISTINCT m.idMaterias, m.Nombre, m.cursos_idCursos 
     FROM materias m
     WHERE m.carreras_idCarrera = ? 
-    AND m.cursos_idCursos = ? 
     AND m.comisiones_idComisiones = ?
 ";
 
 $stmt = $conexion->prepare($queryMaterias);
-$stmt->bind_param("iii", $idCarrera, $idCurso, $idComision);
+$stmt->bind_param("ii", $idCarrera, $idComision);
 $stmt->execute();
 $resultMaterias = $stmt->get_result();
 
-$materiasDisponibles = [];
-
+$materiasPorNivel = [];
 while ($row = $resultMaterias->fetch_assoc()) {
-    $materiasDisponibles[$row['idMaterias']] = [
+    $nivel = $row['cursos_idCursos'];
+    $materiasPorNivel[$nivel][$row['idMaterias']] = [
         'nombre' => $row['Nombre'],
-        'nivel' => $row['cursos_idCursos']
+        'nivel' => $nivel
     ];
 }
-
 $stmt->close();
 
-// 2. Obtener materias aprobadas del alumno
+// 3. Obtener condición de cada materia desde `notas`
+$queryCondiciones = "
+    SELECT DISTINCT n.materias_idMaterias, n.condicion
+    FROM notas n
+    WHERE n.alumno_legajo = ?
+    ORDER BY n.fecha DESC
+";
+
+$stmt = $conexion->prepare($queryCondiciones);
+$stmt->bind_param("i", $alumno_legajo);
+$stmt->execute();
+$resultCondiciones = $stmt->get_result();
+
+$condicionesMaterias = [];
+while ($row = $resultCondiciones->fetch_assoc()) {
+    if (!isset($condicionesMaterias[$row['materias_idMaterias']])) {
+        $condicionesMaterias[$row['materias_idMaterias']] = $row['condicion'];
+    }
+}
+$stmt->close();
+
+// 4. Obtener materias aprobadas y verificar si faltan exámenes finales
 $queryAprobadas = "
-    SELECT DISTINCT materias_idMaterias FROM nota_examen_final 
-    WHERE alumno_legajo = ? AND nota >= 6
-    UNION
-    SELECT DISTINCT materias_idMaterias FROM notas_mesas_promocionados
+    SELECT DISTINCT materias_idMaterias, nota FROM nota_examen_final 
     WHERE alumno_legajo = ?
 ";
 
 $stmt = $conexion->prepare($queryAprobadas);
-$stmt->bind_param("ii", $alumno_legajo, $alumno_legajo);
+$stmt->bind_param("i", $alumno_legajo);
 $stmt->execute();
 $resultAprobadas = $stmt->get_result();
 
 $materiasAprobadas = [];
+$materiasFaltanExamen = [];
 while ($row = $resultAprobadas->fetch_assoc()) {
-    $materiasAprobadas[$row['materias_idMaterias']] = true;
+    if ($row['nota'] >= 6) {
+        $materiasAprobadas[$row['materias_idMaterias']] = true;
+    } else {
+        $materiasFaltanExamen[$row['materias_idMaterias']] = true;
+    }
 }
-
 $stmt->close();
 
-// 3. Obtener correlatividades de las materias disponibles
+// 5. Verificar correlatividades
 $estadoMaterias = [];
+$correlatividadesPendientes = [];
 
-if (!empty($materiasDisponibles)) {
-    $queryCorrelatividad = "
-        SELECT DISTINCT c.materias_idMaterias, c.materias_idMaterias1, c.tipo_correlatividad_idtipo_correlatividad 
-        FROM correlatividades c
-        WHERE c.materias_idMaterias IN (" . implode(',', array_keys($materiasDisponibles)) . ")
-    ";
+$queryCorrelatividad = "
+    SELECT c.materias_idMaterias, c.materias_idMaterias1, c.tipo_correlatividad_idtipo_correlatividad 
+    FROM correlatividades c
+";
 
-    $resultCorrelatividad = $conexion->query($queryCorrelatividad);
+$resultCorrelatividad = $conexion->query($queryCorrelatividad);
 
-    while ($row = $resultCorrelatividad->fetch_assoc()) {
-        $materia = $row['materias_idMaterias'];
-        $correlativa = $row['materias_idMaterias1'];
-        $tipoCorrelatividad = $row['tipo_correlatividad_idtipo_correlatividad'];
+while ($row = $resultCorrelatividad->fetch_assoc()) {
+    $materia = $row['materias_idMaterias'];
+    $correlativa = $row['materias_idMaterias1'];
+    $tipoCorrelatividad = $row['tipo_correlatividad_idtipo_correlatividad'];
 
-        if (!isset($estadoMaterias[$materia])) {
-            $estadoMaterias[$materia] = 'habilitada';
-        }
+    if (!isset($estadoMaterias[$materia])) {
+        $estadoMaterias[$materia] = 'habilitada';
+    }
 
-        // Si la correlativa es de tipo "Regular", verificamos en la tabla notas
-        if ($tipoCorrelatividad == 1) {
-            $queryRegular = "SELECT condicion FROM notas WHERE alumno_legajo = ? AND materias_idMaterias = ? ORDER BY fecha DESC LIMIT 1";
-            $stmt = $conexion->prepare($queryRegular);
-            $stmt->bind_param("ii", $alumno_legajo, $correlativa);
-            $stmt->execute();
-            $resultRegular = $stmt->get_result();
-            $condicion = $resultRegular->fetch_assoc()['condicion'] ?? '';
-
-            if ($condicion !== 'Regular') {
-                $estadoMaterias[$materia] = 'bloqueada';
-            }
-
-            $stmt->close();
-        }
-
-        // Si la correlativa es de tipo "Aprobada", verificamos en las materias aprobadas
-        if ($tipoCorrelatividad == 2 && !isset($materiasAprobadas[$correlativa])) {
+    if ($tipoCorrelatividad == 1) { // Regularización requerida
+        if (!isset($condicionesMaterias[$correlativa]) || $condicionesMaterias[$correlativa] !== 'Regular') {
             $estadoMaterias[$materia] = 'bloqueada';
+            $correlatividadesPendientes[$materia][] = "Debe regularizar: " . $correlativa;
         }
+    }
+
+    if ($tipoCorrelatividad == 2 && !isset($materiasAprobadas[$correlativa])) { // Aprobación requerida
+        $estadoMaterias[$materia] = 'bloqueada';
+        $correlatividadesPendientes[$materia][] = "Debe aprobar: " . $correlativa;
     }
 }
 
-// 4. Obtener materias en las que ya está matriculado
+// 6. Obtener materias en las que ya está matriculado
 $queryMatriculadas = "
     SELECT DISTINCT materias_idMaterias FROM matriculacion_materias WHERE alumno_legajo = ?
 ";
@@ -342,52 +372,66 @@ $materiasMatriculadas = [];
 while ($row = $resultMatriculadas->fetch_assoc()) {
     $materiasMatriculadas[$row['materias_idMaterias']] = true;
 }
-
 $stmt->close();
 
-// 5. Generar la tabla con colores según el estado de cada materia
+// 7. Generar las tablas por nivel
 ?>
 <div class="contenido">
-    <table class="table table-striped table-bordered">
-        <thead>
-            <tr>
-                <th>Materias</th>
-                <th>Nivel</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($materiasDisponibles as $idMateria => $datosMateria): ?>
-                <?php
-                $claseFila = '';
-
-                if (isset($materiasAprobadas[$idMateria])) {
-                    $claseFila = 'table-success'; // Verde (Materia aprobada)
-                } elseif (isset($materiasMatriculadas[$idMateria])) {
-                    $claseFila = 'table-warning'; // Amarillo (Materia que está cursando)
-                } elseif (isset($estadoMaterias[$idMateria]) && $estadoMaterias[$idMateria] == 'bloqueada') {
-                    $claseFila = 'table-danger'; // Rojo (No puede cursar)
-                }
-                ?>
-                <tr class="<?= $claseFila ?>">
-                    <td><?= htmlspecialchars($datosMateria['nombre']) ?></td>
-                    <td><?= $datosMateria['nivel'] ?></td>
-                    <td>
-                        <?php if (isset($materiasAprobadas[$idMateria])): ?>
-                            <span class="badge badge-success">Aprobada</span>
-                        <?php elseif (isset($materiasMatriculadas[$idMateria])): ?>
-                            <span class="badge badge-warning">Actualmente cursando</span>
-                        <?php elseif (isset($estadoMaterias[$idMateria]) && $estadoMaterias[$idMateria] == 'bloqueada'): ?>
-                            <span class="badge badge-danger">No puede cursar</span>
-                        <?php else: ?>
-                            <a href="inscribirse.php?materia=<?= $idMateria ?>" class="btn btn-primary btn-sm">Inscribirse</a>
-                        <?php endif; ?>
-                    </td>
+    <h3>Tu año actual de cursada: Año <?= $añoActual ?> (Curso: <?= $idCurso ?>)</h3>
+    <?php foreach ($materiasPorNivel as $nivel => $materias): ?>
+        <h3 class="mt-4">Año <?= $nivel ?></h3>
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>Materias</th>
+                    <th>Nivel</th>
+                    <th>Condición</th>
+                    <th>Acciones</th>
                 </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                <?php foreach ($materias as $idMateria => $datosMateria): ?>
+                    <?php
+                    $claseFila = '';
+                    $condicion = $condicionesMaterias[$idMateria] ?? 'No cursada';
+
+                    if (isset($materiasAprobadas[$idMateria])) {
+                        $claseFila = 'table-success';
+                        $condicion = 'Aprobada';
+                    } elseif (isset($materiasFaltanExamen[$idMateria])) {
+                        $claseFila = 'table-warning';
+                        $condicion = 'Falta examen final';
+                    } elseif ($nivel > $añoActual) {
+                        $claseFila = 'table-danger';
+                        $condicion = 'No permitido';
+                    } elseif (isset($estadoMaterias[$idMateria]) && $estadoMaterias[$idMateria] == 'bloqueada') {
+                        $claseFila = 'table-danger';
+                    }
+                    ?>
+                    <tr class="<?= $claseFila ?>">
+                        <td><?= htmlspecialchars($datosMateria['nombre']) ?></td>
+                        <td><?= $datosMateria['nivel'] ?></td>
+                        <td><?= $condicion ?></td>
+                        <td>
+                            <?php if ($condicion == 'Aprobada'): ?>
+                                <span class="badge badge-success">Aprobada</span>
+                            <?php elseif ($condicion == 'Falta examen final'): ?>
+                                <span class="badge badge-warning">Falta examen final</span>
+                            <?php else: ?>
+                                <button class="btn btn-primary btn-sm">Inscribirse</button>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    <?php endforeach; ?>
 </div>
+
+
+
+
+
 
 
 

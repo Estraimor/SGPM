@@ -510,6 +510,16 @@ if ($result && mysqli_num_rows($result) > 0) {
                     <span class="sub-item">Cargar Notas de Mesas</span>
                 </a>
             </li>
+			<li>
+                <a href="./carga_notas_pendientes.php">
+                    <span class="sub-item">Notas Pendientes (Individual)</span>
+                </a>
+            </li>
+			<li>
+                <a href="./tabla_notas_pendientes.php">
+                    <span class="sub-item">Tabla Notas Pendientes</span>
+                </a>
+            </li>
         </ul>
     </div>
 </li>
