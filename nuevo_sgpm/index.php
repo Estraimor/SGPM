@@ -17,6 +17,7 @@ $rolUsuario = $_SESSION["roles"];
 // Definimos los roles permitidos para esta página.
 $rolesPermitidos = ['1', '2', '3', '4','5'];
 
+
 // Verificar si el rol del usuario está en la lista de roles permitidos.
 if (!in_array($rolUsuario, $rolesPermitidos)) {
     echo "<script>alert('Acceso restringido a esta página.');</script>";
