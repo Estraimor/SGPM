@@ -498,20 +498,32 @@ if ($result && mysqli_num_rows($result) > 0) {
 
     <?php
     $contador = 1; // Inicializa el contador
-    session_start();
     $idProfesor = isset($_SESSION['id']) ? (int)$_SESSION['id'] : 0; // ID del profesor desde la sesión
-    $idCarrera = isset($_GET['comision']) ? (int)$_GET['comision'] : 0;
-    $idMateria = isset($_GET['materia']) ? (int)$_GET['materia'] : 0;
+    $idCarrera = isset($_GET['carreraId']) ? (int)$_GET['carreraId'] : 0;
+    $idMateria = isset($_GET['materiaId']) ? (int)$_GET['materiaId'] : 0;
+    $comision = isset($_GET['comisionId']) ? (int)$_GET['comisionId'] : 0;
+    $curso = isset($_GET['cursoId']) ? (int)$_GET['cursoId'] : 0;
+    $anio = isset($_GET['anio']) ? (int)$_GET['anio'] : 0;
 
   // Consulta para obtener los alumnos, sus notas y la nota final y condición
 $sql1 = "
-    SELECT a.legajo, a.apellido_alumno, a.nombre_alumno, 
-           n.idnotas, n.numero_evaluacion, n.nota, n.cuatrimestre, n.tipo_evaluacion,
-           n.nota_final, n.condicion
-    FROM inscripcion_asignatura ia
-    INNER JOIN alumno a ON ia.alumno_legajo = a.legajo
+    SELECT 
+        a.legajo, 
+        a.apellido_alumno, 
+        a.nombre_alumno, 
+        m.año_matriculacion, 
+        n.idnotas, 
+        n.numero_evaluacion, 
+        n.nota, 
+        n.cuatrimestre, 
+        n.tipo_evaluacion, 
+        n.nota_final, 
+        n.condicion        
+    FROM matriculacion_materias m
+    INNER JOIN alumno a ON m.alumno_legajo = a.legajo
     LEFT JOIN notas n ON a.legajo = n.alumno_legajo AND n.materias_idMaterias = $idMateria
-    WHERE ia.carreras_idCarrera = $idCarrera AND a.estado = 1
+    WHERE m.materias_idMaterias = $idMateria 
+    AND YEAR(m.año_matriculacion) = $anio 
     ORDER BY a.apellido_alumno
 ";
 
@@ -571,22 +583,20 @@ while ($row = mysqli_fetch_assoc($result)) {
     // Consulta para obtener el porcentaje de asistencia y ausencias ajustadas de cada alumno
 $sql_asistencias = "
     SELECT 
-        a.inscripcion_asignatura_alumno_legajo AS legajo,
-        SUM(CASE WHEN a.1_Horario = 'Presente' OR a.2_Horario = 'Presente' THEN 1 ELSE 0 END) AS asistencias,
-        SUM(CASE WHEN a.1_Horario = 'Ausente' OR a.2_Horario = 'Ausente' THEN 1 ELSE 0 END) AS ausencias,
+        m.alumno_legajo AS legajo,
+        COUNT(CASE WHEN a.asistencia = 1 THEN 1 END) AS asistencias,
+        COUNT(CASE WHEN a.asistencia = 0 THEN 1 END) AS ausencias,
         COUNT(*) AS total_clases,
         (SELECT COUNT(*) 
          FROM alumnos_justificados aj 
-         WHERE aj.inscripcion_asignatura_alumno_legajo = a.inscripcion_asignatura_alumno_legajo
-           AND (aj.materias_idMaterias = $idMateria OR aj.materias_idMaterias1 = $idMateria)
+         WHERE aj.inscripcion_asignatura_alumno_legajo = m.alumno_legajo
+         AND aj.materias_idMaterias = $idMateria
         ) AS justificaciones
-    FROM 
-        asistencia a
-    WHERE 
-        a.inscripcion_asignatura_alumno_legajo IN (SELECT alumno_legajo FROM inscripcion_asignatura WHERE carreras_idCarrera = $idCarrera)
-        AND a.materias_idMaterias = $idMateria
-    GROUP BY 
-        a.inscripcion_asignatura_alumno_legajo";
+    FROM asistencia a
+    JOIN matriculacion_materias m ON a.materias_idMaterias = m.materias_idMaterias 
+    AND a.materias_idMaterias = $idMateria
+    GROUP BY m.alumno_legajo
+";
 
 $query_asistencias = mysqli_query($conexion, $sql_asistencias);
 

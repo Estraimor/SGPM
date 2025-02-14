@@ -1,6 +1,7 @@
 <?php
 include '../../conexion/conexion.php';
 session_start();
+error_log("Datos recibidos: " . print_r($_POST, true));
 
 if (isset($_POST['carrera']) && isset($_POST['curso']) && isset($_POST['comision']) && isset($_POST['anio'])) {
     $idCarrera = $_POST['carrera'];
@@ -19,7 +20,7 @@ if (isset($_POST['carrera']) && isset($_POST['curso']) && isset($_POST['comision
     ");
 
     if (!$stmt) {
-        echo "<p>Error en la consulta SQL</p>";
+        echo "<option value=''>Error en la consulta SQL</option>";
         exit();
     }
 
@@ -27,19 +28,20 @@ if (isset($_POST['carrera']) && isset($_POST['curso']) && isset($_POST['comision
     $stmt->execute();
     $result = $stmt->get_result();
 
+
     if ($result->num_rows > 0) {
-        echo "<ul>";
         while ($row = $result->fetch_assoc()) {
-            echo "<li><input type='checkbox' class='materiaCheckbox' value='{$row['idMaterias']}'> {$row['Nombre']}</li>";
+            $options .= "<option value='{$row['idMaterias']}'>{$row['Nombre']}</option>";
         }
-        echo "</ul>";
     } else {
-        echo "<p>No hay materias disponibles para esta selección.</p>";
+        $options = "<option value=''>No hay materias disponibles</option>";
     }
+
+    echo $options;
 
     $stmt->close();
 } else {
-    echo "<p>Error: Datos incompletos.</p>";
+    echo "<option value=''>Error: Datos incompletos</option>";
     error_log("POST Data: " . print_r($_POST, true));
 }
 ?>

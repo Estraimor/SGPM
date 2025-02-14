@@ -28,12 +28,7 @@ if (!in_array($rolUsuario, $rolesPermitidos)) {
 $idPreceptor = $_SESSION['id'];
 include '../conexion/conexion.php';
 
-// Consulta para obtener las carreras asociadas al preceptor
-$queryCarreras = "SELECT p.carreras_idCarrera, c.nombre_carrera FROM preceptores p
-                  INNER JOIN carreras c ON c.idCarrera = p.carreras_idCarrera
-                  WHERE p.profesor_idProrfesor = $idPreceptor";
-$resultCarreras = mysqli_query($conexion, $queryCarreras);
-$carreras = mysqli_fetch_all($resultCarreras, MYSQLI_ASSOC);
+
 
 // Set inactivity limit in seconds
 $inactivity_limit = 1200;
@@ -547,54 +542,41 @@ if ($result && mysqli_num_rows($result) > 0) {
 	
 </div>
 <div class="contenido">
-<h2>Registro de Notas</h2>
-    
-    <label>Carrera:</label>
-    <select id="carrera">
-        
-    </select>
-    <br>
-    
-    <label>Curso:</label>
-    <select id="curso" disabled>
-        
-    </select>
-    <br>
-    
-    <label>Comisión:</label>
-    <select id="comision" disabled>
-       
-    </select>
-    <br>
-    
-    <label>Año:</label>
-    <select id="anio" disabled>
-        
-    <br>
-	
-	<h3>Materias</h3>
-	<div id="listaMaterias">
-	<p>Las materias se cargarán aquí...</p>
-	</div>
+    <h2>Registro de Notas</h2>
 
-    <button id="cargarDatos" disabled>Cargar Estudiantes</button>
-    
-    <div id="tablaNotas"></div>
-    
-    
+    <label>Carrera:</label>
+    <select id="carrera"></select><br>
+
+    <label>Curso:</label>
+    <select id="curso" disabled></select><br>
+
+    <label>Comisión:</label>
+    <select id="comision" disabled></select><br>
+
+    <label>Año:</label>
+    <select id="anio" disabled></select><br>
+
+    <h3>Materias</h3>
+    <label>Seleccione una materia:</label>
+    <select id="materiaSeleccionada" disabled>
+        <option value="">Seleccione una materia</option>
+    </select><br>
+
+    <div id="tablaNotas" style="margin-top: 20px;"></div>
 </div>
+
 <script>
-      $(document).ready(function() {
-    // Cargar carreras
+  $(document).ready(function() {
+    // 🔹 Cargar carreras
     $.post('./config_notas_pendientes/obtener_carreras.php', function(data) {
         $('#carrera').append(data);
     });
 
-    // Cargar cursos según carrera
+    // 🔹 Cargar cursos según carrera
     $('#carrera').on('change', function() {
         let carrera = $(this).val();
         $('#curso').prop('disabled', false);
-        $.post('./config_notas_pendientes/obtener_cursos.php', {carrera: carrera}, function(data) {
+        $.post('./config_notas_pendientes/obtener_cursos.php', { carrera: carrera }, function(data) {
             $('#curso').html('<option value="">Seleccione un curso</option>' + data);
         }).fail(function() {
             $('#curso').html('<option value="">Error al cargar cursos</option>');
@@ -602,7 +584,7 @@ if ($result && mysqli_num_rows($result) > 0) {
         });
     });
 
-    // Cargar comisiones según curso
+    // 🔹 Cargar comisiones según curso
     $('#curso').on('change', function() {
         let idCarrera = $('#carrera').val();
         let idCurso = $(this).val();
@@ -621,7 +603,7 @@ if ($result && mysqli_num_rows($result) > 0) {
         }
     });
 
-    // Cargar años dinámicamente desde 2023 hasta el año actual
+    // 🔹 Cargar años desde 2023 hasta el actual
     let anioActual = new Date().getFullYear();
     let anioSelect = $('#anio');
     anioSelect.append('<option value="">Seleccione un año</option>');
@@ -629,62 +611,130 @@ if ($result && mysqli_num_rows($result) > 0) {
         anioSelect.append(`<option value="${i}">${i}</option>`);
     }
 
-    // Habilitar el select de años cuando se seleccione una comisión
+    // 🔹 Habilitar el select de años cuando se seleccione una comisión
     $('#comision').on('change', function() {
         $('#anio').prop('disabled', false);
     });
 
-	$('#anio').on('change', function() {
-    let carrera = $('#carrera').val();
-    let curso = $('#curso').val();
-    let comision = $('#comision').val();
-    let anio = $(this).val();
-
-    if (carrera && curso && comision && anio) {
-        console.log("Enviando solicitud para obtener materias:", { carrera, curso, comision, anio });
-
-        $.post('./config_notas_pendientes/obtener_materias.php', {
-            carrera: carrera, 
-            curso: curso, 
-            comision: comision, 
-            anio: anio
-        }, function(data) {
-            console.log("Respuesta de obtener_materias.php:", data);
-            $('#listaMaterias').html(''); // Limpia el div antes de agregar nuevos datos
-            $('#listaMaterias').append(data);
-            $('#listaMaterias').show(); // Asegúrate de que el div está visible
-        }).fail(function() {
-            console.error("Error al obtener materias.");
-            $('#listaMaterias').html('<p>Error al cargar las materias</p>');
-        });
-    }
-});
-
-
-
-    // Obtener última nota y condición cuando se seleccione un año
+    // 🔹 Cargar materias cuando se seleccione un año
     $('#anio').on('change', function() {
+        let carrera = $('#carrera').val();
+        let curso = $('#curso').val();
+        let comision = $('#comision').val();
         let anio = $(this).val();
-        let legajo = $('#listaAlumnos').val();
-        let idMateria = $('#materiaSeleccionada').val();
 
-        if (anio && legajo && idMateria) {
-            $.post('./config_notas_pendientes/obtener_notas.php', {
-                anio: anio, 
-                legajo: legajo, 
-                idMateria: idMateria
-            }, function(data) {
-                let notas = JSON.parse(data);
-                $('#ultimaNota').val(notas.nota_final);
-                $('#ultimaCondicion').val(notas.condicion);
-            }).fail(function() {
-                console.error("Error al obtener las notas.");
+        if (carrera && curso && comision && anio) {
+            $.ajax({
+                url: './config_notas_pendientes/obtener_materias.php',
+                type: 'POST',
+                data: { carrera: carrera, curso: curso, comision: comision, anio: anio },
+                success: function(response) {
+                    $('#materiaSeleccionada').html('<option value="">Seleccione una materia</option>' + response);
+                    $('#materiaSeleccionada').prop('disabled', false);
+                },
+                error: function() {
+                    $('#materiaSeleccionada').html('<option value="">Error al cargar materias</option>');
+                }
             });
+        }
+    });
+
+    $('#materiaSeleccionada').on('change', function() {
+        let idMateria = $(this).val();
+        let anio = $('#anio').val();
+        let comision = $('#comision').val();
+        let curso = $('#curso').val();
+        let carrera = $('#carrera').val();
+
+        if (idMateria && anio && comision && curso && carrera) {
+            $.ajax({
+                url: './config_notas_pendientes/obtener_estudiantes_materia.php',
+                type: 'POST',
+                data: { idMateria, anio, comision, curso, carrera },
+                success: function(response) {
+                    let estudiantes = JSON.parse(response);
+                    let tableHtml = `
+                        <table border="1" style="width:100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th>Legajo</th>
+                                    <th>Nombre</th>
+                                    <th>Apellido</th>
+                                    <th>Nota Final</th>
+                                    <th>Condición</th>
+                                    <th>Detalles</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+
+                    estudiantes.forEach(est => {
+                        let notaInput = est.nota_final === 'No disponible' ? 
+                            `<input type='number' class='notaFinal' data-legajo='${est.legajo}' step='0.1'>` 
+                            : est.nota_final;
+
+                        let condicionSelect = est.condicion === 'No disponible' ? 
+                            `<select class='condicionSelect' data-legajo='${est.legajo}'>
+                                <option value=''>Seleccione condición</option>
+                                <option value='Regular'>Regular</option>
+                                <option value='Promoción'>Promoción</option>
+                            </select>` 
+                            : est.condicion;
+
+                        let detalles = `<div class='detalleCampos' data-legajo='${est.legajo}' style='display: none;'></div>`;
+
+                        tableHtml += `
+                            <tr>
+                                <td>${est.legajo}</td>
+                                <td>${est.nombre}</td>
+                                <td>${est.apellido}</td>
+                                <td>${notaInput}</td>
+                                <td>${condicionSelect}</td>
+                                <td>${detalles}</td>
+                            </tr>`;
+                    });
+
+                    tableHtml += `</tbody></table>`;
+                    $('#tablaNotas').html(tableHtml);
+                },
+                error: function() {
+                    $('#tablaNotas').html('<p style="color:red;">Error al cargar los datos de los estudiantes.</p>');
+                }
+            });
+        }
+    });
+
+    // Mostrar campos adicionales según la condición seleccionada
+    $(document).on('change', '.condicionSelect', function() {
+        let legajo = $(this).data('legajo');
+        let condicion = $(this).val();
+        let detalleDiv = $(`.detalleCampos[data-legajo='${legajo}']`);
+
+        if (condicion === 'Regular') {
+            detalleDiv.html(`
+                <label>Nota Examen Final: </label><input type='number' class='notaExamen' step='0.1'><br>
+                <label>Tomo: </label><input type='text' class='tomo'><br>
+                <label>Folio: </label><input type='text' class='folio'><br>
+                <label>Fecha: </label><input type='date' class='fechaExamen'><br>
+            `).show();
+        } else if (condicion === 'Promoción') {
+            detalleDiv.html(`
+                <label>Nota Promoción: </label><input type='number' class='notaPromocion' step='0.1'><br>
+                <label>Tomo: </label><input type='text' class='tomoPromocion'><br>
+                <label>Folio: </label><input type='text' class='folioPromocion'><br>
+                <label>Fecha: </label><input type='date' class='fechaPromocion'><br>
+            `).show();
+        } else {
+            detalleDiv.hide();
         }
     });
 });
 
-    </script>
+
+</script>
+
+
+
+
 
 
 <!--   Core JS Files   -->

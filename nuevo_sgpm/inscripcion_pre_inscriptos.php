@@ -766,8 +766,8 @@ $conexion->commit();
 </div>
 
 
-        <?php
-           $sql_mater = "SELECT * FROM carreras";
+<?php
+           $sql_mater = "SELECT * FROM carreras where idCarrera  in (18,27,55,46)";
            $peticion = mysqli_query($conexion, $sql_mater);
         ?>
         <select name="inscripcion_carrera" class="form-container__input full">
@@ -776,6 +776,30 @@ $conexion->commit();
                 <option value="<?php echo $informacion['idCarrera'] ?>"><?php echo $informacion['nombre_carrera'] ?></option>
             <?php } ?>
         </select>
+
+        <?php
+// Obtener cursos
+$queryCursos = "SELECT * FROM cursos";
+$resultCursos = mysqli_query($conexion, $queryCursos);
+?>
+<select name="curso" class="form-container__input full">
+    <option hidden>Selecciona un Curso</option>
+    <?php while ($curso = mysqli_fetch_assoc($resultCursos)) { ?>
+        <option value="<?php echo $curso['idCursos']; ?>"><?php echo $curso['curso']; ?></option>
+    <?php } ?>
+</select>
+
+<?php
+// Obtener comisiones
+$queryComisiones = "SELECT * FROM comisiones";
+$resultComisiones = mysqli_query($conexion, $queryComisiones);
+?>
+<select name="comision" class="form-container__input full">
+    <option hidden>Selecciona una Comisión</option>
+    <?php while ($comision = mysqli_fetch_assoc($resultComisiones)) { ?>
+        <option value="<?php echo $comision['idComisiones']; ?>"><?php echo $comision['comision']; ?></option>
+    <?php } ?>
+</select>
 
         <input type="submit" class="form-container__input" name="enviar" value="Enviar" onclick="mostrarAlertaExitosa(); closeSuccessMessage();">
     </form>

@@ -525,76 +525,126 @@ if ($result && mysqli_num_rows($result) > 0) {
 	
 </div>
 
-	<?php
+<?php
 // Incluimos el archivo de conexión a la base de datos
 
-// Obtenemos el ID del preceptor y el rol desde la sesión
-$idPreceptor = $_SESSION['id'];  // Asegúrate de tener el ID del preceptor guardado en la sesión
-$rolUsuario = $_SESSION["roles"]; // Asegúrate de tener el rol guardado en la sesión
+// Obtenemos el ID del usuario y su rol desde la sesión
+$idUsuario = $_SESSION['id'];  
+$rolUsuario = $_SESSION['roles']; 
+
+// Obtener el año actual
+$anioActual = date("Y");
+
+// Verificar si se intentó enviar la materia sin año
+if (isset($_GET['error']) && $_GET['error'] == "noAnio") {
+    echo "<script>alert('⚠️ Debes seleccionar un año antes de elegir una materia.');</script>";
+}
 
 // Definimos la consulta dependiendo del rol
 if ($rolUsuario == 1) {
-    // Si el rol es 1 (administrador, por ejemplo), se muestran todas las materias que tienen personas asociadas en inscripcion_asignatura
-    $queryCarreras = "
-        SELECT c.idCarrera, c.nombre_carrera, m.Nombre, m.idMaterias
-        FROM carreras c
-        INNER JOIN materias m ON m.carreras_idCarrera = c.idCarrera
-        INNER JOIN inscripcion_asignatura ia ON ia.carreras_idCarrera = c.idCarrera
-        GROUP BY m.idMaterias
+    // ADMINISTRADOR: Puede ver todas las materias de todas las carreras
+    $queryMaterias = "
+        SELECT 
+            m.idMaterias, 
+            m.Nombre AS materia, 
+            c.idCarrera, 
+            c.nombre_carrera, 
+            co.idComisiones, 
+            co.comision, 
+            cu.idCursos, 
+            cu.curso
+        FROM materias m
+        INNER JOIN carreras c ON m.carreras_idCarrera = c.idCarrera
+        INNER JOIN comisiones co ON m.comisiones_idComisiones = co.idComisiones
+        INNER JOIN cursos cu ON m.cursos_idCursos = cu.idCursos
+        GROUP BY m.idMaterias, co.idComisiones, cu.idCursos, c.idCarrera
     ";
 } elseif ($rolUsuario == 5) {
-    // Si el rol es 5, se muestran todas las materias asignadas a la carrera del preceptor y, además, las materias asignadas específicamente a él
-    $queryCarreras = "
-        SELECT DISTINCT c.idCarrera, c.nombre_carrera, m.Nombre, m.idMaterias
-        FROM carreras c
-        INNER JOIN materias m ON m.carreras_idCarrera = c.idCarrera
-        LEFT JOIN inscripcion_asignatura ia ON ia.carreras_idCarrera = c.idCarrera
-        WHERE c.profesor_idProrfesor = '{$idPreceptor}' 
-        OR m.profesor_idProrfesor = '{$idPreceptor}'
-        GROUP BY m.idMaterias
+    // PRECEPTOR: Puede ver todas las materias de sus carreras o en las que sea profesor
+    $queryMaterias = "
+        SELECT DISTINCT 
+            m.idMaterias, 
+            m.Nombre AS materia, 
+            c.idCarrera, 
+            c.nombre_carrera, 
+            co.idComisiones, 
+            co.comision, 
+            cu.idCursos, 
+            cu.curso
+        FROM materias m
+        INNER JOIN carreras c ON m.carreras_idCarrera = c.idCarrera
+        INNER JOIN comisiones co ON m.comisiones_idComisiones = co.idComisiones
+        INNER JOIN cursos cu ON m.cursos_idCursos = cu.idCursos
+        WHERE c.profesor_idProfesor = '{$idUsuario}' 
+        OR m.profesor_idProfesor = '{$idUsuario}'
+        GROUP BY m.idMaterias, co.idComisiones, cu.idCursos, c.idCarrera
     ";
 } else {
-    // Si el rol es otro, se muestran solo las materias asignadas al preceptor y con personas asociadas en inscripcion_asignatura
-    $queryCarreras = "
-        SELECT c.idCarrera, c.nombre_carrera, m.Nombre, m.idMaterias
-        FROM carreras c
-        INNER JOIN materias m ON m.carreras_idCarrera = c.idCarrera
-        INNER JOIN inscripcion_asignatura ia ON ia.carreras_idCarrera = c.idCarrera
-        WHERE m.profesor_idProrfesor = '{$idPreceptor}'
-        GROUP BY m.idMaterias
+    // PROFESOR: Solo ve las materias en las que está asignado directamente
+    $queryMaterias = "
+        SELECT 
+            m.idMaterias, 
+            m.Nombre AS materia, 
+            c.idCarrera, 
+            c.nombre_carrera, 
+            co.idComisiones, 
+            co.comision, 
+            cu.idCursos, 
+            cu.curso
+        FROM materias m
+        INNER JOIN carreras c ON m.carreras_idCarrera = c.idCarrera
+        INNER JOIN comisiones co ON m.comisiones_idComisiones = co.idComisiones
+        INNER JOIN cursos cu ON m.cursos_idCursos = cu.idCursos
+        WHERE m.profesor_idProfesor = '{$idUsuario}'
+        GROUP BY m.idMaterias, co.idComisiones, cu.idCursos, c.idCarrera
     ";
 }
 
-
 // Ejecutamos la consulta
-$resultCarreras = mysqli_query($conexion, $queryCarreras);
+$resultMaterias = mysqli_query($conexion, $queryMaterias);
 
 // Obtener los resultados en un array asociativo
-$carreras = mysqli_fetch_all($resultCarreras, MYSQLI_ASSOC);
+$materias = mysqli_fetch_all($resultMaterias, MYSQLI_ASSOC);
 ?>
+
 <div class="contenido">
     <div class="contenedor-materias">
         <h2 class="titulo">Control de Desempeño Académico</h2>
         <p class="indicaciones">
-            Para asignar notas de parciales y trabajos prácticos, debe buscar la unidad curricular correspondiente y hacer clic en el botón que dice "Seleccionar".
+            Seleccione primero el año, luego la materia.
         </p>
-      
+
+        <!-- Select de Años -->
+        <label for="anio">Seleccione un Año:</label>
+        <select id="anio" name="anio">
+            <option value="">Seleccione un año</option>
+            <?php for ($anio = 2023; $anio <= $anioActual; $anio++) { ?>
+                <option value="<?php echo $anio; ?>"><?php echo $anio; ?></option>
+            <?php } ?>
+        </select>
+
         <div class="tabla-contenedor">
             <table id="tablaMaterias" class="tabla-materias">
                 <thead>
                     <tr>
-                        <th>Nombre de la Materia y Carrera</th>
+                        <th>Materia</th>
+                        <th>Comisión</th>
+                        <th>Curso</th>
+                        <th>Carrera</th>
                         <th>Seleccionar</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php 
-                    if (!empty($carreras) && is_array($carreras)) {
-                        foreach ($carreras as $carrera) { ?>
+                    if (!empty($materias) && is_array($materias)) {
+                        foreach ($materias as $materia) { ?>
                             <tr>
-                                <td><?php echo htmlspecialchars($carrera['Nombre']) . " - " . htmlspecialchars($carrera['nombre_carrera']); ?></td>
+                                <td><?php echo htmlspecialchars($materia['materia']); ?></td>
+                                <td><?php echo htmlspecialchars($materia['comision']); ?></td>
+                                <td><?php echo htmlspecialchars($materia['curso']); ?></td>
+                                <td><?php echo htmlspecialchars($materia['nombre_carrera']); ?></td>
                                 <td>
-                                    <button class="btn-seleccionar" onclick="irParciales('<?php echo $carrera['idCarrera']; ?>', '<?php echo $carrera['idMaterias']; ?>')">
+                                    <button class="btn-seleccionar" onclick="validarSeleccion('<?php echo $materia['idCarrera']; ?>', '<?php echo $materia['idMaterias']; ?>', '<?php echo $materia['idComisiones']; ?>', '<?php echo $materia['idCursos']; ?>', '<?php echo htmlspecialchars($materia['nombre_carrera']); ?>')">
                                         <span class="icono">&#10003;</span> Seleccionar
                                     </button>
                                 </td>
@@ -602,7 +652,7 @@ $carreras = mysqli_fetch_all($resultCarreras, MYSQLI_ASSOC);
                         <?php }
                     } else { ?>
                         <tr>
-                            <td colspan="2">No hay carreras asignadas con personas asociadas.</td>
+                            <td colspan="5">No tienes materias asignadas.</td>
                         </tr>
                     <?php } ?>
                 </tbody>
@@ -612,13 +662,26 @@ $carreras = mysqli_fetch_all($resultCarreras, MYSQLI_ASSOC);
 </div>
 
 <script>
-// Esta función redirige a la página de parciales con los parámetros de carrera y materia
-function irParciales(idCarrera, idMaterias) {
-    window.location.href = "gestion_notas.php?comision=" + idCarrera + "&materia=" + idMaterias;
-}
-var myTable = document.querySelector("#tablaMaterias");
-var dataTable = new DataTable(tablaMaterias);
+    function validarSeleccion(idCarrera, idMaterias, idComision, idCurso, nombreCarrera) {
+        let anioSeleccionado = document.getElementById("anio").value;
+        if (!anioSeleccionado) {
+            window.location.href = window.location.pathname + "?error=noAnio";
+            return;
+        }
+        let url = `gestion_notas.php?carreraId=${idCarrera}&materiaId=${idMaterias}&comisionId=${idComision}&cursoId=${idCurso}&nombreCarrera=${encodeURIComponent(nombreCarrera)}&anio=${anioSeleccionado}`;
+        window.location.href = url;
+    }
+
+    // Inicializar DataTable en la tabla de materias
+    document.addEventListener("DOMContentLoaded", () => {
+        var myTable = document.querySelector("#tablaMaterias");
+        var dataTable = new DataTable(myTable);
+    });
 </script>
+
+
+
+
 
 
 
