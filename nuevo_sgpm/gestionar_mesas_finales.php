@@ -63,6 +63,8 @@ if (isset($_SESSION['time']) && (time() - $_SESSION['time'] > $inactivity_limit)
 		});
 	</script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
 	<!-- CSS Files -->
 	<link rel="stylesheet" href="assets/css/bootstrap.min.css">
 	<link rel="stylesheet" href="assets/css/azzara.min.css">
@@ -72,7 +74,69 @@ if (isset($_SESSION['time']) && (time() - $_SESSION['time'] > $inactivity_limit)
 	<link rel="stylesheet" href="assets/css/demo.css">
 	<link href="https://unpkg.com/vanilla-datatables@latest/dist/vanilla-dataTables.min.css" rel="stylesheet" type="text/css">
 <script src="https://unpkg.com/vanilla-datatables@latest/dist/vanilla-dataTables.min.js" type="text/javascript"></script>
-	
+
+
+
+<style>
+     /* Barra de control (buscador y selector) *//* Barra de control (buscador, selector y filtros) */
+    .controls {
+      margin-bottom: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .controls input[type="text"],
+    .controls select,
+    .controls input[type="date"],
+    .controls input[type="number"] {
+      padding: 5px;
+    }
+
+    /* Paginación */
+    .pagination {
+      display: flex;
+      list-style: none;
+      gap: 5px;
+      margin-top: 10px;
+    }
+    .pagination li {
+      cursor: pointer;
+      padding: 5px 10px;
+      border: 1px solid #888;
+      background: #f9f9f9;
+    }
+    .pagination li.active {
+      font-weight: bold;
+      background: #cce5ff;
+      border-color: #66afe9;
+    }
+    .pagination li[disabled] {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    /* Modal */
+    #modal-background {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      z-index: 10;
+    }
+    #modal-editar {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      display: none;
+      z-index: 20;
+      width: 300px;
+    }
+</style>
 </head>
 <body>
 	<div class="wrapper">
@@ -533,47 +597,32 @@ if ($result && mysqli_num_rows($result) > 0) {
     <h2>Agregar Fechas de Mesas Finales</h2>
 
     <form action="./mesa_finales/guardar_fechas_mesas_finales.php" method="POST">
-
-        <!-- Contenedor dinámico para las combinaciones de carrera y materia -->
         <div id="mesa-container">
             <div class="mesa-item">
-                <!-- Selección de carrera principal -->
                 <label for="carrera">Selecciona la Carrera:</label><br>
                 <select class="carrera" name="carrera[]">
                     <option value="">Selecciona una carrera</option>
                     <?php
-                    // Obtener el ID del preceptor y el rol desde la sesión
-            $idPreceptor = $_SESSION['id'];  // Asegúrate de tener el ID del preceptor guardado en la sesión
-            $rolUsuario = $_SESSION["roles"]; // Asegúrate de tener el rol guardado en la sesión
+                    include 'conexion.php';
+                    $idPreceptor = $_SESSION['id'];  
+                    $rolUsuario = $_SESSION["roles"]; 
 
-            // Definimos la consulta dependiendo del rol
-            if ($rolUsuario == 1) {
-                // Si el rol es 1, mostrar todas las carreras que tienen materias con personas asociadas en inscripcion_asignatura
-                $sql_mater = "
-                    SELECT DISTINCT c.idCarrera, c.nombre_carrera
-                    FROM carreras c
-                    INNER JOIN materias m ON c.idCarrera = m.carreras_idCarrera
-                    INNER JOIN inscripcion_asignatura ia ON ia.carreras_idCarrera = c.idCarrera
-                ";
-            } elseif ($rolUsuario == 5) {
-                // Si el rol es 5, mostrar todas las carreras asignadas a las materias del preceptor y con personas asociadas en inscripcion_asignatura
-                $sql_mater = "
-                    SELECT DISTINCT c.idCarrera, c.nombre_carrera
-                    FROM carreras c
-                    INNER JOIN materias m ON c.idCarrera = m.carreras_idCarrera
-                    INNER JOIN inscripcion_asignatura ia ON ia.carreras_idCarrera = c.idCarrera
-                    WHERE c.profesor_idProrfesor = '{$idPreceptor}'
-                ";
-            } else {
-                // Si el rol no es 1 ni 5, mostrar solo las carreras asignadas al preceptor y con personas asociadas en inscripcion_asignatura
-                $sql_mater = "
-                    SELECT DISTINCT c.idCarrera, c.nombre_carrera
-                    FROM carreras c
-                    INNER JOIN materias m ON c.idCarrera = m.carreras_idCarrera
-                    INNER JOIN inscripcion_asignatura ia ON ia.carreras_idCarrera = c.idCarrera
-                    WHERE m.profesor_idProrfesor = '{$idPreceptor}'
-                ";
-            }
+                    if ($rolUsuario == 1) {
+                        $sql_mater = "SELECT DISTINCT c.idCarrera, c.nombre_carrera FROM carreras c
+                                      INNER JOIN materias m ON c.idCarrera = m.carreras_idCarrera
+                                      INNER JOIN inscripcion_asignatura ia ON ia.carreras_idCarrera = c.idCarrera";
+                    } elseif ($rolUsuario == 5) {
+                        $sql_mater = "SELECT DISTINCT c.idCarrera, c.nombre_carrera FROM carreras c
+                                      INNER JOIN materias m ON c.idCarrera = m.carreras_idCarrera
+                                      INNER JOIN inscripcion_asignatura ia ON ia.carreras_idCarrera = c.idCarrera
+                                      WHERE c.profesor_idProrfesor = '{$idPreceptor}'";
+                    } else {
+                        $sql_mater = "SELECT DISTINCT c.idCarrera, c.nombre_carrera FROM carreras c
+                                      INNER JOIN materias m ON c.idCarrera = m.carreras_idCarrera
+                                      INNER JOIN inscripcion_asignatura ia ON ia.carreras_idCarrera = c.idCarrera
+                                      WHERE m.profesor_idProrfesor = '{$idPreceptor}'";
+                    }
+
                     $result = mysqli_query($conexion, $sql_mater);
                     while ($row = mysqli_fetch_assoc($result)) {
                         echo "<option value='{$row['idCarrera']}'>{$row['nombre_carrera']}</option>";
@@ -581,18 +630,25 @@ if ($result && mysqli_num_rows($result) > 0) {
                     ?>
                 </select><br><br>
 
-                <!-- Selección de materia principal que depende de la carrera -->
+                <label for="curso">Selecciona el Curso:</label><br>
+                <select class="curso" name="curso[]">
+                    <option value="">Selecciona una carrera primero</option>
+                </select><br><br>
+
+                <label for="comision">Selecciona la Comisión:</label><br>
+                <select class="comision" name="comision[]">
+                    <option value="">Selecciona un curso primero</option>
+                </select><br><br>
+
                 <label for="materia">Selecciona la Materia:</label><br>
                 <select class="materia" name="materias[]">
-                    <option value="">Selecciona una carrera primero</option>
+                    <option value="">Selecciona una comisión primero</option>
                 </select><br><br>
             </div>
         </div>
 
-        <!-- Botón para agregar más combinaciones de carrera y materia -->
         <button type="button" id="agregar-mesa">Agregar Unidad Curricular</button><br><br>
 
-        <!-- Contenedor para los campos de fecha, llamado, tanda, cupo -->
         <div class="contenedor-detalles">
             <div>
                 <label for="fecha">Fecha:</label>
@@ -612,51 +668,82 @@ if ($result && mysqli_num_rows($result) > 0) {
             </div>
         </div>
 
-        <!-- Primer conjunto de selects para la mesa pedagógica asociada -->
-        <div id="mesa-pedagogica-container">
-            <h3>Agregar Mesa Pedagógica Asociada 1</h3>
-            <div class="mesa-pedagogica-item">
-                <label for="carrera-pedagogica-1">Selecciona la Carrera Pedagógica 1:</label><br>
-                <select class="carrera" name="carrera_pedagogica_1">
-                    <option value="">Selecciona una carrera</option>
-                    <?php
-                    $query = "SELECT * FROM carreras";
-                    $result = mysqli_query($conexion, $query);
-                    while ($row = mysqli_fetch_assoc($result)) {
-                        echo "<option value='{$row['idCarrera']}'>{$row['nombre_carrera']}</option>";
-                    }
-                    ?>
-                </select><br><br>
 
-                <label for="materia-pedagogica-1">Selecciona la Materia Pedagógica 1:</label><br>
-                <select class="materia" name="materia_pedagogica_1">
-                    <option value="">Selecciona una carrera primero</option>
-                </select><br><br>
-            </div>
-        </div>
+    <!-- Mesa Pedagógica Asociada 1 -->
+<div class="mesa-pedagogica-container">
+    <h3>Agregar Mesa Pedagógica Asociada 1</h3>
+    <div class="mesa-pedagogica-item">
+        <!-- Seleccionar Carrera -->
+        <label for="carrera-1">Selecciona la Carrera:</label><br>
+        <select class="carrera" name="carrera_1">
+            <option value="">Selecciona una carrera</option>
+            <?php
+            include("conexion.php");
+            $query = "SELECT * FROM carreras";
+            $result = mysqli_query($conexion, $query);
+            while ($row = mysqli_fetch_assoc($result)) {
+                echo "<option value='{$row['idCarrera']}'>{$row['nombre_carrera']}</option>";
+            }
+            ?>
+        </select><br><br>
 
-        <!-- Segundo conjunto de selects para la mesa pedagógica asociada -->
-        <div id="mesa-pedagogica-container">
-            <h3>Agregar Mesa Pedagógica Asociada 2</h3>
-            <div class="mesa-pedagogica-item">
-                <label for="carrera-pedagogica-2">Selecciona la Carrera Pedagógica 2:</label><br>
-                <select class="carrera" name="carrera_pedagogica_2">
-                    <option value="">Selecciona una carrera</option>
-                    <?php
-                    $query = "SELECT * FROM carreras";
-                    $result = mysqli_query($conexion, $query);
-                    while ($row = mysqli_fetch_assoc($result)) {
-                        echo "<option value='{$row['idCarrera']}'>{$row['nombre_carrera']}</option>";
-                    }
-                    ?>
-                </select><br><br>
+        <!-- Seleccionar Curso -->
+        <label for="curso-1">Selecciona el Curso:</label><br>
+        <select class="curso" name="curso_1">
+            <option value="">Selecciona una carrera primero</option>
+        </select><br><br>
 
-                <label for="materia-pedagogica-2">Selecciona la Materia Pedagógica 2:</label><br>
-                <select class="materia" name="materia_pedagogica_2">
-                    <option value="">Selecciona una carrera primero</option>
-                </select><br><br>
-            </div>
-        </div>
+        <!-- Seleccionar Comisión -->
+        <label for="comision-1">Selecciona la Comisión:</label><br>
+        <select class="comision" name="comision_1">
+            <option value="">Selecciona un curso primero</option>
+        </select><br><br>
+
+        <!-- Seleccionar Materia Principal -->
+        <label for="materia-principal-1">Selecciona la Materia Principal:</label><br>
+        <select class="materia-principal" name="materia_principal_1">
+            <option value="">Selecciona Carrera, Curso y Comisión primero</option>
+        </select><br><br>
+
+        
+    </div>
+</div>
+
+<!-- Mesa Pedagógica Asociada 2 -->
+<div class="mesa-pedagogica-container">
+    <h3>Agregar Mesa Pedagógica Asociada 2</h3>
+    <div class="mesa-pedagogica-item">
+        <label for="carrera-2">Selecciona la Carrera:</label><br>
+        <select class="carrera" name="carrera_2">
+            <option value="">Selecciona una carrera</option>
+            <?php
+            $query = "SELECT * FROM carreras";
+            $result = mysqli_query($conexion, $query);
+            while ($row = mysqli_fetch_assoc($result)) {
+                echo "<option value='{$row['idCarrera']}'>{$row['nombre_carrera']}</option>";
+            }
+            ?>
+        </select><br><br>
+
+        <label for="curso-2">Selecciona el Curso:</label><br>
+        <select class="curso" name="curso_2">
+            <option value="">Selecciona una carrera primero</option>
+        </select><br><br>
+
+        <label for="comision-2">Selecciona la Comisión:</label><br>
+        <select class="comision" name="comision_2">
+            <option value="">Selecciona un curso primero</option>
+        </select><br><br>
+
+        
+
+        <label for="materia-pedagogica-2">Selecciona la Materia Pedagógica Asociada:</label><br>
+        <select class="materia-pedagogica" name="materia_pedagogica_2">
+            <option value="">Selecciona Carrera, Curso y Comisión primero</option>
+        </select><br><br>
+    </div>
+</div>
+
 
         <input type="submit" value="Agregar Mesa">
     </form>
@@ -667,106 +754,187 @@ if ($result && mysqli_num_rows($result) > 0) {
 
 
 
-   <h2>Mesas Finales</h2>
+    <h2>Mesas Finales</h2>
+
+<!-- Controles de búsqueda y tamaño de página -->
+<div class="controls">
+  <!-- Búsqueda general -->
+  <input type="text" id="searchInput" placeholder="Buscar texto en la tabla...">
+
+  <!-- Selector de cuántas filas se muestran por página -->
+  <select id="pageSizeSelect">
+    <option value="5">5 filas</option>
+    <option value="10" selected>10 filas</option>
+    <option value="25">25 filas</option>
+    <option value="50">50 filas</option>
+  </select>
+
+  <!-- Filtros adicionales -->
+  <label for="filterFecha">Fecha:</label>
+  <input type="date" id="filterFecha">
+
+  <label for="filterLlamado">Llamado:</label>
+  <input type="number" id="filterLlamado" placeholder="1 o 2...">
+
+  <label for="filterTanda">Tanda:</label>
+  <input type="number" id="filterTanda" placeholder="Ej: 1, 2...">
+
+  <label for="filterCupo">Cupo:</label>
+  <input type="number" id="filterCupo" placeholder="Ej: 30">
+</div>
+
+<!-- TABLA con los datos de Mesas Finales -->
 <table border="1" id="tabla_mesas">
-    <thead>
-        <tr>
-            <th>ID tanta </th>
-            <th>Unidad Curricular</th>
-            <th>Fecha</th>
-            <th>Llamado</th>
-            <th>Tanda</th>
-            <th>Cupo</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        <?php
-        // Consulta para obtener las mesas finales junto con las tandas, materias y la carrera
-        $query = "SELECT fm.idfechas_mesas_finales, m.Nombre AS nombre_materia,t.idtandas , t.fecha, t.llamado, t.tanda, t.cupo, c.nombre_carrera
-                  FROM fechas_mesas_finales fm
-                  JOIN materias m ON fm.materias_idMaterias = m.idMaterias
-                  JOIN tandas t ON fm.tandas_idtandas = t.idtandas
-                  JOIN carreras c ON m.carreras_idCarrera  = c.idCarrera"; // Asegúrate de que esta relación sea correcta
-        $result = mysqli_query($conexion, $query);
+  <thead>
+    <tr>
+      <th>ID tanta</th>
+      <th>Unidad Curricular</th>
+      <th>Fecha</th>
+      <th>Llamado</th>
+      <th>Tanda</th>
+      <th>Cupo</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    <?php
+    // EJEMPLO DE CONSULTA (ajusta según tu configuración/archivo PHP).
+    // Asegúrate de haber incluido la conexión a la BD antes (conexion.php).
+    // include("conexion.php");
 
-        // Verificar si la consulta se ejecutó correctamente y si hay resultados
-        if ($result && mysqli_num_rows($result) > 0) {
-            // Recorrer los resultados de la consulta y mostrarlos en la tabla
-            while ($row = mysqli_fetch_assoc($result)) {
-                // Obtener los primeros 4 caracteres y los últimos 5 caracteres de la carrera
-                $carrera_prefix = substr($row['nombre_carrera'], 0, 4);
-                $carrera_suffix = substr($row['nombre_carrera'], -5);
-                
-                // Concatenar los valores para formar el nombre completo
-                $nombre_materia_completo = $carrera_prefix . " " . $row['nombre_materia'] . " " . $carrera_suffix;
+    $query = "SELECT fm.idfechas_mesas_finales, 
+                     m.Nombre AS nombre_materia,
+                     t.idtandas, 
+                     t.fecha, 
+                     t.llamado, 
+                     t.tanda, 
+                     t.cupo, 
+                     c.nombre_carrera
+              FROM fechas_mesas_finales fm
+              JOIN materias m ON fm.materias_idMaterias = m.idMaterias
+              JOIN tandas t ON fm.tandas_idtandas = t.idtandas
+              JOIN carreras c ON m.carreras_idCarrera  = c.idCarrera";
 
-                echo "<tr>";
-                echo "<td>" . htmlspecialchars($row['idtandas']) . "</td>";
-                echo "<td>" . htmlspecialchars($nombre_materia_completo) . "</td>";
-                echo "<td>" . htmlspecialchars($row['fecha']) . "</td>";
-                echo "<td>" . ($row['llamado'] == 1 ? 'Primer Llamado' : 'Segundo Llamado') . "</td>";
-                echo "<td>" . htmlspecialchars($row['tanda']) . "</td>";
-                echo "<td>" . htmlspecialchars($row['cupo']) . "</td>";
-                echo "<td>
-                        <button class='editar' data-id='" . htmlspecialchars($row['idfechas_mesas_finales']) . "'>Modificar</button>
-                        <button class='eliminar' data-id='" . htmlspecialchars($row['idfechas_mesas_finales']) . "'>Eliminar</button>
-                      </td>";
-                echo "</tr>";
-            }
-        } else {
-            // Mensaje si no hay mesas finales registradas
-            echo "<tr><td colspan='6'>No se encontraron mesas finales.</td></tr>";
+    $result = mysqli_query($conexion, $query);
+
+    if ($result && mysqli_num_rows($result) > 0) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            // Construir nombre_materia_completo
+            $carrera_prefix = substr($row['nombre_carrera'], 0, 4);
+            $carrera_suffix = substr($row['nombre_carrera'], -5);
+            $nombre_materia_completo = $carrera_prefix . " " . $row['nombre_materia'] . " " . $carrera_suffix;
+
+            echo "<tr>";
+            echo "<td>" . htmlspecialchars($row['idtandas']) . "</td>"; // Columna 0
+            echo "<td>" . htmlspecialchars($nombre_materia_completo) . "</td>"; // Columna 1
+            echo "<td>" . htmlspecialchars($row['fecha']) . "</td>"; // Columna 2
+            // Convertir llamado 1 o 2 a texto
+            $llamadoText = ($row['llamado'] == 1) ? 'Primer Llamado' : 'Segundo Llamado';
+            echo "<td>" . $llamadoText . "</td>"; // Columna 3
+            echo "<td>" . htmlspecialchars($row['tanda']) . "</td>"; // Columna 4
+            echo "<td>" . htmlspecialchars($row['cupo']) . "</td>";  // Columna 5
+            echo "<td>
+                    <button class='editar' data-id='" . htmlspecialchars($row['idfechas_mesas_finales']) . "'>Modificar</button>
+                    <button class='eliminar' data-id='" . htmlspecialchars($row['idfechas_mesas_finales']) . "'>Eliminar</button>
+                  </td>"; // Columna 6
+            echo "</tr>";
         }
-
-        // Cerrar la conexión a la base de datos
-        ?>
-    </tbody>
+    } else {
+        echo "<tr><td colspan='7'>No se encontraron mesas finales.</td></tr>";
+    }
+    ?>
+  </tbody>
 </table>
 
-
-    
-    </div>
-
+<!-- Contenedor para la paginación -->
+<ul id="pagination" class="pagination"></ul>
 
 <!-- Fondo oscuro del modal -->
-<div id="modal-background" style="display:none;"></div>
+<div id="modal-background"></div>
 
 <!-- Modal para editar mesa final -->
-<div id="modal-editar" style="display:none;">
-    <form id="form-editar">
-        <input type="hidden" id="modal_id_mesa" name="id_mesa">
+<div id="modal-editar">
+  <form id="form-editar">
+    <input type="hidden" id="modal_id_mesa" name="id_mesa">
 
-        <label for="modal_fecha">Fecha:</label>
-        <input type="datetime-local" id="modal_fecha" name="fecha"><br><br>
+    <label for="modal_fecha">Fecha:</label>
+    <input type="datetime-local" id="modal_fecha" name="fecha"><br><br>
 
-        <label for="modal_llamado">Llamado:</label>
-        <input type="number" id="modal_llamado" name="llamado"><br><br>
+    <label for="modal_llamado">Llamado:</label>
+    <input type="number" id="modal_llamado" name="llamado"><br><br>
 
-        <label for="modal_tanda">Tanda:</label>
-        <input type="number" id="modal_tanda" name="tanda"><br><br>
+    <label for="modal_tanda">Tanda:</label>
+    <input type="number" id="modal_tanda" name="tanda"><br><br>
 
-        <label for="modal_cupo">Cupo:</label>
-        <input type="number" id="modal_cupo" name="cupo"><br><br>
+    <label for="modal_cupo">Cupo:</label>
+    <input type="number" id="modal_cupo" name="cupo"><br><br>
 
-        <button type="submit">Guardar cambios</button>
-        <button type="button" id="cerrar-modal">Cancelar</button>
-    </form>
+    <button type="submit">Guardar cambios</button>
+    <button type="button" id="cerrar-modal">Cancelar</button>
+  </form>
 </div>
 
 
 <script>
- $(document).ready(function() {
-    // Cargar las materias para la carrera principal
+$(document).ready(function() {
+    // Cargar los cursos cuando se seleccione una carrera
     $(document).on('change', '.carrera', function() {
         var idCarrera = $(this).val();
+        var cursoSelect = $(this).closest('.mesa-item').find('.curso');
+        var comisionSelect = $(this).closest('.mesa-item').find('.comision');
         var materiaSelect = $(this).closest('.mesa-item').find('.materia');
 
         if (idCarrera) {
             $.ajax({
                 type: 'POST',
-                url: './mesa_finales/obtener_materias_mesas_finales.php',
+                url: './mesa_finales/obtener_cursos.php',
                 data: { idCarrera: idCarrera },
+                success: function(html) {
+                    cursoSelect.html(html);
+                    comisionSelect.html('<option value="">Selecciona un curso primero</option>');
+                    materiaSelect.html('<option value="">Selecciona una comisión primero</option>');
+                },
+                error: function() {
+                    alert('Error al cargar los cursos.');
+                }
+            });
+        }
+    });
+
+    // Cargar las comisiones cuando se seleccione un curso
+    $(document).on('change', '.curso', function() {
+        var idCurso = $(this).val();
+        var comisionSelect = $(this).closest('.mesa-item').find('.comision');
+        var materiaSelect = $(this).closest('.mesa-item').find('.materia');
+
+        if (idCurso) {
+            $.ajax({
+                type: 'POST',
+                url: './mesa_finales/obtener_comisiones.php',
+                data: { idCurso: idCurso },
+                success: function(html) {
+                    comisionSelect.html(html);
+                    materiaSelect.html('<option value="">Selecciona una comisión primero</option>');
+                },
+                error: function() {
+                    alert('Error al cargar las comisiones.');
+                }
+            });
+        }
+    });
+
+    // Cargar las materias cuando se seleccione una comisión
+    $(document).on('change', '.comision', function() {
+        var idCarrera = $(this).closest('.mesa-item').find('.carrera').val();
+        var idCurso = $(this).closest('.mesa-item').find('.curso').val();
+        var idComision = $(this).val();
+        var materiaSelect = $(this).closest('.mesa-item').find('.materia');
+
+        if (idCarrera && idCurso && idComision) {
+            $.ajax({
+                type: 'POST',
+                url: './mesa_finales/obtener_materias_mesas_finales.php',
+                data: { idCarrera: idCarrera, idCurso: idCurso, idComision: idComision },
                 success: function(html) {
                     materiaSelect.html(html);
                 },
@@ -774,57 +942,11 @@ if ($result && mysqli_num_rows($result) > 0) {
                     alert('Error al cargar las materias.');
                 }
             });
-        } else {
-            materiaSelect.html('<option value="">Selecciona una carrera primero</option>');
-        }
-    });
-
-    // Cargar las materias para la primera carrera pedagógica
-    $(document).on('change', 'select[name="carrera_pedagogica_1"]', function() {
-        var idCarreraPedagogica = $(this).val();
-        var materiaSelectPedagogica = $('select[name="materia_pedagogica_1"]');
-
-        if (idCarreraPedagogica) {
-            $.ajax({
-                type: 'POST',
-                url: './mesa_finales/obtener_materias_mesas_finales.php',
-                data: { idCarrera: idCarreraPedagogica },
-                success: function(html) {
-                    materiaSelectPedagogica.html(html);
-                },
-                error: function() {
-                    alert('Error al cargar las materias pedagógicas.');
-                }
-            });
-        } else {
-            materiaSelectPedagogica.html('<option value="">Selecciona una carrera primero</option>');
-        }
-    });
-
-    // Cargar las materias para la segunda carrera pedagógica
-    $(document).on('change', 'select[name="carrera_pedagogica_2"]', function() {
-        var idCarreraPedagogica = $(this).val();
-        var materiaSelectPedagogica = $('select[name="materia_pedagogica_2"]');
-
-        if (idCarreraPedagogica) {
-            $.ajax({
-                type: 'POST',
-                url: './mesa_finales/obtener_materias_mesas_finales.php',
-                data: { idCarrera: idCarreraPedagogica },
-                success: function(html) {
-                    materiaSelectPedagogica.html(html);
-                },
-                error: function() {
-                    alert('Error al cargar las materias pedagógicas.');
-                }
-            });
-        } else {
-            materiaSelectPedagogica.html('<option value="">Selecciona una carrera primero</option>');
         }
     });
 
 
-    // Evento para agregar una nueva combinación de carrera y materia
+    // Agregar nueva combinación de carrera, curso, comisión y materia
     $('#agregar-mesa').on('click', function() {
         var nuevaMesa = `
             <div class="mesa-item">
@@ -832,38 +954,36 @@ if ($result && mysqli_num_rows($result) > 0) {
                 <select class="carrera" name="carrera[]">
                     <option value="">Selecciona una carrera</option>
                     <?php
-                    // Obtener el ID del preceptor y el rol desde la sesión
-            $idPreceptor = $_SESSION['id'];  // Asegúrate de tener el ID del preceptor guardado en la sesión
-            $rolUsuario = $_SESSION["roles"]; // Asegúrate de tener el rol guardado en la sesión
+                    include 'conexion.php';
 
-            // Definimos la consulta dependiendo del rol
-            if ($rolUsuario == 1) {
-                // Si el rol es 1, mostrar todas las carreras que tienen materias con personas asociadas en inscripcion_asignatura
-                $sql_mater = "
-                    SELECT DISTINCT c.idCarrera, c.nombre_carrera
-                    FROM carreras c
-                    INNER JOIN materias m ON c.idCarrera = m.carreras_idCarrera
-                    INNER JOIN inscripcion_asignatura ia ON ia.carreras_idCarrera = c.idCarrera
-                ";
-            } elseif ($rolUsuario == 5) {
-                // Si el rol es 5, mostrar todas las carreras asignadas a las materias del preceptor y con personas asociadas en inscripcion_asignatura
-                $sql_mater = "
-                    SELECT DISTINCT c.idCarrera, c.nombre_carrera
-                    FROM carreras c
-                    INNER JOIN materias m ON c.idCarrera = m.carreras_idCarrera
-                    INNER JOIN inscripcion_asignatura ia ON ia.carreras_idCarrera = c.idCarrera
-                    WHERE c.profesor_idProrfesor = '{$idPreceptor}'
-                ";
-            } else {
-                // Si el rol no es 1 ni 5, mostrar solo las carreras asignadas al preceptor y con personas asociadas en inscripcion_asignatura
-                $sql_mater = "
-                    SELECT DISTINCT c.idCarrera, c.nombre_carrera
-                    FROM carreras c
-                    INNER JOIN materias m ON c.idCarrera = m.carreras_idCarrera
-                    INNER JOIN inscripcion_asignatura ia ON ia.carreras_idCarrera = c.idCarrera
-                    WHERE m.profesor_idProrfesor = '{$idPreceptor}'
-                ";
-            }
+                    $idPreceptor = $_SESSION['id'];
+                    $rolUsuario = $_SESSION["roles"];
+
+                    if ($rolUsuario == 1) {
+                        $sql_mater = "
+                            SELECT DISTINCT c.idCarrera, c.nombre_carrera
+                            FROM carreras c
+                            INNER JOIN materias m ON c.idCarrera = m.carreras_idCarrera
+                            INNER JOIN inscripcion_asignatura ia ON ia.carreras_idCarrera = c.idCarrera
+                        ";
+                    } elseif ($rolUsuario == 5) {
+                        $sql_mater = "
+                            SELECT DISTINCT c.idCarrera, c.nombre_carrera
+                            FROM carreras c
+                            INNER JOIN materias m ON c.idCarrera = m.carreras_idCarrera
+                            INNER JOIN inscripcion_asignatura ia ON ia.carreras_idCarrera = c.idCarrera
+                            WHERE c.profesor_idProrfesor = '{$idPreceptor}'
+                        ";
+                    } else {
+                        $sql_mater = "
+                            SELECT DISTINCT c.idCarrera, c.nombre_carrera
+                            FROM carreras c
+                            INNER JOIN materias m ON c.idCarrera = m.carreras_idCarrera
+                            INNER JOIN inscripcion_asignatura ia ON ia.carreras_idCarrera = c.idCarrera
+                            WHERE m.profesor_idProrfesor = '{$idPreceptor}'
+                        ";
+                    }
+
                     $result = mysqli_query($conexion, $sql_mater);
                     while ($row = mysqli_fetch_assoc($result)) {
                         echo "<option value='{$row['idCarrera']}'>{$row['nombre_carrera']}</option>";
@@ -871,9 +991,19 @@ if ($result && mysqli_num_rows($result) > 0) {
                     ?>
                 </select><br><br>
 
+                <label for="curso">Selecciona el Curso:</label><br>
+                <select class="curso" name="curso[]">
+                    <option value="">Selecciona una carrera primero</option>
+                </select><br><br>
+
+                <label for="comision">Selecciona la Comisión:</label><br>
+                <select class="comision" name="comision[]">
+                    <option value="">Selecciona un curso primero</option>
+                </select><br><br>
+
                 <label for="materia">Selecciona la Materia:</label><br>
                 <select class="materia" name="materias[]">
-                    <option value="">Selecciona una carrera primero</option>
+                    <option value="">Selecciona una comisión primero</option>
                 </select><br><br>
 
                 <button type="button" class="eliminar-mesa">Eliminar Unidad Curricular</button><br><br>
@@ -882,87 +1012,411 @@ if ($result && mysqli_num_rows($result) > 0) {
         $('#mesa-container').append(nuevaMesa);
     });
 
-    // Evento para eliminar una mesa recién agregada
+    // Eliminar una mesa agregada
     $(document).on('click', '.eliminar-mesa', function() {
         $(this).closest('.mesa-item').remove();
     });
-  });
-</script>
-
-<script>
-  $(document).ready(function() {
-    $('.editar').on('click', function() {
-    var idMesa = $(this).data('id');
-    console.log("ID de Mesa seleccionado:", idMesa); // Verificar el ID de mesa
-    
-    $.ajax({
-        type: 'POST',
-        url: './obtener_mesa_final.php',
-        data: { idMesa: idMesa },
-        dataType: 'json',
-        success: function(data) {
-            $('#modal_id_mesa').val(data.idfechas_mesas_finales);
-            $('#modal_fecha').val(data.fecha);
-            $('#modal_llamado').val(data.llamado);
-            $('#modal_tanda').val(data.tanda);
-            $('#modal_cupo').val(data.cupo);
-
-            $('#modal-background').show();
-            $('#modal-editar').show();
-            }
-        });
-    });
 });
 
-    // Cerrar el modal al hacer clic en el botón "Cancelar"
-    $('#cerrar-modal').on('click', function() {
-        $('#modal-background').hide();
-        $('#modal-editar').hide();
-    });
 
-    // Cerrar el modal al hacer clic en el fondo oscuro
-    $('#modal-background').on('click', function() {
-        $('#modal-background').hide();
-        $('#modal-editar').hide();
-    });
+</script>
 
+<!-- JS materia pedagogica   -->
+<script>
+$(document).ready(function() {
 
-    // Guardar cambios al hacer submit en el formulario
-    $('#form-editar').on('submit', function(e) {
-        e.preventDefault();
+    // 🔹 Cuando cambia la Carrera, cargar los Cursos correspondientes
+    $('.carrera').on('change', function() {
+        var idCarrera = $(this).val();
+        var $cursoSelect = $(this).closest('.mesa-pedagogica-item').find('.curso');
+        var $comisionSelect = $(this).closest('.mesa-pedagogica-item').find('.comision');
+        var $materiaSelects = $(this).closest('.mesa-pedagogica-item').find('.materia-principal, .materia-pedagogica');
+
+        // Restablecer selects dependientes
+        $cursoSelect.html('<option value="">Selecciona una carrera primero</option>');
+        $comisionSelect.html('<option value="">Selecciona un curso primero</option>');
+        $materiaSelects.html('<option value="">Selecciona Carrera, Curso y Comisión primero</option>');
+
+        if (!idCarrera) return;
+
         $.ajax({
+            url: './mesa_finales/obtener_cursos.php',
             type: 'POST',
-            url: './mesa_finales/modificar_mesa_final.php',
-            data: $(this).serialize(),
-            success: function(response) {
-                 alert('Mesa actualizada correctamente');
-                $('#modal-background').hide();
-                $('#modal-editar').hide();
-                 location.reload(); // Recargar la página para ver los cambios
+            data: { idCarrera: idCarrera },
+            success: function(options) {
+                $cursoSelect.html('<option value="">Selecciona un curso</option>' + options);
+            },
+            error: function() {
+                alert("Error al cargar los cursos.");
             }
         });
     });
 
-    // Eliminar mesa al hacer clic en el botón "Eliminar"
-    $('.eliminar').on('click', function() {
-        var idMesa = $(this).data('id');
-        if (confirm('¿Estás seguro de que deseas eliminar esta mesa?')) {
-            $.ajax({
-                type: 'POST',
-                url: './mesa_finales/eliminar_mesa_final.php',
-                data: { idMesa: idMesa },
-                success: function(response) {
-                    alert('Mesa eliminada correctamente');
-                    location.reload(); // Recargar la página para ver los cambios
-                }
-            });
-        }
+    // 🔹 Cuando cambia el Curso, cargar las Comisiones correspondientes
+    $('.curso').on('change', function() {
+        var idCurso = $(this).val();
+        var $comisionSelect = $(this).closest('.mesa-pedagogica-item').find('.comision');
+        var $materiaSelects = $(this).closest('.mesa-pedagogica-item').find('.materia-principal, .materia-pedagogica');
+
+        // Restablecer selects dependientes
+        $comisionSelect.html('<option value="">Selecciona un curso primero</option>');
+        $materiaSelects.html('<option value="">Selecciona Carrera, Curso y Comisión primero</option>');
+
+        if (!idCurso) return;
+
+        $.ajax({
+            url: './mesa_finales/obtener_comisiones.php',
+            type: 'POST',
+            data: { idCurso: idCurso },
+            success: function(options) {
+                $comisionSelect.html('<option value="">Selecciona una comisión</option>' + options);
+            },
+            error: function() {
+                alert("Error al cargar las comisiones.");
+            }
+        });
     });
 
+    // 🔹 Cuando cambia la Comisión, cargar las Materias Principal y Pedagógica desde obtener_materia_pedagogica.php
+    $('.comision').on('change', function() {
+        var idCarrera = $(this).closest('.mesa-pedagogica-item').find('.carrera').val();
+        var idCurso = $(this).closest('.mesa-pedagogica-item').find('.curso').val();
+        var idComision = $(this).val();
+        var $materiaPrincipalSelect = $(this).closest('.mesa-pedagogica-item').find('.materia-principal');
+        var $materiaPedagogicaSelect = $(this).closest('.mesa-pedagogica-item').find('.materia-pedagogica');
 
-var myTable = document.querySelector("#tabla_mesas");
-var dataTable = new DataTable(tabla_mesas);
+        if (!idCarrera || !idCurso || !idComision) {
+            $materiaPrincipalSelect.html('<option value="">Selecciona Carrera, Curso y Comisión primero</option>');
+            $materiaPedagogicaSelect.html('<option value="">Selecciona Carrera, Curso y Comisión primero</option>');
+            return;
+        }
 
+        // Obtener Materias (Ambas: Principal y Pedagógica) desde obtener_materia_pedagogica.php
+        $.ajax({
+            url: './mesa_finales/obtener_materia_pedagogica.php',
+            type: 'POST',
+            data: { idCarrera: idCarrera, idCurso: idCurso, idComision: idComision },
+            success: function(options) {
+                $materiaPrincipalSelect.html('<option value="">Selecciona una materia</option>' + options);
+                $materiaPedagogicaSelect.html('<option value="">Selecciona una materia pedagógica</option>' + options);
+            },
+            error: function() {
+                alert("Error al cargar las materias.");
+            }
+        });
+    });
+
+});
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+  // ==========================================
+  // 1) CÓDIGO para BÚSQUEDA, PAGINACIÓN y FILTROS
+  // ==========================================
+
+  const table = document.getElementById('tabla_mesas');
+  const tBody = table.querySelector('tbody');
+  // Todas las filas originales
+  const allRows = Array.from(tBody.querySelectorAll('tr'));
+
+  // Controles de búsqueda/tamaño de página
+  const searchInput    = document.getElementById('searchInput');
+  const pageSizeSelect = document.getElementById('pageSizeSelect');
+
+  // Filtros específicos
+  const filterFecha   = document.getElementById('filterFecha');
+  const filterLlamado = document.getElementById('filterLlamado');
+  const filterTanda   = document.getElementById('filterTanda');
+  const filterCupo    = document.getElementById('filterCupo');
+
+  // Contenedor de la paginación
+  const paginationUL = document.getElementById('pagination');
+
+  // Variables de estado
+  let filteredRows = [...allRows];
+  let currentPage  = 1;
+  let pageSize     = parseInt(pageSizeSelect.value);
+
+  /**
+   * Aplica todos los filtros:
+   * - Búsqueda global (searchInput)
+   * - Fecha (filterFecha)
+   * - Llamado (filterLlamado)
+   * - Tanda (filterTanda)
+   * - Cupo (filterCupo)
+   * Devuelve las filas que cumplen todo.
+   */
+  function applyAllFilters() {
+    const textSearch   = searchInput.value.toLowerCase().trim();
+    const dateFilter   = filterFecha.value.trim();   // AAAA-MM-DD
+    const llamadoFilter= filterLlamado.value.trim(); // "1" o "2"
+    const tandaFilter  = filterTanda.value.trim();   // p.ej. "1"
+    const cupoFilter   = filterCupo.value.trim();    // p.ej. "30"
+
+    // Filtra sobre allRows
+    return allRows.filter(row => {
+      // Extraemos el texto de cada columna que nos interesa
+      // Columnas (basado en tu <thead>):
+      // 0 -> ID Tanta
+      // 1 -> Unidad Curricular
+      // 2 -> Fecha
+      // 3 -> Llamado (texto: "Primer Llamado" / "Segundo Llamado")
+      // 4 -> Tanda
+      // 5 -> Cupo
+      // 6 -> Acciones
+
+      const c0_idTanta    = row.cells[0].innerText.toLowerCase();
+      const c1_unidad     = row.cells[1].innerText.toLowerCase();
+      const c2_fecha      = row.cells[2].innerText; // no toLowerCase si quieres comparar substring
+      const c3_llamado    = row.cells[3].innerText.toLowerCase();
+      const c4_tanda      = row.cells[4].innerText.toLowerCase();
+      const c5_cupo       = row.cells[5].innerText.toLowerCase();
+
+      // 1) Filtro global (searchInput):
+      //    Verificamos si toda la fila (row.innerText) contiene el texto buscado.
+      //    O podemos comprobar cada celda. Aquí iremos a lo simple:
+      const rowText = row.innerText.toLowerCase();
+      const passSearch = rowText.includes(textSearch);
+
+      // 2) Filtro fecha:
+      //    Si dateFilter está vacío, no filtramos por fecha.  
+      //    De lo contrario, chequeamos si c2_fecha incluye esa subcadena AAAA-MM-DD.  
+      //    (Si deseas exactitud, deberías comparar exacto. Aquí es substring.)
+      let passFecha = true;
+      if (dateFilter) {
+        passFecha = c2_fecha.includes(dateFilter);
+      }
+
+      // 3) Filtro llamado:
+      //    "Primer Llamado" -> "primer llamado"
+      //    "Segundo Llamado" -> "segundo llamado"
+      //    Si el user ingresa "1" podría significar "Primer Llamado".
+      //    Podríamos hacerlo literal: row['llamado']==1, etc. 
+      //    Aquí haremos substring. Si filtra "1", coincidirá en "primer". 
+      let passLlamado = true;
+      if (llamadoFilter) {
+        // puede ser "1" => "primer", "2" => "segundo", 
+        // o tal vez el user ponga "primer" directamente.
+        // Hacemos substring:
+        passLlamado = c3_llamado.includes(llamadoFilter.toLowerCase());
+      }
+
+      // 4) Filtro tanda:
+      let passTanda = true;
+      if (tandaFilter) {
+        passTanda = c4_tanda.includes(tandaFilter);
+      }
+
+      // 5) Filtro cupo:
+      let passCupo = true;
+      if (cupoFilter) {
+        passCupo = c5_cupo.includes(cupoFilter);
+      }
+
+      // Si todos los filtros dan true -> la fila pasa
+      return passSearch && passFecha && passLlamado && passTanda && passCupo;
+    });
+  }
+
+  /**
+   * Renderiza la tabla según las filas filtradas, la página actual y el tamaño de página.
+   */
+  function renderTable() {
+    // Re-calculamos las filas que cumplen los filtros
+    filteredRows = applyAllFilters();
+
+    // Limpiamos el tbody
+    tBody.innerHTML = '';
+
+    // Calculamos cuántas páginas hay
+    const totalPages = Math.ceil(filteredRows.length / pageSize) || 1;
+
+    // Ajustar currentPage si está fuera de rango
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    // Cálculo de índice inicial y final
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex   = startIndex + pageSize;
+
+    // Obtenemos solo las filas que se verán en esta página
+    const rowsToShow = filteredRows.slice(startIndex, endIndex);
+
+    // Insertamos esas filas
+    rowsToShow.forEach(row => {
+      tBody.appendChild(row);
+    });
+
+    // Renderizar la paginación
+    renderPagination(totalPages);
+  }
+
+  /**
+   * Renderiza los botones de paginación (1, 2, 3...) y flechas < y >.
+   */
+  function renderPagination(totalPages) {
+    // Limpiamos la paginación
+    paginationUL.innerHTML = '';
+
+    if (totalPages < 1) return;
+
+    // Flecha "anterior"
+    const prevLi = document.createElement('li');
+    prevLi.textContent = '<';
+    if (currentPage > 1) {
+      prevLi.addEventListener('click', function() {
+        currentPage--;
+        renderTable();
+      });
+    } else {
+      prevLi.setAttribute('disabled', true);
+    }
+    paginationUL.appendChild(prevLi);
+
+    // Mostramos un rango de 5 páginas alrededor de la actual
+    const visiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(visiblePages / 2));
+    let endPage   = startPage + visiblePages - 1;
+    if (endPage > totalPages) {
+      endPage   = totalPages;
+      startPage = Math.max(1, endPage - visiblePages + 1);
+    }
+
+    for (let p = startPage; p <= endPage; p++) {
+      const li = document.createElement('li');
+      li.textContent = p;
+      if (p === currentPage) {
+        li.classList.add('active');
+      } else {
+        li.addEventListener('click', function() {
+          currentPage = p;
+          renderTable();
+        });
+      }
+      paginationUL.appendChild(li);
+    }
+
+    // Flecha "siguiente"
+    const nextLi = document.createElement('li');
+    nextLi.textContent = '>';
+    if (currentPage < totalPages) {
+      nextLi.addEventListener('click', function() {
+        currentPage++;
+        renderTable();
+      });
+    } else {
+      nextLi.setAttribute('disabled', true);
+    }
+    paginationUL.appendChild(nextLi);
+  }
+
+  // Eventos que recalculan la tabla
+  searchInput.addEventListener('input', () => {
+    currentPage = 1;
+    renderTable();
+  });
+  pageSizeSelect.addEventListener('change', () => {
+    pageSize = parseInt(pageSizeSelect.value);
+    currentPage = 1;
+    renderTable();
+  });
+
+  // Filtros extras: cada vez que cambie algo, recalculamos
+  filterFecha.addEventListener('change', () => { currentPage=1; renderTable(); });
+  filterLlamado.addEventListener('input', () => { currentPage=1; renderTable(); });
+  filterTanda.addEventListener('input', () => { currentPage=1; renderTable(); });
+  filterCupo.addEventListener('input', () => { currentPage=1; renderTable(); });
+
+  // Render inicial
+  renderTable();
+
+
+  // ==========================================
+  // 2) CÓDIGO para el MODAL (Editar / Eliminar)
+  // ==========================================
+
+  // Al hacer clic en "Modificar"
+  document.querySelectorAll('.editar').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var idMesa = this.getAttribute('data-id');
+      console.log("ID de Mesa seleccionado:", idMesa);
+
+      // AJAX para obtener datos de la mesa
+      fetch('./obtener_mesa_final.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: new URLSearchParams({ idMesa: idMesa })
+      })
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('modal_id_mesa').value = data.idfechas_mesas_finales;
+        document.getElementById('modal_fecha').value = data.fecha;
+        document.getElementById('modal_llamado').value = data.llamado;
+        document.getElementById('modal_tanda').value = data.tanda;
+        document.getElementById('modal_cupo').value = data.cupo;
+
+        document.getElementById('modal-background').style.display = 'block';
+        document.getElementById('modal-editar').style.display = 'block';
+      })
+      .catch(err => console.error(err));
+    });
+  });
+
+  // Cerrar modal al hacer clic en "Cancelar"
+  document.getElementById('cerrar-modal').addEventListener('click', function() {
+    document.getElementById('modal-background').style.display = 'none';
+    document.getElementById('modal-editar').style.display = 'none';
+  });
+
+  // Cerrar modal al hacer clic en el fondo oscuro
+  document.getElementById('modal-background').addEventListener('click', function() {
+    document.getElementById('modal-background').style.display = 'none';
+    document.getElementById('modal-editar').style.display = 'none';
+  });
+
+  // Guardar cambios al enviar el form
+  document.getElementById('form-editar').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+
+    fetch('./mesa_finales/modificar_mesa_final.php', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.text())
+    .then(response => {
+      alert('Mesa actualizada correctamente');
+      document.getElementById('modal-background').style.display = 'none';
+      document.getElementById('modal-editar').style.display = 'none';
+      location.reload();
+    })
+    .catch(err => console.error(err));
+  });
+
+  // Eliminar mesa
+  document.querySelectorAll('.eliminar').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var idMesa = this.getAttribute('data-id');
+      if (confirm('¿Estás seguro de que deseas eliminar esta mesa?')) {
+        fetch('./mesa_finales/eliminar_mesa_final.php', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+          body: new URLSearchParams({ idMesa: idMesa })
+        })
+        .then(response => response.text())
+        .then(response => {
+          alert('Mesa eliminada correctamente');
+          location.reload();
+        })
+        .catch(err => console.error(err));
+      }
+    });
+  });
+
+});
 </script>
 
 

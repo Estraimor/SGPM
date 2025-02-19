@@ -8,7 +8,7 @@ if (isset($_POST['idCarrera']) && isset($_POST['idCurso']) && isset($_POST['idCo
     $idCurso = $_POST['idCurso'];
     $idComision = $_POST['idComision'];
 
-    // Consulta para obtener las materias filtradas por carrera, curso y comisión
+    // Consulta para obtener las materias pedagógicas filtradas por carrera, curso y comisión
     $query = "
         SELECT idMaterias, Nombre 
         FROM materias 
@@ -21,13 +21,13 @@ if (isset($_POST['idCarrera']) && isset($_POST['idCurso']) && isset($_POST['idCo
 
     // Verificar si hay resultados
     if (mysqli_num_rows($result) > 0) {
-        // Recorrer los resultados y generar las opciones para el select de materias
+        // Recorrer los resultados y generar las opciones para el select de materias pedagógicas
         while ($row = mysqli_fetch_assoc($result)) {
             echo "<option value='{$row['idMaterias']}'>{$row['Nombre']}</option>";
         }
     } else {
-        // No hay materias disponibles para la selección
-        echo "<option value=''>No hay materias disponibles</option>";
+        // No hay materias pedagógicas disponibles
+        echo "<option value=''>No hay materias pedagógicas disponibles</option>";
     }
 } else {
     // No se recibieron todos los parámetros necesarios

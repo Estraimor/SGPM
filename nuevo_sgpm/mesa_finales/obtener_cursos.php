@@ -7,7 +7,7 @@ if (isset($_POST['idCarrera'])) {
     $idCarrera = $_POST['idCarrera'];
 
     // Consulta para obtener los cursos asociados a la carrera desde la tabla materias
-    $query = "SELECT DISTINCT c.idCursos, c.nombre 
+    $query = "SELECT DISTINCT c.idCursos, c.curso 
               FROM cursos c
               INNER JOIN materias m ON c.idCursos = m.cursos_idCursos
               WHERE m.carreras_idCarrera = '$idCarrera'";
@@ -18,7 +18,7 @@ if (isset($_POST['idCarrera'])) {
     if (mysqli_num_rows($result) > 0) {
         echo '<option value="">Selecciona un curso</option>';
         while ($row = mysqli_fetch_assoc($result)) {
-            echo "<option value='{$row['idCursos']}'>{$row['nombre']}</option>";
+            echo "<option value='{$row['idCursos']}'>{$row['curso']}</option>";
         }
     } else {
         echo "<option value=''>No hay cursos disponibles</option>";

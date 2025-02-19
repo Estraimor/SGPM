@@ -7,7 +7,7 @@ if (isset($_POST['idCurso'])) {
     $idCurso = $_POST['idCurso'];
 
     // Consulta para obtener las comisiones asociadas al curso desde la tabla materias
-    $query = "SELECT DISTINCT co.idComisiones, co.nombre
+    $query = "SELECT DISTINCT co.idComisiones, co.comision
               FROM comisiones co
               INNER JOIN materias m ON co.idComisiones = m.comisiones_idComisiones
               WHERE m.cursos_idCursos = '$idCurso'";
@@ -18,7 +18,7 @@ if (isset($_POST['idCurso'])) {
     if (mysqli_num_rows($result) > 0) {
         echo '<option value="">Selecciona una comisión</option>';
         while ($row = mysqli_fetch_assoc($result)) {
-            echo "<option value='{$row['idComisiones']}'>{$row['nombre']}</option>";
+            echo "<option value='{$row['idComisiones']}'>{$row['comision']}</option>";
         }
     } else {
         echo "<option value=''>No hay comisiones disponibles</option>";

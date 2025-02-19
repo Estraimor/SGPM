@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $tandaCargada = false; // Bandera para verificar si se cargó el módulo de tandas principal
     $mesaPedagogicaCargada = false; // Bandera para verificar si se cargaron las materias pedagógicas
 
-    // Verificar si el módulo de tandas principal está completo
+    // Verificar si se completaron todos los campos para la tanda principal
     if (!empty($fecha) && !empty($llamado) && !empty($tanda) && !empty($cupo) && isset($_POST['carrera']) && isset($_POST['materias']) && !empty($_POST['carrera'][0]) && !empty($_POST['materias'][0])) {
         // Insertar la tanda en la base de datos
         $queryTanda = "INSERT INTO tandas (fecha, llamado, tanda, cupo) VALUES ('$fecha', '$llamado', '$tanda', '$cupo')";
@@ -32,46 +32,35 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $queryMesa = "INSERT INTO fechas_mesas_finales (materias_idMaterias, tandas_idtandas) VALUES ('$materia_id', '$idtandas')";
                 mysqli_query($conexion, $queryMesa);
             }
-            $tandaCargada = true; // Marcar que el módulo de tandas principal se cargó correctamente
+            $tandaCargada = true;
         } else {
             echo "<script>alert('Error al guardar la tanda: " . mysqli_error($conexion) . "');</script>";
             exit();
         }
     }
 
-    // Verificar si las materias principal y pedagógica están definidas para realizar un solo insert en mesas_pedagogicas
-    if (!empty($_POST['materia_pedagogica_1']) && !empty($_POST['materia_pedagogica_2'])) {
-        // Recoger la materia principal y la pedagógica
-        $materiaPrincipal = $_POST['materia_pedagogica_1'];
+    // Guardar la Materia Principal y Pedagógica
+    if (!empty($_POST['materia_principal_1']) && !empty($_POST['materia_pedagogica_2'])) {
+        $materiaPrincipal = $_POST['materia_principal_1'];
         $materiaPedagogica = $_POST['materia_pedagogica_2'];
 
-        // Insertar en la tabla mesas_pedagogicas con una sola fila que contenga la materia principal y la pedagógica
+        // Insertar en la tabla mesas_pedagogicas
         $queryMesaPedagogica = "INSERT INTO mesas_pedagogicas (materias_idMaterias, materias_idMaterias1, fecha) VALUES ('$materiaPrincipal', '$materiaPedagogica', now())";
         if (mysqli_query($conexion, $queryMesaPedagogica)) {
-            $mesaPedagogicaCargada = true; // Marcar que el módulo de materias pedagógicas se cargó correctamente
+            $mesaPedagogicaCargada = true;
         } else {
             echo "<script>alert('Error al guardar las materias pedagógicas: " . mysqli_error($conexion) . "');</script>";
             exit();
         }
     }
 
-    // Generar el mensaje de resultado
+    // Mensaje de confirmación
     $mensaje = "Resultado de la carga:\\n";
-    if ($tandaCargada) {
-        $mensaje .= "- Se cargó el módulo de tandas principal.\\n";
-    }
-    if ($mesaPedagogicaCargada) {
-        $mensaje .= "- Se cargó la relación de materias pedagógicas.\\n";
-    }
-    if (!$tandaCargada && !$mesaPedagogicaCargada) {
-        $mensaje .= "No se cargó ningún módulo. Verifique los datos ingresados.";
-    }
+    if ($tandaCargada) $mensaje .= "- Se cargó el módulo de tandas principal.\\n";
+    if ($mesaPedagogicaCargada) $mensaje .= "- Se cargó la relación de materias pedagógicas.\\n";
+    if (!$tandaCargada && !$mesaPedagogicaCargada) $mensaje .= "No se cargó ningún módulo.";
 
-    // Imprimir el script con el mensaje de alerta
-    echo "<script>
-        alert('$mensaje');
-        window.location.href = '../gestionar_mesas_finales.php';
-    </script>";
+    echo "<script>alert('$mensaje'); window.location.href = '../gestionar_mesas_finales.php';</script>";
     exit();
 }
 ?>
