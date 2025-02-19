@@ -772,6 +772,8 @@ if ($result && mysqli_num_rows($result) > 0) {
   <!-- Filtros adicionales -->
   <label for="filterFecha">Fecha:</label>
   <input type="date" id="filterFecha">
+  <!-- Botón para limpiar la fecha -->
+  <button type="button" id="clearFecha" title="Limpiar fecha">🗑️</button>
 
   <label for="filterLlamado">Llamado:</label>
   <input type="number" id="filterLlamado" placeholder="1 o 2...">
@@ -782,6 +784,8 @@ if ($result && mysqli_num_rows($result) > 0) {
   <label for="filterCupo">Cupo:</label>
   <input type="number" id="filterCupo" placeholder="Ej: 30">
 </div>
+
+
 
 <!-- TABLA con los datos de Mesas Finales -->
 <table border="1" id="tabla_mesas">
@@ -1113,310 +1117,225 @@ $(document).ready(function() {
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 
-  // ==========================================
-  // 1) CÓDIGO para BÚSQUEDA, PAGINACIÓN y FILTROS
-  // ==========================================
+// ==========================================
+// 1) CONFIGURACIÓN DE BÚSQUEDA, PAGINACIÓN Y FILTROS
+// ==========================================
 
-  const table = document.getElementById('tabla_mesas');
-  const tBody = table.querySelector('tbody');
-  // Todas las filas originales
-  const allRows = Array.from(tBody.querySelectorAll('tr'));
+const table = document.getElementById('tabla_mesas');
+const tBody = table.querySelector('tbody');
+const allRows = Array.from(tBody.querySelectorAll('tr')); // Guardar todas las filas originales
 
-  // Controles de búsqueda/tamaño de página
-  const searchInput    = document.getElementById('searchInput');
-  const pageSizeSelect = document.getElementById('pageSizeSelect');
+// Controles de búsqueda y filtros
+const searchInput    = document.getElementById('searchInput');
+const pageSizeSelect = document.getElementById('pageSizeSelect');
+const filterFecha    = document.getElementById('filterFecha');
+const filterLlamado  = document.getElementById('filterLlamado');
+const filterTanda    = document.getElementById('filterTanda');
+const filterCupo     = document.getElementById('filterCupo');
+const paginationUL   = document.getElementById('pagination');
 
-  // Filtros específicos
-  const filterFecha   = document.getElementById('filterFecha');
-  const filterLlamado = document.getElementById('filterLlamado');
-  const filterTanda   = document.getElementById('filterTanda');
-  const filterCupo    = document.getElementById('filterCupo');
+// Variables de estado para la paginación y filtrado
+let filteredRows = [...allRows];
+let currentPage = 1;
+let pageSize = parseInt(pageSizeSelect.value);
 
-  // Contenedor de la paginación
-  const paginationUL = document.getElementById('pagination');
+/**
+ * FUNCION: Aplica todos los filtros a la tabla
+ * Incluye búsqueda global, fecha, llamado, tanda y cupo.
+ * @returns {Array} Filas que cumplen con todos los filtros aplicados
+ */
+function applyAllFilters() {
+  const textSearch   = searchInput.value.toLowerCase().trim();
+  const dateFilter   = filterFecha.value.trim();   
+  const llamadoFilter= filterLlamado.value.trim(); 
+  const tandaFilter  = filterTanda.value.trim();   
+  const cupoFilter   = filterCupo.value.trim();    
 
-  // Variables de estado
-  let filteredRows = [...allRows];
-  let currentPage  = 1;
-  let pageSize     = parseInt(pageSizeSelect.value);
+  return allRows.filter(row => {
+    // Extraer el contenido de cada columna relevante
+    const c2_fecha    = row.cells[2].innerText; 
+    const c3_llamado  = row.cells[3].innerText.toLowerCase();
+    const c4_tanda    = row.cells[4].innerText.toLowerCase();
+    const c5_cupo     = row.cells[5].innerText.toLowerCase();
+    const rowText     = row.innerText.toLowerCase();
 
-  /**
-   * Aplica todos los filtros:
-   * - Búsqueda global (searchInput)
-   * - Fecha (filterFecha)
-   * - Llamado (filterLlamado)
-   * - Tanda (filterTanda)
-   * - Cupo (filterCupo)
-   * Devuelve las filas que cumplen todo.
-   */
-  function applyAllFilters() {
-    const textSearch   = searchInput.value.toLowerCase().trim();
-    const dateFilter   = filterFecha.value.trim();   // AAAA-MM-DD
-    const llamadoFilter= filterLlamado.value.trim(); // "1" o "2"
-    const tandaFilter  = filterTanda.value.trim();   // p.ej. "1"
-    const cupoFilter   = filterCupo.value.trim();    // p.ej. "30"
+    // Validar cada filtro individualmente
+    const passSearch  = rowText.includes(textSearch);
+    const passFecha   = !dateFilter || c2_fecha.includes(dateFilter);
+    const passLlamado = !llamadoFilter || c3_llamado.includes(llamadoFilter.toLowerCase());
+    const passTanda   = !tandaFilter || c4_tanda.includes(tandaFilter);
+    const passCupo    = !cupoFilter || c5_cupo.includes(cupoFilter);
 
-    // Filtra sobre allRows
-    return allRows.filter(row => {
-      // Extraemos el texto de cada columna que nos interesa
-      // Columnas (basado en tu <thead>):
-      // 0 -> ID Tanta
-      // 1 -> Unidad Curricular
-      // 2 -> Fecha
-      // 3 -> Llamado (texto: "Primer Llamado" / "Segundo Llamado")
-      // 4 -> Tanda
-      // 5 -> Cupo
-      // 6 -> Acciones
+    return passSearch && passFecha && passLlamado && passTanda && passCupo;
+  });
+}
 
-      const c0_idTanta    = row.cells[0].innerText.toLowerCase();
-      const c1_unidad     = row.cells[1].innerText.toLowerCase();
-      const c2_fecha      = row.cells[2].innerText; // no toLowerCase si quieres comparar substring
-      const c3_llamado    = row.cells[3].innerText.toLowerCase();
-      const c4_tanda      = row.cells[4].innerText.toLowerCase();
-      const c5_cupo       = row.cells[5].innerText.toLowerCase();
+/**
+ * FUNCION: Renderiza la tabla aplicando los filtros y la paginación
+ */
+function renderTable() {
+  filteredRows = applyAllFilters();
+  tBody.innerHTML = ''; // Limpiar la tabla antes de renderizar
 
-      // 1) Filtro global (searchInput):
-      //    Verificamos si toda la fila (row.innerText) contiene el texto buscado.
-      //    O podemos comprobar cada celda. Aquí iremos a lo simple:
-      const rowText = row.innerText.toLowerCase();
-      const passSearch = rowText.includes(textSearch);
+  const totalPages = Math.ceil(filteredRows.length / pageSize) || 1;
 
-      // 2) Filtro fecha:
-      //    Si dateFilter está vacío, no filtramos por fecha.  
-      //    De lo contrario, chequeamos si c2_fecha incluye esa subcadena AAAA-MM-DD.  
-      //    (Si deseas exactitud, deberías comparar exacto. Aquí es substring.)
-      let passFecha = true;
-      if (dateFilter) {
-        passFecha = c2_fecha.includes(dateFilter);
-      }
+  currentPage = Math.max(1, Math.min(currentPage, totalPages));
 
-      // 3) Filtro llamado:
-      //    "Primer Llamado" -> "primer llamado"
-      //    "Segundo Llamado" -> "segundo llamado"
-      //    Si el user ingresa "1" podría significar "Primer Llamado".
-      //    Podríamos hacerlo literal: row['llamado']==1, etc. 
-      //    Aquí haremos substring. Si filtra "1", coincidirá en "primer". 
-      let passLlamado = true;
-      if (llamadoFilter) {
-        // puede ser "1" => "primer", "2" => "segundo", 
-        // o tal vez el user ponga "primer" directamente.
-        // Hacemos substring:
-        passLlamado = c3_llamado.includes(llamadoFilter.toLowerCase());
-      }
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex   = startIndex + pageSize;
+  const rowsToShow = filteredRows.slice(startIndex, endIndex);
 
-      // 4) Filtro tanda:
-      let passTanda = true;
-      if (tandaFilter) {
-        passTanda = c4_tanda.includes(tandaFilter);
-      }
+  rowsToShow.forEach(row => tBody.appendChild(row));
+  renderPagination(totalPages);
+}
 
-      // 5) Filtro cupo:
-      let passCupo = true;
-      if (cupoFilter) {
-        passCupo = c5_cupo.includes(cupoFilter);
-      }
+/**
+ * FUNCION: Renderiza los controles de paginación
+ */
+function renderPagination(totalPages) {
+  paginationUL.innerHTML = ''; // Limpiar la paginación
 
-      // Si todos los filtros dan true -> la fila pasa
-      return passSearch && passFecha && passLlamado && passTanda && passCupo;
+  if (totalPages < 1) return;
+
+  // Flecha "anterior"
+  const prevLi = document.createElement('li');
+  prevLi.textContent = '<';
+  prevLi.addEventListener('click', () => { 
+    if (currentPage > 1) { 
+      currentPage--; 
+      renderTable(); 
+    } 
+  });
+  paginationUL.appendChild(prevLi);
+
+  // Rango visible de páginas (5 botones)
+  const visiblePages = 5;
+  let startPage = Math.max(1, currentPage - Math.floor(visiblePages / 2));
+  let endPage   = Math.min(totalPages, startPage + visiblePages - 1);
+
+  for (let p = startPage; p <= endPage; p++) {
+    const li = document.createElement('li');
+    li.textContent = p;
+    li.classList.toggle('active', p === currentPage);
+    li.addEventListener('click', () => { 
+      currentPage = p; 
+      renderTable(); 
+    });
+    paginationUL.appendChild(li);
+  }
+
+  // Flecha "siguiente"
+  const nextLi = document.createElement('li');
+  nextLi.textContent = '>';
+  nextLi.addEventListener('click', () => { 
+    if (currentPage < totalPages) { 
+      currentPage++; 
+      renderTable(); 
+    } 
+  });
+  paginationUL.appendChild(nextLi);
+}
+
+// Eventos que recalculan la tabla
+searchInput.addEventListener('input', () => { currentPage = 1; renderTable(); });
+pageSizeSelect.addEventListener('change', () => { 
+  pageSize = parseInt(pageSizeSelect.value); 
+  currentPage = 1; 
+  renderTable(); 
+});
+
+// Filtros adicionales
+[filterFecha, filterLlamado, filterTanda, filterCupo].forEach(filter => {
+  filter.addEventListener('input', () => { 
+    currentPage = 1; 
+    renderTable(); 
+  });
+});
+
+renderTable();
+
+// ==========================================
+// 2) MANEJO DEL MODAL (Editar / Eliminar)
+// ==========================================
+
+table.addEventListener('click', function(e) {
+  // Modal para Modificar
+  if (e.target.classList.contains('editar')) {
+    const idMesa = e.target.getAttribute('data-id');
+    
+    fetch('./obtener_mesa_final.php', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: new URLSearchParams({ idMesa: idMesa })
+    })
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('modal_id_mesa').value = data.idfechas_mesas_finales;
+      document.getElementById('modal_fecha').value = data.fecha;
+      document.getElementById('modal_llamado').value = data.llamado;
+      document.getElementById('modal_tanda').value = data.tanda;
+      document.getElementById('modal_cupo').value = data.cupo;
+
+      document.getElementById('modal-background').style.display = 'block';
+      document.getElementById('modal-editar').style.display = 'block';
     });
   }
 
-  /**
-   * Renderiza la tabla según las filas filtradas, la página actual y el tamaño de página.
-   */
-  function renderTable() {
-    // Re-calculamos las filas que cumplen los filtros
-    filteredRows = applyAllFilters();
-
-    // Limpiamos el tbody
-    tBody.innerHTML = '';
-
-    // Calculamos cuántas páginas hay
-    const totalPages = Math.ceil(filteredRows.length / pageSize) || 1;
-
-    // Ajustar currentPage si está fuera de rango
-    if (currentPage > totalPages) currentPage = totalPages;
-    if (currentPage < 1) currentPage = 1;
-
-    // Cálculo de índice inicial y final
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex   = startIndex + pageSize;
-
-    // Obtenemos solo las filas que se verán en esta página
-    const rowsToShow = filteredRows.slice(startIndex, endIndex);
-
-    // Insertamos esas filas
-    rowsToShow.forEach(row => {
-      tBody.appendChild(row);
-    });
-
-    // Renderizar la paginación
-    renderPagination(totalPages);
-  }
-
-  /**
-   * Renderiza los botones de paginación (1, 2, 3...) y flechas < y >.
-   */
-  function renderPagination(totalPages) {
-    // Limpiamos la paginación
-    paginationUL.innerHTML = '';
-
-    if (totalPages < 1) return;
-
-    // Flecha "anterior"
-    const prevLi = document.createElement('li');
-    prevLi.textContent = '<';
-    if (currentPage > 1) {
-      prevLi.addEventListener('click', function() {
-        currentPage--;
-        renderTable();
-      });
-    } else {
-      prevLi.setAttribute('disabled', true);
-    }
-    paginationUL.appendChild(prevLi);
-
-    // Mostramos un rango de 5 páginas alrededor de la actual
-    const visiblePages = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(visiblePages / 2));
-    let endPage   = startPage + visiblePages - 1;
-    if (endPage > totalPages) {
-      endPage   = totalPages;
-      startPage = Math.max(1, endPage - visiblePages + 1);
-    }
-
-    for (let p = startPage; p <= endPage; p++) {
-      const li = document.createElement('li');
-      li.textContent = p;
-      if (p === currentPage) {
-        li.classList.add('active');
-      } else {
-        li.addEventListener('click', function() {
-          currentPage = p;
-          renderTable();
-        });
-      }
-      paginationUL.appendChild(li);
-    }
-
-    // Flecha "siguiente"
-    const nextLi = document.createElement('li');
-    nextLi.textContent = '>';
-    if (currentPage < totalPages) {
-      nextLi.addEventListener('click', function() {
-        currentPage++;
-        renderTable();
-      });
-    } else {
-      nextLi.setAttribute('disabled', true);
-    }
-    paginationUL.appendChild(nextLi);
-  }
-
-  // Eventos que recalculan la tabla
-  searchInput.addEventListener('input', () => {
-    currentPage = 1;
-    renderTable();
-  });
-  pageSizeSelect.addEventListener('change', () => {
-    pageSize = parseInt(pageSizeSelect.value);
-    currentPage = 1;
-    renderTable();
-  });
-
-  // Filtros extras: cada vez que cambie algo, recalculamos
-  filterFecha.addEventListener('change', () => { currentPage=1; renderTable(); });
-  filterLlamado.addEventListener('input', () => { currentPage=1; renderTable(); });
-  filterTanda.addEventListener('input', () => { currentPage=1; renderTable(); });
-  filterCupo.addEventListener('input', () => { currentPage=1; renderTable(); });
-
-  // Render inicial
-  renderTable();
-
-
-  // ==========================================
-  // 2) CÓDIGO para el MODAL (Editar / Eliminar)
-  // ==========================================
-
-  // Al hacer clic en "Modificar"
-  document.querySelectorAll('.editar').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      var idMesa = this.getAttribute('data-id');
-      console.log("ID de Mesa seleccionado:", idMesa);
-
-      // AJAX para obtener datos de la mesa
-      fetch('./obtener_mesa_final.php', {
+  // Eliminar
+  if (e.target.classList.contains('eliminar')) {
+    const idMesa = e.target.getAttribute('data-id');
+    
+    if (confirm('¿Eliminar esta mesa?')) {
+      fetch('./mesa_finales/eliminar_mesa_final.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: new URLSearchParams({ idMesa: idMesa })
       })
-      .then(response => response.json())
-      .then(data => {
-        document.getElementById('modal_id_mesa').value = data.idfechas_mesas_finales;
-        document.getElementById('modal_fecha').value = data.fecha;
-        document.getElementById('modal_llamado').value = data.llamado;
-        document.getElementById('modal_tanda').value = data.tanda;
-        document.getElementById('modal_cupo').value = data.cupo;
-
-        document.getElementById('modal-background').style.display = 'block';
-        document.getElementById('modal-editar').style.display = 'block';
-      })
-      .catch(err => console.error(err));
-    });
-  });
-
-  // Cerrar modal al hacer clic en "Cancelar"
-  document.getElementById('cerrar-modal').addEventListener('click', function() {
-    document.getElementById('modal-background').style.display = 'none';
-    document.getElementById('modal-editar').style.display = 'none';
-  });
-
-  // Cerrar modal al hacer clic en el fondo oscuro
-  document.getElementById('modal-background').addEventListener('click', function() {
-    document.getElementById('modal-background').style.display = 'none';
-    document.getElementById('modal-editar').style.display = 'none';
-  });
-
-  // Guardar cambios al enviar el form
-  document.getElementById('form-editar').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const formData = new FormData(this);
-
-    fetch('./mesa_finales/modificar_mesa_final.php', {
-      method: 'POST',
-      body: formData
-    })
-    .then(response => response.text())
-    .then(response => {
-      alert('Mesa actualizada correctamente');
-      document.getElementById('modal-background').style.display = 'none';
-      document.getElementById('modal-editar').style.display = 'none';
-      location.reload();
-    })
-    .catch(err => console.error(err));
-  });
-
-  // Eliminar mesa
-  document.querySelectorAll('.eliminar').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      var idMesa = this.getAttribute('data-id');
-      if (confirm('¿Estás seguro de que deseas eliminar esta mesa?')) {
-        fetch('./mesa_finales/eliminar_mesa_final.php', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-          body: new URLSearchParams({ idMesa: idMesa })
-        })
-        .then(response => response.text())
-        .then(response => {
-          alert('Mesa eliminada correctamente');
-          location.reload();
-        })
-        .catch(err => console.error(err));
-      }
-    });
-  });
-
+      .then(() => {
+        alert('Eliminado correctamente');
+        renderTable();
+      });
+    }
+  }
 });
+
+// Cerrar Modal
+document.getElementById('cerrar-modal').addEventListener('click', () => {
+  document.getElementById('modal-background').style.display = 'none';
+  document.getElementById('modal-editar').style.display = 'none';
+});
+
+// Guardar cambios en el modal
+document.getElementById('form-editar').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const formData = new FormData(this);
+
+  fetch('./mesa_finales/modificar_mesa_final.php', {
+    method: 'POST',
+    body: formData
+  })
+  .then(() => {
+    alert('Mesa actualizada correctamente');
+    document.getElementById('modal-background').style.display = 'none';
+    document.getElementById('modal-editar').style.display = 'none';
+    renderTable();
+  });
+});
+// Botón para limpiar la fecha y recargar la tabla sin filtros activos
+document.getElementById('clearFecha').addEventListener('click', function() {
+    document.getElementById('filterFecha').value = ''; // Vaciar el campo de fecha
+    searchInput.value = ''; // Limpiar la búsqueda general
+    filterLlamado.value = ''; // Limpiar el filtro de llamado
+    filterTanda.value = ''; // Limpiar el filtro de tanda
+    filterCupo.value = ''; // Limpiar el filtro de cupo
+
+    currentPage = 1; // Volver a la primera página
+    renderTable(); // Recargar la tabla con todos los registros (estado default)
+});
+});
+
+
+
 </script>
 
 
