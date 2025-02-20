@@ -916,40 +916,68 @@ $conexion->commit();
 </div>
 
 
-        <?php
-           $sql_mater = "SELECT * FROM carreras where idCarrera  in (18,27,55,46)";
-           $peticion = mysqli_query($conexion, $sql_mater);
-        ?>
-        <select name="inscripcion_carrera" class="form-container__input full">
-            <option hidden>Selecciona una carrera</option>
-            <?php while ($informacion = mysqli_fetch_assoc($peticion)) { ?>
-                <option value="<?php echo $informacion['idCarrera'] ?>"><?php echo $informacion['nombre_carrera'] ?></option>
-            <?php } ?>
-        </select>
+<?php
+// Conexión a la base de datos
 
-        <?php
-// Obtener cursos
-$queryCursos = "SELECT * FROM cursos";
+// Consulta para obtener las carreras
+$sql_mater = "SELECT * FROM carreras WHERE idCarrera IN (18,27,55,46)";
+$peticion = mysqli_query($conexion, $sql_mater);
+?>
+
+<!-- Select para elegir la carrera -->
+<select name="inscripcion_carrera" id="inscripcion_carrera" class="form-container__input full" onchange="cargarComisiones()">
+    <option hidden>Selecciona una carrera</option>
+    <?php while ($informacion = mysqli_fetch_assoc($peticion)) { ?>
+        <option value="<?php echo $informacion['idCarrera']; ?>">
+            <?php echo $informacion['nombre_carrera']; ?>
+        </option>
+    <?php } ?>
+</select>
+
+<!-- Select para elegir el curso (fijo en 1er año) -->
+<?php
+$queryCursos = "SELECT * FROM cursos WHERE idCursos = 1";
 $resultCursos = mysqli_query($conexion, $queryCursos);
 ?>
-<select name="curso" class="form-container__input full">
+<select name="curso" id="curso" class="form-container__input full" onchange="cargarComisiones()">
     <option hidden>Selecciona un Curso</option>
     <?php while ($curso = mysqli_fetch_assoc($resultCursos)) { ?>
-        <option value="<?php echo $curso['idCursos']; ?>"><?php echo $curso['curso']; ?></option>
+        <option value="<?php echo $curso['idCursos']; ?>">
+            <?php echo $curso['curso']; ?>
+        </option>
     <?php } ?>
 </select>
 
-<?php
-// Obtener comisiones
-$queryComisiones = "SELECT * FROM comisiones";
-$resultComisiones = mysqli_query($conexion, $queryComisiones);
-?>
-<select name="comision" class="form-container__input full">
+<!-- Select para las comisiones dinámicas -->
+<select name="comision" id="comision" class="form-container__input full">
     <option hidden>Selecciona una Comisión</option>
-    <?php while ($comision = mysqli_fetch_assoc($resultComisiones)) { ?>
-        <option value="<?php echo $comision['idComisiones']; ?>"><?php echo $comision['comision']; ?></option>
-    <?php } ?>
 </select>
+
+<!-- Script para cargar comisiones en tiempo real -->
+<script>
+function cargarComisiones() {
+    var carreraId = document.getElementById('inscripcion_carrera').value;
+    var cursoId = document.getElementById('curso').value;
+
+    if (carreraId && cursoId) { // Solo realizar la solicitud si ambos selects tienen un valor
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', './config_estu/obtener_comisiones.php', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.onload = function() {
+            if (this.status == 200) {
+                document.getElementById('comision').innerHTML = this.responseText;
+            }
+        };
+        xhr.send('carreraId=' + carreraId + '&cursoId=' + cursoId);
+    } else {
+        document.getElementById('comision').innerHTML = '<option hidden>Selecciona una Comisión</option>';
+    }
+}
+</script>
+
+
+<!-- Script para cargar comisiones dinámicamente -->
+
 
 
         <input type="submit" class="form-container__input" name="enviar" value="Enviar" onclick="mostrarAlertaExitosa(); closeSuccessMessage();">
@@ -1280,6 +1308,12 @@ trabajaNo.addEventListener('change', function() {
 });
 
 </script>
+
+
+
+
+
+
 
 
 <style>

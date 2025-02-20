@@ -142,7 +142,7 @@ $inscripcionPrincipal = inscribirEnMesa($conexion, $alumno_legajo, $materiaPrinc
 $cupoPrincipal = actualizarCupo($conexion, $idFecha);
 
 if ($inscripcionPrincipal && $cupoPrincipal) {
-    // Si existe una materia pedagógica asociada, inscribir también en esa mesa con la misma tanda y llamado
+    // Verificar si existe una materia pedagógica asociada
     if ($materiaAsociadaId) {
         // Obtener el idFecha correspondiente a la materia asociada con el mismo tanda y llamado
         $queryFechaPedagogica = "
@@ -160,6 +160,7 @@ if ($inscripcionPrincipal && $cupoPrincipal) {
             $rowFechaPedagogica = mysqli_fetch_assoc($resultFechaPedagogica);
             $idFechaPedagogica = $rowFechaPedagogica['idfechas_mesas_finales'];
 
+            // Inscribir en la mesa pedagógica
             $inscripcionPedagogica = inscribirEnMesa($conexion, $alumno_legajo, $materiaAsociadaId, $idFechaPedagogica);
             $cupoPedagogico = actualizarCupo($conexion, $idFechaPedagogica);
 
