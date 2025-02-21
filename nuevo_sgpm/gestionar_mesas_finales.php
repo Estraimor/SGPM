@@ -5,28 +5,29 @@ if (empty($_SESSION["id"])) {
     exit;
 }
 
-// Verificación de la contraseña específica "0123456789"
 if (isset($_SESSION["contraseña"]) && $_SESSION["contraseña"] === "0123456789") {
     header('Location: cambio_contrasena_profe.php');
     exit;
 }
 
-// Asumimos que también almacenas el rol en la sesión.
 $rolUsuario = $_SESSION["roles"];
-
-// Definimos los roles permitidos para esta página.
 $rolesPermitidos = ['1', '2', '3', '4'];
 
-// Verificar si el rol del usuario está en la lista de roles permitidos.
 if (!in_array($rolUsuario, $rolesPermitidos)) {
-    echo "<script>alert('Acceso restringido a esta página.');</script>";
-    // Opcional: redirigir al usuario a otra página
-    // header('Location: pagina_principal.php');
-    exit; // Detener la ejecución del script.
+    header('Location: ../login/no_autorizado.php');
+    exit;
 }
 
-$idPreceptor = $_SESSION['id'];
-include '../conexion/conexion.php';
+// Conexión a la base de datos
+require_once '../../conexion.php';
+
+// Consultas a la base de datos
+$carreras = mysqli_query($conn, "SELECT * FROM carreras");
+$materias = mysqli_query($conn, "SELECT * FROM materias");
+$comisiones = mysqli_query($conn, "SELECT * FROM comisiones");
+$mesas_finales = mysqli_query($conn, "SELECT * FROM mesas_finales");
+$materias_pedagogicas = mysqli_query($conn, "SELECT * FROM mesas_pedagogicas");
+
 
 
 // Set inactivity limit in seconds
@@ -593,34 +594,29 @@ if ($result && mysqli_num_rows($result) > 0) {
 	</div>
 	
 </div>
-    <div class="contenido">
+<div class="contenido">
     <h2>Agregar Fechas de Mesas Finales</h2>
 
     <form action="./mesa_finales/guardar_fechas_mesas_finales.php" method="POST">
         <div id="mesa-container">
             <div class="mesa-item">
                 <label for="carrera">Selecciona la Carrera:</label><br>
-                <select class="carrera" name="carrera[]">
+                <select class="carrera" name="carrera[]" required>
                     <option value="">Selecciona una carrera</option>
                     <?php
                     include 'conexion.php';
                     $idPreceptor = $_SESSION['id'];  
                     $rolUsuario = $_SESSION["roles"]; 
 
-                    if ($rolUsuario == 1) {
-                        $sql_mater = "SELECT DISTINCT c.idCarrera, c.nombre_carrera FROM carreras c
-                                      INNER JOIN materias m ON c.idCarrera = m.carreras_idCarrera
-                                      INNER JOIN inscripcion_asignatura ia ON ia.carreras_idCarrera = c.idCarrera";
-                    } elseif ($rolUsuario == 5) {
-                        $sql_mater = "SELECT DISTINCT c.idCarrera, c.nombre_carrera FROM carreras c
-                                      INNER JOIN materias m ON c.idCarrera = m.carreras_idCarrera
-                                      INNER JOIN inscripcion_asignatura ia ON ia.carreras_idCarrera = c.idCarrera
-                                      WHERE c.profesor_idProrfesor = '{$idPreceptor}'";
-                    } else {
-                        $sql_mater = "SELECT DISTINCT c.idCarrera, c.nombre_carrera FROM carreras c
-                                      INNER JOIN materias m ON c.idCarrera = m.carreras_idCarrera
-                                      INNER JOIN inscripcion_asignatura ia ON ia.carreras_idCarrera = c.idCarrera
-                                      WHERE m.profesor_idProrfesor = '{$idPreceptor}'";
+                    $sql_mater = "SELECT DISTINCT c.idCarrera, c.nombre_carrera 
+                                  FROM carreras c
+                                  INNER JOIN materias m ON c.idCarrera = m.carreras_idCarrera
+                                  INNER JOIN inscripcion_asignatura ia ON ia.carreras_idCarrera = c.idCarrera";
+                    
+                    if ($rolUsuario == 5) {
+                        $sql_mater .= " WHERE c.profesor_idProrfesor = '{$idPreceptor}'";
+                    } elseif ($rolUsuario != 1) {
+                        $sql_mater .= " WHERE m.profesor_idProrfesor = '{$idPreceptor}'";
                     }
 
                     $result = mysqli_query($conexion, $sql_mater);
@@ -631,23 +627,24 @@ if ($result && mysqli_num_rows($result) > 0) {
                 </select><br><br>
 
                 <label for="curso">Selecciona el Curso:</label><br>
-                <select class="curso" name="curso[]">
+                <select class="curso" name="curso[]" required>
                     <option value="">Selecciona una carrera primero</option>
                 </select><br><br>
 
                 <label for="comision">Selecciona la Comisión:</label><br>
-                <select class="comision" name="comision[]">
+                <select class="comision" name="comision[]" required>
                     <option value="">Selecciona un curso primero</option>
                 </select><br><br>
 
                 <label for="materia">Selecciona la Materia:</label><br>
-                <select class="materia" name="materias[]">
+                <select class="materia" name="materias[]" required>
                     <option value="">Selecciona una comisión primero</option>
                 </select><br><br>
             </div>
         </div>
 
-        <button type="button" id="agregar-mesa">Agregar Unidad Curricular</button><br><br>
+        <button type="button" id="agregar-mesa" class="btn">Agregar Unidad Curricular</button><br><br>
+
 
         <div class="contenedor-detalles">
             <div>
