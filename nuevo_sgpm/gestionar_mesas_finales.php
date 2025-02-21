@@ -758,8 +758,10 @@ if ($result && mysqli_num_rows($result) > 0) {
 
 <!-- Controles de búsqueda y tamaño de página -->
 <div class="controls">
+  <!-- Búsqueda general -->
   <input type="text" id="searchInput" placeholder="Buscar texto en la tabla...">
 
+  <!-- Selector de cuántas filas se muestran por página -->
   <select id="pageSizeSelect">
     <option value="5">5 filas</option>
     <option value="10" selected>10 filas</option>
@@ -767,8 +769,10 @@ if ($result && mysqli_num_rows($result) > 0) {
     <option value="50">50 filas</option>
   </select>
 
+  <!-- Filtros adicionales -->
   <label for="filterFecha">Fecha:</label>
   <input type="date" id="filterFecha">
+  <!-- Botón para limpiar la fecha -->
   <button type="button" id="clearFecha" title="Limpiar fecha">🗑️</button>
 
   <label for="filterLlamado">Llamado:</label>
@@ -781,15 +785,14 @@ if ($result && mysqli_num_rows($result) > 0) {
   <input type="number" id="filterCupo" placeholder="Ej: 30">
 </div>
 
+
+
 <!-- TABLA con los datos de Mesas Finales -->
-<table id="tabla_mesas">
+<table border="1" id="tabla_mesas">
   <thead>
     <tr>
-      <th>ID Tanta</th>
-      <th>Carrera</th>
+      <th>ID tanta</th>
       <th>Unidad Curricular</th>
-      <th>Curso</th>
-      <th>Comisión</th>
       <th>Fecha</th>
       <th>Llamado</th>
       <th>Tanda</th>
@@ -799,35 +802,49 @@ if ($result && mysqli_num_rows($result) > 0) {
   </thead>
   <tbody>
     <?php
-    $query = "SELECT fm.idfechas_mesas_finales, m.Nombre AS nombre_materia, t.idtandas, t.fecha, t.llamado, t.tanda, t.cupo, c.nombre_carrera, co.comision, cu.curso
+    // EJEMPLO DE CONSULTA (ajusta según tu configuración/archivo PHP).
+    // Asegúrate de haber incluido la conexión a la BD antes (conexion.php).
+    // include("conexion.php");
+
+    $query = "SELECT fm.idfechas_mesas_finales, 
+                     m.Nombre AS nombre_materia,
+                     t.idtandas, 
+                     t.fecha, 
+                     t.llamado, 
+                     t.tanda, 
+                     t.cupo, 
+                     c.nombre_carrera
               FROM fechas_mesas_finales fm
               JOIN materias m ON fm.materias_idMaterias = m.idMaterias
               JOIN tandas t ON fm.tandas_idtandas = t.idtandas
-              JOIN carreras c ON m.carreras_idCarrera = c.idCarrera
-              JOIN comisiones co ON m.comisiones_idComisiones = co.idComisiones
-              JOIN cursos cu ON co.idCursos = cu.idCursos";
+              JOIN carreras c ON m.carreras_idCarrera  = c.idCarrera";
 
     $result = mysqli_query($conexion, $query);
 
     if ($result && mysqli_num_rows($result) > 0) {
         while ($row = mysqli_fetch_assoc($result)) {
+            // Construir nombre_materia_completo
+            $carrera_prefix = substr($row['nombre_carrera'], 0, 4);
+            $carrera_suffix = substr($row['nombre_carrera'], -5);
+            $nombre_materia_completo = $carrera_prefix . " " . $row['nombre_materia'] . " " . $carrera_suffix;
+
             echo "<tr>";
-            echo "<td>" . htmlspecialchars($row['idtandas']) . "</td>";
-            echo "<td>" . htmlspecialchars($row['nombre_carrera']) . "</td>";
-            echo "<td>" . htmlspecialchars($row['nombre_materia']) . "</td>";
-            echo "<td>" . htmlspecialchars($row['curso']) . "</td>";
-            echo "<td>" . htmlspecialchars($row['comision']) . "</td>";
-            echo "<td>" . htmlspecialchars($row['fecha']) . "</td>";
+            echo "<td>" . htmlspecialchars($row['idtandas']) . "</td>"; // Columna 0
+            echo "<td>" . htmlspecialchars($nombre_materia_completo) . "</td>"; // Columna 1
+            echo "<td>" . htmlspecialchars($row['fecha']) . "</td>"; // Columna 2
+            // Convertir llamado 1 o 2 a texto
             $llamadoText = ($row['llamado'] == 1) ? 'Primer Llamado' : 'Segundo Llamado';
-            echo "<td>" . $llamadoText . "</td>";
-            echo "<td>" . htmlspecialchars($row['tanda']) . "</td>";
-            echo "<td>" . htmlspecialchars($row['cupo']) . "</td>";
-            echo "<td><button class='editar' data-id='" . htmlspecialchars($row['idfechas_mesas_finales']) . "'>Modificar</button>
-                  <button class='eliminar' data-id='" . htmlspecialchars($row['idfechas_mesas_finales']) . "'>Eliminar</button></td>";
+            echo "<td>" . $llamadoText . "</td>"; // Columna 3
+            echo "<td>" . htmlspecialchars($row['tanda']) . "</td>"; // Columna 4
+            echo "<td>" . htmlspecialchars($row['cupo']) . "</td>";  // Columna 5
+            echo "<td>
+                    <button class='editar' data-id='" . htmlspecialchars($row['idfechas_mesas_finales']) . "'>Modificar</button>
+                    <button class='eliminar' data-id='" . htmlspecialchars($row['idfechas_mesas_finales']) . "'>Eliminar</button>
+                  </td>"; // Columna 6
             echo "</tr>";
         }
     } else {
-        echo "<tr><td colspan='10'>No se encontraron mesas finales.</td></tr>";
+        echo "<tr><td colspan='7'>No se encontraron mesas finales.</td></tr>";
     }
     ?>
   </tbody>
