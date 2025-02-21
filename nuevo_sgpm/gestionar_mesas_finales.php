@@ -21,12 +21,6 @@ if (!in_array($rolUsuario, $rolesPermitidos)) {
 // Conexión a la base de datos
 require_once '../../conexion.php';
 
-// Consultas a la base de datos
-$carreras = mysqli_query($conn, "SELECT * FROM carreras");
-$materias = mysqli_query($conn, "SELECT * FROM materias");
-$comisiones = mysqli_query($conn, "SELECT * FROM comisiones");
-$mesas_finales = mysqli_query($conn, "SELECT * FROM mesas_finales");
-$materias_pedagogicas = mysqli_query($conn, "SELECT * FROM mesas_pedagogicas");
 
 
 
