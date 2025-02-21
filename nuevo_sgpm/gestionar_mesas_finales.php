@@ -1572,16 +1572,17 @@ document.getElementById('clearFecha').addEventListener('click', function() {
       flex: 1 1 100%;
     }
   }
+
   @media (max-width: 480px) {
     #modal-editar {
       width: 90%;
     }
   }
-  /*subir cambios */
     </style>
 
 
 
-</body> 
+
+</body>
 </html>
 
