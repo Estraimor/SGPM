@@ -64,7 +64,6 @@ if (isset($_SESSION['time']) && (time() - $_SESSION['time'] > $inactivity_limit)
 			}
 		});
 	</script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 
 	<!-- CSS Files -->
@@ -545,16 +544,24 @@ if ($result && mysqli_num_rows($result) > 0) {
     <h2>Registro de Notas</h2>
 
     <label>Carrera:</label>
-    <select id="carrera"></select><br>
+    <select id="carrera">
+        <option value="">Seleccione una carrera</option>
+    </select><br>
 
     <label>Curso:</label>
-    <select id="curso" disabled></select><br>
+    <select id="curso" disabled>
+        <option value="">Seleccione un curso</option>
+    </select><br>
 
     <label>Comisión:</label>
-    <select id="comision" disabled></select><br>
+    <select id="comision" disabled>
+        <option value="">Seleccione una comisión</option>
+    </select><br>
 
     <label>Año:</label>
-    <select id="anio" disabled></select><br>
+    <select id="anio" disabled>
+        <option value="">Seleccione un año</option>
+    </select><br>
 
     <h3>Materias</h3>
     <label>Seleccione una materia:</label>
@@ -562,175 +569,158 @@ if ($result && mysqli_num_rows($result) > 0) {
         <option value="">Seleccione una materia</option>
     </select><br>
 
-    <div id="tablaNotas" style="margin-top: 20px;"></div>
+    <!-- Tabla ya definida en el HTML -->
+<div id="tablaNotas" style="margin-top: 20px;">
+    <table border="1" style="width:100%; border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th>Legajo</th>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>Nota Final</th>
+                <th>Condición</th>
+            </tr>
+        </thead>
+        <tbody id="tablaCuerpo">
+            <!-- Las filas se cargarán dinámicamente aquí -->
+        </tbody>
+    </table>
 </div>
 
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-  $(document).ready(function() {
-    // 🔹 Cargar carreras
+$(document).ready(function() {
+    // Cargar carreras al iniciar
     $.post('./config_notas_pendientes/obtener_carreras.php', function(data) {
-        $('#carrera').append(data);
+        $('#carrera').html('<option value="">Seleccione una carrera</option>' + data);
     });
 
-    // 🔹 Cargar cursos según carrera
+    // Cargar cursos al seleccionar una carrera
     $('#carrera').on('change', function() {
         let carrera = $(this).val();
         $('#curso').prop('disabled', false);
         $.post('./config_notas_pendientes/obtener_cursos.php', { carrera: carrera }, function(data) {
             $('#curso').html('<option value="">Seleccione un curso</option>' + data);
-        }).fail(function() {
-            $('#curso').html('<option value="">Error al cargar cursos</option>');
-            $('#curso').prop('disabled', true);
         });
     });
 
-    // 🔹 Cargar comisiones según curso
+    // Cargar comisiones al seleccionar un curso
     $('#curso').on('change', function() {
         let idCarrera = $('#carrera').val();
         let idCurso = $(this).val();
-
-        if (idCarrera && idCurso) {
-            $.post('./config_notas_pendientes/obtener_comisiones.php', { idCarrera: idCarrera, idCurso: idCurso }, function(data) {
-                $('#comision').html('<option value="">Seleccione una comisión</option>' + data);
-                $('#comision').prop('disabled', false);
-            }).fail(function() {
-                $('#comision').html('<option value="">Error al cargar comisiones</option>');
-                $('#comision').prop('disabled', true);
-            });
-        } else {
-            $('#comision').html('<option value="">Seleccione un curso primero</option>');
-            $('#comision').prop('disabled', true);
-        }
+        $.post('./config_notas_pendientes/obtener_comisiones.php', { idCarrera, idCurso }, function(data) {
+            $('#comision').html('<option value="">Seleccione una comisión</option>' + data);
+            $('#comision').prop('disabled', false);
+        });
     });
 
-    // 🔹 Cargar años desde 2023 hasta el actual
-    let anioActual = new Date().getFullYear();
-    let anioSelect = $('#anio');
-    anioSelect.append('<option value="">Seleccione un año</option>');
-    for (let i = anioActual; i >= 2023; i--) {
-        anioSelect.append(`<option value="${i}">${i}</option>`);
-    }
-
-    // 🔹 Habilitar el select de años cuando se seleccione una comisión
+    // Cargar materias al seleccionar la comisión
     $('#comision').on('change', function() {
-        $('#anio').prop('disabled', false);
-    });
-
-    // 🔹 Cargar materias cuando se seleccione un año
-    $('#anio').on('change', function() {
+        $('#materiaSeleccionada').prop('disabled', false);
         let carrera = $('#carrera').val();
         let curso = $('#curso').val();
         let comision = $('#comision').val();
-        let anio = $(this).val();
 
-        if (carrera && curso && comision && anio) {
-            $.ajax({
-                url: './config_notas_pendientes/obtener_materias.php',
-                type: 'POST',
-                data: { carrera: carrera, curso: curso, comision: comision, anio: anio },
-                success: function(response) {
-                    $('#materiaSeleccionada').html('<option value="">Seleccione una materia</option>' + response);
-                    $('#materiaSeleccionada').prop('disabled', false);
-                },
-                error: function() {
-                    $('#materiaSeleccionada').html('<option value="">Error al cargar materias</option>');
-                }
-            });
-        }
+        $.post('./config_notas_pendientes/obtener_materias.php', 
+        { carrera, curso, comision }, 
+        function(data) {
+            $('#materiaSeleccionada').html('<option value="">Seleccione una materia</option>' + data);
+        });
     });
 
+    // Cargar años al seleccionar la materia
     $('#materiaSeleccionada').on('change', function() {
-        let idMateria = $(this).val();
-        let anio = $('#anio').val();
-        let comision = $('#comision').val();
-        let curso = $('#curso').val();
-        let carrera = $('#carrera').val();
+        $('#anio').prop('disabled', false);
+        let anioActual = new Date().getFullYear();
+        let anioSelect = $('#anio');
+        anioSelect.empty();
+        anioSelect.append('<option value="">Seleccione un año</option>');
 
-        if (idMateria && anio && comision && curso && carrera) {
-            $.ajax({
-                url: './config_notas_pendientes/obtener_estudiantes_materia.php',
-                type: 'POST',
-                data: { idMateria, anio, comision, curso, carrera },
-                success: function(response) {
-                    let estudiantes = JSON.parse(response);
-                    let tableHtml = `
-                        <table border="1" style="width:100%; border-collapse: collapse;">
-                            <thead>
-                                <tr>
-                                    <th>Legajo</th>
-                                    <th>Nombre</th>
-                                    <th>Apellido</th>
-                                    <th>Nota Final</th>
-                                    <th>Condición</th>
-                                    <th>Detalles</th>
-                                </tr>
-                            </thead>
-                            <tbody>`;
-
-                    estudiantes.forEach(est => {
-                        let notaInput = est.nota_final === 'No disponible' ? 
-                            `<input type='number' class='notaFinal' data-legajo='${est.legajo}' step='0.1'>` 
-                            : est.nota_final;
-
-                        let condicionSelect = est.condicion === 'No disponible' ? 
-                            `<select class='condicionSelect' data-legajo='${est.legajo}'>
-                                <option value=''>Seleccione condición</option>
-                                <option value='Regular'>Regular</option>
-                                <option value='Promoción'>Promoción</option>
-                            </select>` 
-                            : est.condicion;
-
-                        let detalles = `<div class='detalleCampos' data-legajo='${est.legajo}' style='display: none;'></div>`;
-
-                        tableHtml += `
-                            <tr>
-                                <td>${est.legajo}</td>
-                                <td>${est.nombre}</td>
-                                <td>${est.apellido}</td>
-                                <td>${notaInput}</td>
-                                <td>${condicionSelect}</td>
-                                <td>${detalles}</td>
-                            </tr>`;
-                    });
-
-                    tableHtml += `</tbody></table>`;
-                    $('#tablaNotas').html(tableHtml);
-                },
-                error: function() {
-                    $('#tablaNotas').html('<p style="color:red;">Error al cargar los datos de los estudiantes.</p>');
-                }
-            });
+        for (let i = anioActual; i >= 2023; i--) {
+            anioSelect.append(`<option value="${i}">${i}</option>`);
         }
     });
 
-    // Mostrar campos adicionales según la condición seleccionada
-    $(document).on('change', '.condicionSelect', function() {
-        let legajo = $(this).data('legajo');
-        let condicion = $(this).val();
-        let detalleDiv = $(`.detalleCampos[data-legajo='${legajo}']`);
+    $('#anio').on('change', function() {
+    let idMateria = $('#materiaSeleccionada').val();
+    let anio = $('#anio').val();
+    let comision = $('#comision').val();
+    let curso = $('#curso').val();
+    let carrera = $('#carrera').val();
 
-        if (condicion === 'Regular') {
-            detalleDiv.html(`
-                <label>Nota Examen Final: </label><input type='number' class='notaExamen' step='0.1'><br>
-                <label>Tomo: </label><input type='text' class='tomo'><br>
-                <label>Folio: </label><input type='text' class='folio'><br>
-                <label>Fecha: </label><input type='date' class='fechaExamen'><br>
-            `).show();
-        } else if (condicion === 'Promoción') {
-            detalleDiv.html(`
-                <label>Nota Promoción: </label><input type='number' class='notaPromocion' step='0.1'><br>
-                <label>Tomo: </label><input type='text' class='tomoPromocion'><br>
-                <label>Folio: </label><input type='text' class='folioPromocion'><br>
-                <label>Fecha: </label><input type='date' class='fechaPromocion'><br>
-            `).show();
-        } else {
-            detalleDiv.hide();
+    $.post('./config_notas_pendientes/obtener_estudiantes_materia.php', 
+    { idMateria, anio, comision, curso, carrera }, 
+    function(data) {
+        console.log("Datos recibidos:", data);
+
+        if (data.error) {
+            console.error('Error desde el servidor:', data.error);
+            $('#tablaNotas').html(`<p style="color:red;">Error al cargar los datos: ${data.error}</p>`);
+            return;
         }
+
+        if (Array.isArray(data)) {
+            let estudiantes = data;
+            let tableHtml = `
+                <table border="1" style="width:100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th>Legajo</th>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
+                            <th>Nota Final</th>
+                            <th>Condición</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+            estudiantes.forEach(est => {
+                tableHtml += `
+                    <tr>
+                        <td>${est.legajo}</td>
+                        <td>${est.nombre}</td>
+                        <td>${est.apellido}</td>
+                        <td>
+                            <input type="number" 
+                                   class="notaFinal" 
+                                   data-legajo="${est.legajo}" 
+                                   value="${est.nota_final ?? ''}" 
+                                   step="0.1" 
+                                   placeholder="Ingrese nota">
+                        </td>
+                        <td>
+                            <select class="condicionSelect" data-legajo="${est.legajo}">
+                                <option value="">Seleccione condición</option>
+                                <option value="Regular" ${est.condicion === 'Regular' ? 'selected' : ''}>Regular</option>
+                                <option value="Promoción" ${est.condicion === 'Promocion' ? 'selected' : ''}>Promoción</option>
+                                <option value="Libre" ${est.condicion === 'Libre' ? 'selected' : ''}>Libre</option>
+                            </select>
+                        </td>
+                    </tr>`;
+            });
+
+            tableHtml += `</tbody></table>`;
+            $('#tablaNotas').html(tableHtml);
+        } else {
+            console.error('Respuesta no válida:', data);
+            $('#tablaNotas').html('<p style="color:red;">Error al cargar los datos de los estudiantes. Respuesta inválida.</p>');
+        }
+    }, 'json').fail(function(xhr, status, error) {
+        console.error('Error en la solicitud AJAX:', error);
+        $('#tablaNotas').html('<p style="color:red;">Error en la solicitud al servidor. Solicitud fallida.</p>');
     });
 });
 
 
+});
+
 </script>
+
+
+
+
 
 
 
@@ -752,13 +742,7 @@ if ($result && mysqli_num_rows($result) > 0) {
 <!-- Azzara JS -->
 <script src="assets/js/ready.min.js"></script>
 
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('../sw.js')
-      .then(() => console.log('Service Worker registrado'))
-      .catch((error) => console.error('Error al registrar el Service Worker', error));
-  }
-</script>
+
 
 </body>
 </html>

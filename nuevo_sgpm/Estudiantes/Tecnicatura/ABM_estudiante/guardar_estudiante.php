@@ -265,7 +265,7 @@ if (mysqli_num_rows($resultMaterias) > 0) {
     while ($materia = mysqli_fetch_assoc($resultMaterias)) {
         $materia_id = $materia['idMaterias'];
         $sqlInsert = "INSERT INTO matriculacion_materias (alumno_legajo, materias_idMaterias, año_matriculacion)
-                      VALUES ('$alumno_legajo', '$materia_id', '$añoInscripcion')";
+                      VALUES ('$alumno_legajo', '$materia_id', now())";
         mysqli_query($conexion, $sqlInsert);
     }
     echo "Inscripción realizada correctamente.";

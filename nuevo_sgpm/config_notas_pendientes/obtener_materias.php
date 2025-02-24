@@ -1,16 +1,19 @@
 <?php
 include '../../conexion/conexion.php';
 session_start();
+
 error_log("Datos recibidos: " . print_r($_POST, true));
 
-if (isset($_POST['carrera']) && isset($_POST['curso']) && isset($_POST['comision']) && isset($_POST['anio'])) {
+// Verificar que se recibieron todos los parámetros necesarios
+if (isset($_POST['carrera']) && isset($_POST['curso']) && isset($_POST['comision']) ) {
     $idCarrera = $_POST['carrera'];
     $idCurso = $_POST['curso'];
     $idComision = $_POST['comision'];
-    $anio = $_POST['anio'];
+    
 
     error_log("Carrera: $idCarrera, Curso: $idCurso, Comisión: $idComision, Año: $anio");
 
+    // Preparar la consulta para obtener las materias asociadas
     $stmt = $conexion->prepare("
         SELECT idMaterias, Nombre
         FROM materias 
@@ -19,22 +22,25 @@ if (isset($_POST['carrera']) && isset($_POST['curso']) && isset($_POST['comision
         AND comisiones_idComisiones = ?
     ");
 
+    // Verificar si la consulta se preparó correctamente
     if (!$stmt) {
         echo "<option value=''>Error en la consulta SQL</option>";
         exit();
     }
 
+    // Asignar los parámetros a la consulta preparada
     $stmt->bind_param("iii", $idCarrera, $idCurso, $idComision);
     $stmt->execute();
     $result = $stmt->get_result();
 
 
+    // Verificar si se encontraron resultados
     if ($result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
             $options .= "<option value='{$row['idMaterias']}'>{$row['Nombre']}</option>";
         }
     } else {
-        $options = "<option value=''>No hay materias disponibles</option>";
+        $options .= "<option value=''>No hay materias disponibles</option>";
     }
 
     echo $options;
