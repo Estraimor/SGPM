@@ -10,7 +10,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['materia']) && isset($_
     $llamado = $_POST['llamado'];
     $tanda = $_POST['tanda'];
     $anio = $_POST['anio'];
-    $nombre_inst = utf8_decode('Instituto Superior Politécnico Misiones Nº 1');
+    $nombre_inst = mb_convert_encoding('Instituto Superior Politécnico Misiones Nº 1', 'ISO-8859-1', 'UTF-8');
 
     // Consulta para obtener los datos de la materia, docente y carrera
     $query_materia = "
@@ -65,7 +65,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['materia']) && isset($_
             $this->Image('../../imagenes/CGE.png', 170, 10, 25); // Imagen del CGE en la esquina opuesta
             $this->Cell(0, 10, $nombre_inst, 0, 1, 'C');
             $this->Ln(10);
-            $nombre_titu = utf8_decode('ACTA VOLANTE DE EXÁMENES');
+            $nombre_titu = mb_convert_encoding('ACTA VOLANTE DE EXÁMENES', 'ISO-8859-1', 'UTF-8');
             $this->SetFont('Arial', 'B', 12);
             $this->Cell(0, 10, $nombre_titu , 0, 1, 'C');
             $this->Ln(5);
@@ -96,11 +96,11 @@ $this->Cell(0, 8, $encabezado, 0, 1, 'C');
 
             // Información de la asignatura, docente, etc.
             $this->SetFont('Arial', 'B', 10);
-            $this->Cell(0, 10, 'Asignatura: ' . utf8_decode($datos_materia['materia']), 0, 1);
-            $this->Cell(0, 10, 'Docente: ' . utf8_decode($datos_materia['nombre_profe'] . ' ' . $datos_materia['apellido_profe']), 0, 1);
-            $this->Cell(0, 10, 'Carrera: ' . utf8_decode($datos_materia['carrera']), 0, 1);
+            $this->Cell(0, 10, 'Asignatura: ' . mb_convert_encoding($datos_materia['materia'], 'ISO-8859-1', 'UTF-8'), 0, 1);
+            $this->Cell(0, 10, 'Docente: ' . mb_convert_encoding($datos_materia['nombre_profe'] . ' ' . $datos_materia['apellido_profe'], 'ISO-8859-1', 'UTF-8'), 0, 1);
+            $this->Cell(0, 10, 'Carrera: ' . mb_convert_encoding($datos_materia['carrera'], 'ISO-8859-1', 'UTF-8'), 0, 1);
             $this->Cell(0, 10, 'Cantidad llamados: ', 0, 1);
-            $this->Cell(0, 10, utf8_decode('N° Tanda : '). $tanda , 0, 1);
+            $this->Cell(0, 10, mb_convert_encoding('N° Tanda : ', 'ISO-8859-1', 'UTF-8'). $tanda , 0, 1);
             $this->Ln(5);
         }
 
@@ -148,7 +148,7 @@ $this->Cell(0, 8, $encabezado, 0, 1, 'C');
     $result = $stmt->get_result();
     $profesor = $result->fetch_assoc();
 
-    $nombreCompleto = ($profesor ? utf8_decode($profesor['nombre_profe'] . ' ' . $profesor['apellido_profe']) : 'Información no disponible');
+    $nombreCompleto = ($profesor ? mb_convert_encoding($profesor['nombre_profe'] . ' ' . $profesor['apellido_profe'], 'ISO-8859-1', 'UTF-8') : 'Información no disponible');
 
     // Configuración y visualización del nombre del presidente de mesa
     $this->SetX(10 + $lineWidth + $spaceBetween);
@@ -200,7 +200,7 @@ $this->Cell(0, 8, $encabezado, 0, 1, 'C');
         // Dibujar fila de datos
         $this->Cell($w[0], 6, $count++, 1);
         $this->Cell($w[1], 6, $row['dni_alumno'], 1);
-        $this->Cell($w[2], 6, utf8_decode($row['nombre_completo']), 1);
+        $this->Cell($w[2], 6, mb_convert_encoding($row['nombre_completo'], 'ISO-8859-1', 'UTF-8'), 1);
         $this->Cell($w[3] / 3, 6, '', 1); // Espacio para calificación ORAL N°
         $this->Cell(2 * $w[3] / 3, 6, '', 1); // Espacio para calificación ORAL LETRA
         $this->Cell($w[4] / 3, 6, '', 1); // Espacio para calificación ESCRITA N°
@@ -220,8 +220,8 @@ function AddTableHeader($header, $w) {
     $this->Cell($w[2], 21, $header[2], 1, 0, 'C', false);
 
     // "Calificación" abarcando dos filas (Oral y Escrita)
-    $this->Cell($w[3] + $w[4], 7, utf8_decode('CALIFICACIÓN'), 1, 0, 'C', false);
-    $this->Cell($w[5], 21, utf8_decode('CALF. DEF'), 1, 0, 'C', false);
+    $this->Cell($w[3] + $w[4], 7, mb_convert_encoding('CALIFICACIÓN', 'ISO-8859-1', 'UTF-8'), 1, 0, 'C', false);
+    $this->Cell($w[5], 21, mb_convert_encoding('CALF. DEF', 'ISO-8859-1', 'UTF-8'), 1, 0, 'C', false);
     $this->Ln(7);
 
     // Dibujar subencabezados "Oral" y "Escrita"
@@ -231,8 +231,8 @@ function AddTableHeader($header, $w) {
     $this->Cell($w[2], 7, '', 0, 0, 'C', false);
 
     // Subencabezados dentro de "CALIFICACIÓN"
-    $this->Cell($w[3], 7, utf8_decode('ORAL'), 1, 0, 'C', false);
-    $this->Cell($w[4], 7, utf8_decode('ESCRITO'), 1, 0, 'C', false);
+    $this->Cell($w[3], 7, mb_convert_encoding('ORAL', 'ISO-8859-1', 'UTF-8'), 1, 0, 'C', false);
+    $this->Cell($w[4], 7, mb_convert_encoding('ESCRITO', 'ISO-8859-1', 'UTF-8'), 1, 0, 'C', false);
 
     $this->Ln(7);
 
@@ -243,12 +243,12 @@ function AddTableHeader($header, $w) {
     $this->Cell($w[2], 7, '', 0, 0, 'C', false);
 
     // "N°" y "LETRA" debajo de "Oral"
-    $this->Cell($w[3] / 3, 7, utf8_decode('N°'), 1, 0, 'C', false); // N° más pequeño
-    $this->Cell(2 * $w[3] / 3, 7, utf8_decode('LETRA'), 1, 0, 'C', false); // LETRA más grande
+    $this->Cell($w[3] / 3, 7, mb_convert_encoding('N°', 'ISO-8859-1', 'UTF-8'), 1, 0, 'C', false); // N° más pequeño
+    $this->Cell(2 * $w[3] / 3, 7, mb_convert_encoding('LETRA', 'ISO-8859-1', 'UTF-8'), 1, 0, 'C', false); // LETRA más grande
 
     // "N°" y "LETRA" debajo de "Escrita"
-    $this->Cell($w[4] / 3, 7, utf8_decode('N°'), 1, 0, 'C', false); // N° más pequeño
-    $this->Cell(2 * $w[4] / 3, 7, utf8_decode('LETRA'), 1, 0, 'C', false); // LETRA más grande
+    $this->Cell($w[4] / 3, 7, mb_convert_encoding('N°', 'ISO-8859-1', 'UTF-8'), 1, 0, 'C', false); // N° más pequeño
+    $this->Cell(2 * $w[4] / 3, 7, mb_convert_encoding('LETRA', 'ISO-8859-1', 'UTF-8'), 1, 0, 'C', false); // LETRA más grande
 
     // Espacio para "CALF. DEF"
     $this->Ln();
@@ -282,8 +282,8 @@ function AddTableHeader($header, $w) {
     $pdf = new PDF();
     $pdf->AliasNbPages();
     $pdf->AddPage();
-    $nombreTitulo = utf8_decode('ACTA VOLANTE DE EXÁMENES');
-    $enumeracion = utf8_decode('N°');
+    $nombreTitulo = mb_convert_encoding('ACTA VOLANTE DE EXÁMENES', 'ISO-8859-1', 'UTF-8');
+    $enumeracion = mb_convert_encoding('N°', 'ISO-8859-1', 'UTF-8');
 
     // Encabezados de la tabla
     $header = array($enumeracion, 'D.N.I', 'NOMBRE COMPLETO', 'CALIFICACIÓN');
@@ -295,7 +295,7 @@ function AddTableHeader($header, $w) {
     $pdf->AddTomoFolioFecha();
 
     // Salida del PDF como descarga
-    $pdf->Output('D', 'Acta_Volante_Examenes_' . utf8_decode($datos_materia['materia']) . '_' . utf8_decode($datos_materia['carrera']) . '.pdf');
+    $pdf->Output('D', 'Acta_Volante_Examenes_' . mb_convert_encoding($datos_materia['materia'], 'ISO-8859-1', 'UTF-8') . '_' . mb_convert_encoding($datos_materia['carrera'], 'ISO-8859-1', 'UTF-8') . '.pdf');
 } else {
     echo "Error: Materia no seleccionada.";
 }

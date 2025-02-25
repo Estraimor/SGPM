@@ -540,20 +540,19 @@ if ($result && mysqli_num_rows($result) > 0) {
 </div>
 
 <div class="contenido">
-    <h1>Gestión de Actas Volantes Estudiantes Libres </h1>
+    <h1>Gestión de Actas Volantes Estudiantes Libres</h1>
     <form method="POST" action="./config_actas_volantes/crear_acta_volante_libres.php">
         <div class="cuadro" id="cuadroCarreras">
             <label for="carrera">Seleccione una Carrera:</label>
-            <select name="carrera" id="carrera" onchange="limpiarInfoEstudiantes(); habilitarMaterias();">
+            <select name="carrera" id="carrera" onchange="limpiarInfoEstudiantes(); cargarCursos();">
                 <option value="">Seleccione una carrera</option>
                 <?php
-                // Obtener el ID del preceptor y el rol desde la sesión
-                $idPreceptor = $_SESSION['id'];  // Asegúrate de tener el ID del preceptor guardado en la sesión
-                $rolUsuario = $_SESSION["roles"]; // Asegúrate de tener el rol guardado en la sesión
+                include '../../conexion/conexion.php';
 
-                // Definimos la consulta dependiendo del rol
+                $idPreceptor = $_SESSION['id'];
+                $rolUsuario = $_SESSION["roles"];
+
                 if ($rolUsuario == 1) {
-                    // Si el rol es 1, mostrar todas las carreras que tienen materias con personas asociadas en inscripcion_asignatura
                     $queryCarreras = "
                         SELECT DISTINCT c.idCarrera, c.nombre_carrera
                         FROM carreras c
@@ -561,7 +560,6 @@ if ($result && mysqli_num_rows($result) > 0) {
                         INNER JOIN inscripcion_asignatura ia ON ia.carreras_idCarrera = c.idCarrera
                     ";
                 } elseif ($rolUsuario == 5) {
-                    // Si el rol es 5, mostrar todas las carreras asignadas a las materias del preceptor y con personas asociadas en inscripcion_asignatura
                     $queryCarreras = "
                         SELECT DISTINCT c.idCarrera, c.nombre_carrera
                         FROM carreras c
@@ -570,7 +568,6 @@ if ($result && mysqli_num_rows($result) > 0) {
                         WHERE c.profesor_idProrfesor = '{$idPreceptor}'
                     ";
                 } else {
-                    // Si el rol no es 1 ni 5, mostrar solo las carreras asignadas al preceptor y con personas asociadas en inscripcion_asignatura
                     $queryCarreras = "
                         SELECT DISTINCT c.idCarrera, c.nombre_carrera
                         FROM carreras c
@@ -580,11 +577,9 @@ if ($result && mysqli_num_rows($result) > 0) {
                     ";
                 }
 
-                // Ejecutar la consulta
                 $resultCarreras = $conexion->query($queryCarreras);
                 
                 if ($resultCarreras->num_rows > 0) {
-                    // Mostrar las opciones de las carreras
                     while ($row = $resultCarreras->fetch_assoc()) {
                         echo '<option value="' . $row['idCarrera'] . '">' . htmlspecialchars($row['nombre_carrera']) . '</option>';
                     }
@@ -593,6 +588,17 @@ if ($result && mysqli_num_rows($result) > 0) {
                 }
                 ?>
             </select>
+
+            <label for="curso">Seleccione un Curso:</label>
+            <select name="curso" id="curso" onchange="cargarComisiones();limpiarInfoEstudiantes();">
+                <option value="">Seleccione un curso</option>
+            </select>
+
+            <label for="comision">Seleccione una Comisión:</label>
+            <select name="comision" id="comision" onchange="habilitarMaterias();limpiarInfoEstudiantes();">
+                <option value="">Seleccione una comisión</option>
+            </select>
+
             <label for="llamado">Seleccione un Llamado:</label>
             <select name="llamado" id="llamado" onchange="limpiarInfoEstudiantes(); habilitarMaterias();">
                 <option hidden>Selecciona un llamado</option>
@@ -603,28 +609,25 @@ if ($result && mysqli_num_rows($result) > 0) {
             <label for="tanda">Seleccione una Tanda:</label>
             <select name="tanda" id="tanda" onchange="limpiarInfoEstudiantes(); habilitarMaterias();">
                 <option hidden>Selecciona una tanda</option>
-                <option value="1">Tanda 1</option>
-                <option value="2">Tanda 2</option>
-                <option value="3">Tanda 3</option>
-                <option value="4">Tanda 4</option>
-                <option value="5">Tanda 5</option>
-                <option value="6">Tanda 6</option>
+                <?php for ($i = 1; $i <= 6; $i++): ?>
+                    <option value="<?= $i ?>">Tanda <?= $i ?></option>
+                <?php endfor; ?>
             </select>
 
             <label for="anio">Seleccione un Año:</label>
             <select name="anio" id="anio" onchange="limpiarInfoEstudiantes(); habilitarMaterias();">
                 <option hidden>Selecciona un año</option>
-                <option value="2023">2023</option>
-                <option value="2024">2024</option>
-                <option value="2025">2025</option>
-                <option value="2026">2026</option>
-                <option value="2027">2027</option>
+                <?php for ($i = 2024; $i <= date('Y') + 5; $i++): ?>
+                    <option value="<?= $i ?>"><?= $i ?></option>
+                <?php endfor; ?>
             </select>
         </div>
+
         <div class="cuadro" id="cuadroMaterias">
             <label for="materias">Seleccione una Materia:</label>
             <div id="materias"></div>
         </div>
+
         <div class="cuadro" id="infoAlumnos" style="display:none;">
             <h2>Información de Mesa</h2>
             <p id="numAlumnos">Información de los alumnos aparecerá aquí.</p>
@@ -634,6 +637,8 @@ if ($result && mysqli_num_rows($result) > 0) {
         <button class="boton" type="submit">Generar Acta Volante</button>
     </form>
 </div>
+
+
 
 <!--   Core JS Files   -->
 <script src="assets/js/core/jquery.3.2.1.min.js"></script>
@@ -650,55 +655,109 @@ if ($result && mysqli_num_rows($result) > 0) {
 <!-- Azzara JS -->
 <script src="assets/js/ready.min.js"></script>
 <script>
- function limpiarInfoEstudiantes() {
-    // Limpiar la información de estudiantes
+ function cargarCursos() {
+    const carrera = document.getElementById('carrera').value;
+    const cursoSelect = document.getElementById('curso');
+    const comisionSelect = document.getElementById('comision');
+    
+    limpiarInfoEstudiantes();
+    
+    cursoSelect.innerHTML = '<option value="">Seleccione un curso</option>';
+    comisionSelect.innerHTML = '<option value="">Seleccione una comisión</option>';
+    
+    if (carrera) {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', `./config_actas_volantes/obtener_cursos.php?idCarrera=${carrera}`, true);
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    cursoSelect.innerHTML = xhr.responseText;
+                } else {
+                    console.error('Error al cargar los cursos:', xhr.statusText);
+                    cursoSelect.innerHTML = '<option value="">Error al cargar cursos</option>';
+                }
+            }
+        };
+        xhr.send();
+    }
+}
+
+function cargarComisiones() {
+    const curso = document.getElementById('curso').value;
+    const comisionSelect = document.getElementById('comision');
+    
+    limpiarInfoEstudiantes();
+    
+    comisionSelect.innerHTML = '<option value="">Seleccione una comisión</option>';
+    
+    if (curso) {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', `./config_actas_volantes/obtener_comisiones.php?idCurso=${curso}`, true);
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    comisionSelect.innerHTML = xhr.responseText;
+                } else {
+                    console.error('Error al cargar las comisiones:', xhr.statusText);
+                    comisionSelect.innerHTML = '<option value="">Error al cargar comisiones</option>';
+                }
+            }
+        };
+        xhr.send();
+    }
+}
+
+function limpiarInfoEstudiantes() {
     document.getElementById('numAlumnos').innerHTML = '';
     document.getElementById('infoAlumnos').style.display = 'none';
-
-    // Limpiar las materias cargadas
-    document.getElementById('materias').innerHTML = '<p>Seleccione una carrera, llamado, tanda y año para cargar materias.</p>';
+    document.getElementById('materias').innerHTML = '<p>Seleccione una carrera, curso, comisión, llamado, tanda y año para cargar materias.</p>';
 }
 
 function habilitarMaterias() {
     const carrera = document.getElementById('carrera').value;
+    const curso = document.getElementById('curso').value;
+    const comision = document.getElementById('comision').value;
     const llamado = document.getElementById('llamado').value;
     const tanda = document.getElementById('tanda').value;
     const anio = document.getElementById('anio').value;
 
-    if (carrera && llamado && tanda && anio) {
-        cargarMaterias(carrera, llamado, tanda, anio);
+    if (carrera && curso && comision && llamado && tanda && anio) {
+        cargarMaterias(carrera, curso, comision, llamado, tanda, anio);
     } else {
         document.getElementById('materias').innerHTML = '<p>Por favor, selecciona todos los valores para cargar las materias.</p>';
     }
 }
 
-function cargarMaterias(carrera, llamado, tanda, anio) {
+function cargarMaterias(carrera, curso, comision, llamado, tanda, anio) {
     const xhr = new XMLHttpRequest();
     xhr.open(
         'GET',
-        `./config_actas_volantes/obtener_materias.php?idCarrera=${carrera}&llamado=${llamado}&tanda=${tanda}&anio=${anio}`,
+        `./config_actas_volantes/obtener_materias.php?idCarrera=${carrera}&idCurso=${curso}&idComision=${comision}&llamado=${llamado}&tanda=${tanda}&anio=${anio}`,
         true
     );
     xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-            document.getElementById('materias').innerHTML = xhr.responseText;
+        if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+                document.getElementById('materias').innerHTML = xhr.responseText;
 
-            // Añadir eventos a los checkboxes de materias
-            const checkboxes = document.querySelectorAll('#materias input[type="checkbox"]');
-            checkboxes.forEach(function (checkbox) {
-                checkbox.addEventListener('change', function () {
-                    if (this.checked) {
-                        // Desmarcar otros checkboxes
-                        checkboxes.forEach(function (cb) {
-                            if (cb !== checkbox) cb.checked = false;
-                        });
+                const checkboxes = document.querySelectorAll('#materias input[type="checkbox"]');
+                checkboxes.forEach(function (checkbox) {
+                    checkbox.addEventListener('change', function () {
+                        if (this.checked) {
+                            checkboxes.forEach(function (cb) {
+                                if (cb !== checkbox) cb.checked = false;
+                            });
 
-                        obtenerDetallesAlumnos(carrera, this.value, llamado, tanda, anio);
-                    } else {
-                        document.getElementById('infoAlumnos').style.display = 'none';
-                    }
+                            obtenerDetallesAlumnos(carrera, this.value, llamado, tanda, anio);
+                        } else {
+                            document.getElementById('infoAlumnos').style.display = 'none';
+                        }
+                    });
                 });
-            });
+            } else {
+                console.error('Error al cargar las materias:', xhr.statusText);
+                document.getElementById('materias').innerHTML = '<p>Error al cargar las materias. Inténtelo de nuevo.</p>';
+            }
         }
     };
     xhr.send();
@@ -712,13 +771,20 @@ function obtenerDetallesAlumnos(carrera, materia, llamado, tanda, anio) {
         true
     );
     xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-            document.getElementById('numAlumnos').innerHTML = xhr.responseText;
-            document.getElementById('infoAlumnos').style.display = 'block';
+        if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+                document.getElementById('numAlumnos').innerHTML = xhr.responseText;
+                document.getElementById('infoAlumnos').style.display = 'block';
+            } else {
+                console.error('Error al obtener los detalles de los alumnos:', xhr.statusText);
+                document.getElementById('numAlumnos').innerHTML = 'Error al cargar la información de los alumnos.';
+            }
         }
     };
     xhr.send();
 }
+
+
 </script>
 
 <script>
