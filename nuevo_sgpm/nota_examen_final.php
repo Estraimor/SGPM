@@ -627,28 +627,22 @@ $query = "
     JOIN alumno a ON mf.alumno_legajo = a.legajo
     JOIN fechas_mesas_finales fmf ON mf.fechas_mesas_finales_idfechas_mesas_finales = fmf.idfechas_mesas_finales
     JOIN tandas t ON fmf.tandas_idtandas = t.idtandas
-    JOIN inscripcion_asignatura ia ON ia.alumno_legajo = a.legajo
-    JOIN materias m ON m.comisiones_idComisiones = ia.Comisiones_idComisiones
     LEFT JOIN nota_examen_final nef1 
         ON mf.alumno_legajo = nef1.alumno_legajo 
         AND nef1.llamado = 1 
-        AND nef1.materias_idMaterias = ?
+        AND nef1.materias_idMaterias = mf.materias_idMaterias
     LEFT JOIN nota_examen_final nef2 
         ON mf.alumno_legajo = nef2.alumno_legajo 
         AND nef2.llamado = 2 
-        AND nef2.materias_idMaterias = ?
+        AND nef2.materias_idMaterias = mf.materias_idMaterias
     WHERE mf.materias_idMaterias = ?
       AND t.fecha BETWEEN ? AND ?
-      AND ia.año_inscripcion = ?
-      AND ia.cursos_idCursos = ?
-      AND ia.Comisiones_idComisiones = ?
-    GROUP BY mf.alumno_legajo
-    ORDER BY a.apellido_alumno ASC
+    ORDER BY a.apellido_alumno ASC;
 ";
 
 // Preparar la consulta con los parámetros necesarios
 $stmt = $conexion->prepare($query);
-$stmt->bind_param("iiissiii", $idMateria, $idMateria, $idMateria, $fecha_inicio, $fecha_fin, $año, $idCurso, $idComision);
+$stmt->bind_param("iss", $idMateria, $fecha_inicio, $fecha_fin);
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -698,8 +692,13 @@ $stmt_materia->close();
 
 <div class="contenido">
     <div class="form-container">
-        <h2>Mesa Final: Lista de Inscriptos: <?php echo htmlspecialchars($materia_nombre); ?> - Mesas del período actual -   Turno <?php echo htmlspecialchars($turno_seleccionado); ?> 
-    (<?php echo htmlspecialchars($meses); ?>) </h2>
+        <h2>Mesa Final: Lista de Inscriptos: 
+            <?php echo htmlspecialchars(strval($materia_nombre), ENT_QUOTES, 'UTF-8'); ?> 
+            - Mesas del período actual - Turno 
+            <?php echo htmlspecialchars(strval($turno_seleccionado), ENT_QUOTES, 'UTF-8'); ?> 
+            (<?php echo htmlspecialchars(strval($meses), ENT_QUOTES, 'UTF-8'); ?>) 
+        </h2>
+
         <?php if ($result->num_rows > 0) { ?>
             <form action="guardar_nota_examen_final.php" method="POST">
                 <div class="table-responsive">
@@ -714,110 +713,109 @@ $stmt_materia->close();
                                 <th colspan="4" class="llamados">Segundo Llamado</th>
                             </tr>
                             <tr>
-                                <th></th>
-                                <th></th>
-                                <th></th>
-                                <th></th>
-                                <th>Nota</th>
-                                <th>Tomo</th>
-                                <th>Folio</th>
-                                <th>Ausente</th>
-                                <th>Nota</th>
-                                <th>Tomo</th>
-                                <th>Folio</th>
-                                <th>Ausente</th>
+                                <th></th><th></th><th></th><th></th>
+                                <th>Nota</th><th>Tomo</th><th>Folio</th><th>Ausente</th>
+                                <th>Nota</th><th>Tomo</th><th>Folio</th><th>Ausente</th>
                             </tr>
                         </thead>
                         <tbody>
     <?php 
     $contador = 1;
     while ($row = $result->fetch_assoc()) { 
-        // Verificar si el segundo llamado debe estar habilitado
         $habilitarSegundoLlamado = ($row['nota_primer_llamado'] !== null && $row['nota_primer_llamado'] < 6);
     ?>
         <tr>
             <td><?php echo $contador; ?></td>
-            <td><?php echo htmlspecialchars($row['apellido_alumno']); ?></td>
-            <td><?php echo htmlspecialchars($row['nombre_alumno']); ?></td>
-            <td><?php echo htmlspecialchars($row['dni_alumno']); ?></td>
+            <td><?php echo htmlspecialchars(strval($row['apellido_alumno']), ENT_QUOTES, 'UTF-8'); ?></td>
+            <td><?php echo htmlspecialchars(strval($row['nombre_alumno']), ENT_QUOTES, 'UTF-8'); ?></td>
+            <td><?php echo htmlspecialchars(strval($row['dni_alumno']), ENT_QUOTES, 'UTF-8'); ?></td>
 
-            <!-- Input oculto para el legajo del estudiante -->
-            <input type="hidden" name="alumno_legajo[<?php echo $contador; ?>]" value="<?php echo htmlspecialchars($row['alumno_legajo']); ?>">
+            <input type="hidden" name="alumno_legajo[<?php echo $contador; ?>]" 
+                   value="<?php echo htmlspecialchars(strval($row['alumno_legajo']), ENT_QUOTES, 'UTF-8'); ?>">
 
-          <!-- Primer Llamado -->
-<td id="primer-llamado-<?php echo $contador; ?>" class="input-nota-container">
-    <?php if ($row['nota_primer_llamado'] !== null && ($row['nota_primer_llamado'] === '0' || $row['nota_primer_llamado'] == 0)): ?>
-        <!-- Mostrar la "A" si la nota es 0 -->
-        <span class="ausente">A</span>
-    <?php else: ?>
-        <!-- Mostrar input si la nota no es 0 o es NULL -->
-        <input 
-            type="number" 
-            name="nota_final_1[<?php echo $contador; ?>]" 
-            class="input-nota nota-1" 
-            data-segundo-llamado="segundo-llamado-<?php echo $contador; ?>" 
-            min="0" 
-            max="10" 
-            step="0.1" 
-            onchange="evaluarNota(this)"
-            value="<?php echo htmlspecialchars($row['nota_primer_llamado']); ?>">
-    <?php endif; ?>
-</td>
-            <td><input type="number" name="tomo_1[<?php echo $contador; ?>]" class="input-nota nota-1" value="<?php echo htmlspecialchars($row['tomo_primer_llamado']); ?>"></td>
-            <td><input type="number" name="folio_1[<?php echo $contador; ?>]" class="input-nota nota-1" value="<?php echo htmlspecialchars($row['folio_primer_llamado']); ?>"></td>
+            <!-- Primer Llamado -->
+            <td>
+                <?php if ($row['nota_primer_llamado'] === '0' || $row['nota_primer_llamado'] == 0): ?>
+                    <span class="ausente">A</span>
+                <?php else: ?>
+                    <input 
+                        type="number" 
+                        name="nota_final_1[<?php echo $contador; ?>]" 
+                        class="input-nota nota-1" 
+                        min="0" max="10" step="0.1" 
+                        onchange="evaluarNota(this)"
+                        value="<?php echo htmlspecialchars(strval($row['nota_primer_llamado'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+                <?php endif; ?>
+            </td>
+
+            <td>
+                <input type="number" 
+                       name="tomo_1[<?php echo $contador; ?>]" 
+                       class="input-nota nota-1" 
+                       value="<?php echo htmlspecialchars(strval($row['tomo_primer_llamado'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+            </td>
+
+            <td>
+                <input type="number" 
+                       name="folio_1[<?php echo $contador; ?>]" 
+                       class="input-nota nota-1" 
+                       value="<?php echo htmlspecialchars(strval($row['folio_primer_llamado'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+            </td>
+
             <td>
                 <input 
                     type="checkbox" 
                     name="ausente_1[<?php echo $contador; ?>]" 
                     value="1" 
-                    data-llamado="primer-llamado-<?php echo $contador; ?>" 
                     onchange="toggleAusente(this)"
-                    <?php 
-                    echo ($row['nota_primer_llamado'] !== null && $row['nota_primer_llamado'] !== '0') ? 'disabled' : ''; 
-                    ?>
+                    <?php echo ($row['nota_primer_llamado'] !== null && $row['nota_primer_llamado'] !== '0') ? 'disabled' : ''; ?>
                     <?php echo ($row['nota_primer_llamado'] === '0') ? 'checked' : ''; ?>>
             </td>
 
-           <!-- Segundo Llamado -->
-<td id="segundo-llamado-<?php echo $contador; ?>" class="input-nota-container">
-    <?php if ($row['nota_segundo_llamado'] !== null && ($row['nota_segundo_llamado'] === '0' || $row['nota_segundo_llamado'] == 0)): ?>
-        <!-- Mostrar la "A" si la nota es 0 -->
-        <span class="ausente">A</span>
-    <?php else: ?>
-        <!-- Mostrar input si la nota no es 0 o es NULL -->
-        <input 
-            type="number" 
-            name="nota_final_2[<?php echo $contador; ?>]" 
-            class="input-nota nota-2" 
-            min="0" 
-            max="10" 
-            step="0.1" 
-            value="<?php echo htmlspecialchars($row['nota_segundo_llamado']); ?>" 
-            <?php echo !$habilitarSegundoLlamado ? 'disabled' : ''; ?>>
-    <?php endif; ?>
-</td>
-            <td><input type="number" name="tomo_2[<?php echo $contador; ?>]" class="input-nota nota-1" value="<?php echo htmlspecialchars($row['tomo_segundo_llamado']); ?>" 
-                <?php echo !$habilitarSegundoLlamado ? 'disabled' : ''; ?>></td>
-            <td><input type="number" name="folio_2[<?php echo $contador; ?>]" class="input-nota nota-1" value="<?php echo htmlspecialchars($row['folio_segundo_llamado']); ?>" 
-                <?php echo !$habilitarSegundoLlamado ? 'disabled' : ''; ?>></td>
+            <!-- Segundo Llamado -->
+            <td>
+                <input 
+                    type="number" 
+                    name="nota_final_2[<?php echo $contador; ?>]" 
+                    class="input-nota nota-2" 
+                    min="0" max="10" step="0.1" 
+                    value="<?php echo htmlspecialchars(strval($row['nota_segundo_llamado'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                    <?php echo !$habilitarSegundoLlamado ? 'disabled' : ''; ?>>
+            </td>
+
+            <td>
+                <input type="number" 
+                       name="tomo_2[<?php echo $contador; ?>]" 
+                       class="input-nota nota-1" 
+                       value="<?php echo htmlspecialchars(strval($row['tomo_segundo_llamado'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                       <?php echo !$habilitarSegundoLlamado ? 'disabled' : ''; ?>>
+            </td>
+
+            <td>
+                <input type="number" 
+                       name="folio_2[<?php echo $contador; ?>]" 
+                       class="input-nota nota-1" 
+                       value="<?php echo htmlspecialchars(strval($row['folio_segundo_llamado'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                       <?php echo !$habilitarSegundoLlamado ? 'disabled' : ''; ?>>
+            </td>
+
             <td>
                 <input 
                     type="checkbox" 
                     name="ausente_2[<?php echo $contador; ?>]" 
                     value="1" 
-                    data-llamado="segundo-llamado-<?php echo $contador; ?>" 
                     onchange="toggleAusente(this)"
                     <?php echo !$habilitarSegundoLlamado ? 'disabled' : ''; ?>
                     <?php echo ($row['nota_segundo_llamado'] === '0') ? 'checked' : ''; ?>>
             </td>
         </tr>
     <?php $contador++; } ?>
-</tbody>
+                        </tbody>
                     </table>
                 </div>
-                <input type="hidden" name="materia" value="<?php echo htmlspecialchars($idMateria); ?>">
-                <input type="hidden" name="turno" value="<?php echo htmlspecialchars($turno_seleccionado); ?>">
-                <input type="hidden" name="año" value="<?php echo htmlspecialchars($año); ?>">
+                <input type="hidden" name="materia" value="<?php echo htmlspecialchars(strval($idMateria), ENT_QUOTES, 'UTF-8'); ?>">
+                <input type="hidden" name="turno" value="<?php echo htmlspecialchars(strval($turno_seleccionado), ENT_QUOTES, 'UTF-8'); ?>">
+                <input type="hidden" name="año" value="<?php echo htmlspecialchars(strval($año), ENT_QUOTES, 'UTF-8'); ?>">
                 <button type="submit" class="btn-submit">Guardar Notas</button>
             </form>
         <?php } else { ?>
@@ -825,6 +823,7 @@ $stmt_materia->close();
         <?php } ?>
     </div>
 </div>
+
 
 <script>
     function evaluarNota(input) {
