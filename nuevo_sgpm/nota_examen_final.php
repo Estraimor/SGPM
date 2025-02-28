@@ -501,8 +501,7 @@ if ($result && mysqli_num_rows($result) > 0) {
 	
 </div>
 <?php
-session_start();
-include '../conexion/conexion.php';
+
 
 // Definir un array de IDs de materias cuatrimestrales
 $materias_cuatrimestrales = ['146','415','426','193','444','453'];
@@ -511,6 +510,9 @@ $materias_cuatrimestrales = ['146','415','426','193','444','453'];
 $idMateria = $_POST['materia'] ?? $_GET['materia'] ?? null;
 $turno_seleccionado = $_POST['turno'] ?? $_GET['turno'] ?? null;
 $año = $_POST['año'] ?? $_GET['año'] ?? null;
+// Variables adicionales para el curso y la comisión
+$idCurso = $_POST['curso'] ?? $_GET['curso'] ?? null;
+$idComision = $_POST['comision'] ?? $_GET['comision'] ?? null;
 
 
 // Determinar si la materia es cuatrimestral o anual
@@ -520,78 +522,78 @@ $es_cuatrimestral = in_array($idMateria, $materias_cuatrimestrales);
 switch ($turno_seleccionado) {
     case 1:
         if ($es_cuatrimestral) {
-            $fecha_inicio = date('Y') . "-07-01";
-            $fecha_fin = date('Y') . "-08-31";
+            $fecha_inicio = "$año-07-01";
+            $fecha_fin = "$año-08-31";
             $num_llamados = 1;
         } else {
-            $fecha_inicio = date('Y') . "-11-01";
-            $fecha_fin = date('Y') . "-12-31";
+            $fecha_inicio = "$año-11-01";
+            $fecha_fin = "$año-12-31";
             $num_llamados = 2;
         }
         break;
     case 2:
         if ($es_cuatrimestral) {
-            $fecha_inicio = date('Y') . "-11-01";
-            $fecha_fin = date('Y') . "-12-31";
+            $fecha_inicio = "$año-11-01";
+            $fecha_fin = "$año-12-31";
             $num_llamados = 2;
         } else {
-            $fecha_inicio = date('Y') . "-02-01";
-            $fecha_fin = date('Y') . "-03-31";
+            $fecha_inicio = "$año-02-01";
+            $fecha_fin = "$año-03-31";
             $num_llamados = 2;
         }
         break;
     case 3:
         if ($es_cuatrimestral) {
-            $fecha_inicio = date('Y') . "-02-01";
-            $fecha_fin = date('Y') . "-03-31";
+            $fecha_inicio = "$año-02-01";
+            $fecha_fin = "$año-03-31";
             $num_llamados = 2;
         } else {
-            $fecha_inicio = date('Y') . "-07-01";
-            $fecha_fin = date('Y') . "-08-31";
+            $fecha_inicio = "$año-07-01";
+            $fecha_fin = "$año-08-31";
             $num_llamados = 1;
         }
         break;
     case 4:
         if ($es_cuatrimestral) {
-            $fecha_inicio = date('Y') . "-07-01";
-            $fecha_fin = date('Y') . "-08-31";
+            $fecha_inicio = "$año-07-01";
+            $fecha_fin = "$año-08-31";
             $num_llamados = 1;
         } else {
-            $fecha_inicio = date('Y') . "-11-01";
-            $fecha_fin = date('Y') . "-12-31";
+            $fecha_inicio = "$año-11-01";
+            $fecha_fin = "$año-12-31";
             $num_llamados = 2;
         }
         break;
     case 5:
         if ($es_cuatrimestral) {
-            $fecha_inicio = date('Y') . "-11-01";
-            $fecha_fin = date('Y') . "-12-31";
+            $fecha_inicio = "$año-11-01";
+            $fecha_fin = "$año-12-31";
             $num_llamados = 2;
         } else {
-            $fecha_inicio = date('Y') . "-02-01";
-            $fecha_fin = date('Y') . "-03-31";
+            $fecha_inicio = "$año-02-01";
+            $fecha_fin = "$año-03-31";
             $num_llamados = 2;
         }
         break;
     case 6:
         if ($es_cuatrimestral) {
-            $fecha_inicio = date('Y') . "-02-01";
-            $fecha_fin = date('Y') . "-03-31";
+            $fecha_inicio = "$año-02-01";
+            $fecha_fin = "$año-03-31";
             $num_llamados = 2;
         } else {
-            $fecha_inicio = date('Y') . "-07-01";
-            $fecha_fin = date('Y') . "-08-31";
+            $fecha_inicio = "$año-07-01";
+            $fecha_fin = "$año-08-31";
             $num_llamados = 1;
         }
         break;
     case 7:
         if ($es_cuatrimestral) {
-            $fecha_inicio = date('Y') . "-07-01";
-            $fecha_fin = date('Y') . "-08-31";
+            $fecha_inicio = "$año-07-01";
+            $fecha_fin = "$año-08-31";
             $num_llamados = 1;
         } else {
-            $fecha_inicio = date('Y') . "-11-01";
-            $fecha_fin = date('Y') . "-12-31";
+            $fecha_inicio = "$año-11-01";
+            $fecha_fin = "$año-12-31";
             $num_llamados = 2;
         }
         break;
@@ -602,6 +604,11 @@ switch ($turno_seleccionado) {
         </script>";
         exit;
 }
+
+// Mostrar las fechas para depuración
+echo "Fecha Inicio: $fecha_inicio <br>";
+echo "Fecha Fin: $fecha_fin <br>";
+
 
 // Consulta SQL para obtener los estudiantes inscritos y sus notas en el período actual
 $query = "
@@ -620,20 +627,28 @@ $query = "
     JOIN alumno a ON mf.alumno_legajo = a.legajo
     JOIN fechas_mesas_finales fmf ON mf.fechas_mesas_finales_idfechas_mesas_finales = fmf.idfechas_mesas_finales
     JOIN tandas t ON fmf.tandas_idtandas = t.idtandas
+    JOIN inscripcion_asignatura ia ON ia.alumno_legajo = a.legajo
+    JOIN materias m ON m.comisiones_idComisiones = ia.Comisiones_idComisiones
     LEFT JOIN nota_examen_final nef1 
-        ON mf.alumno_legajo = nef1.alumno_legajo AND nef1.llamado = 1 AND nef1.materias_idMaterias = ?
+        ON mf.alumno_legajo = nef1.alumno_legajo 
+        AND nef1.llamado = 1 
+        AND nef1.materias_idMaterias = ?
     LEFT JOIN nota_examen_final nef2 
-        ON mf.alumno_legajo = nef2.alumno_legajo AND nef2.llamado = 2 AND nef2.materias_idMaterias = ?
+        ON mf.alumno_legajo = nef2.alumno_legajo 
+        AND nef2.llamado = 2 
+        AND nef2.materias_idMaterias = ?
     WHERE mf.materias_idMaterias = ?
       AND t.fecha BETWEEN ? AND ?
-      AND YEAR(t.fecha) = ?
-      GROUP BY mf.alumno_legajo
+      AND ia.año_inscripcion = ?
+      AND ia.cursos_idCursos = ?
+      AND ia.Comisiones_idComisiones = ?
+    GROUP BY mf.alumno_legajo
     ORDER BY a.apellido_alumno ASC
-    
 ";
 
+// Preparar la consulta con los parámetros necesarios
 $stmt = $conexion->prepare($query);
-$stmt->bind_param("iiissi", $idMateria, $idMateria, $idMateria, $fecha_inicio, $fecha_fin, $año);
+$stmt->bind_param("iiissiii", $idMateria, $idMateria, $idMateria, $fecha_inicio, $fecha_fin, $año, $idCurso, $idComision);
 $stmt->execute();
 $result = $stmt->get_result();
 
