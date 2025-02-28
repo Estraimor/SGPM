@@ -524,63 +524,66 @@ if ($result && mysqli_num_rows($result) > 0) {
 <?php
 
 
-// Obtener el ID del profesor y el rol desde la sesión
-$idProfesor = $_SESSION['id'];
-$rolUsuario = $_SESSION['roles'];
+    // Obtener el ID del profesor y el rol desde la sesión
+    $idProfesor = $_SESSION['id'];
+    $rolUsuario = $_SESSION['roles'];
 
-/* =============================
-   1) Consulta de Carreras
-   ============================= */
-if ($rolUsuario == '1') {
-    // Rol 1: Administrador => todas las carreras
-    $sqlCarreras = "SELECT * FROM carreras";
-} else {
-    // Caso contrario: solo las carreras asignadas al profesor
-    $sqlCarreras = "SELECT c.*
-                    FROM carreras c
-                    JOIN preceptores p ON c.idCarrera = p.carreras_idCarrera
-                    WHERE p.profesor_idProrfesor = $idProfesor";
-}
-$resultCarreras = mysqli_query($conexion, $sqlCarreras);
-if (!$resultCarreras) {
-    die("Error al consultar carreras: " . mysqli_error($conexion));
-}
+    /* =============================
+    1) Consulta de Carreras
+    ============================= */
+    if ($rolUsuario == '1') {
+        // Rol 1: Administrador => todas las carreras
+        $sqlCarreras = "SELECT * FROM carreras";
+    } else {
+        // Caso contrario: solo las carreras asignadas al profesor
+        $sqlCarreras = "SELECT c.*
+                        FROM carreras c
+                        JOIN preceptores p ON c.idCarrera = p.carreras_idCarrera
+                        WHERE p.profesor_idProrfesor = $idProfesor
+                        GROUP BY c.idCarrera";
+    }
+    $resultCarreras = mysqli_query($conexion, $sqlCarreras);
+    if (!$resultCarreras) {
+        die("Error al consultar carreras: " . mysqli_error($conexion));
+    }
 
-/* =============================
-   2) Consulta de Comisiones
-   ============================= */
-if ($rolUsuario == '1') {
-    // Rol 1: Administrador => todas las comisiones
-    $sqlComisiones = "SELECT * FROM comisiones";
-} else {
-    // Caso contrario: solo las comisiones asignadas al profesor
-    $sqlComisiones = "SELECT co.*
-                      FROM comisiones co
-                      JOIN preceptores p ON co.idComisiones = p.comisiones_idComisiones
-                      WHERE p.profesor_idProrfesor = $idProfesor";
-}
-$resultComisiones = mysqli_query($conexion, $sqlComisiones);
-if (!$resultComisiones) {
-    die("Error al consultar comisiones: " . mysqli_error($conexion));
-}
+    /* =============================
+    2) Consulta de Comisiones
+    ============================= */
+    if ($rolUsuario == '1') {
+        // Rol 1: Administrador => todas las comisiones
+        $sqlComisiones = "SELECT * FROM comisiones";
+    } else {
+        // Caso contrario: solo las comisiones asignadas al profesor
+        $sqlComisiones = "SELECT co.*
+                        FROM comisiones co
+                        JOIN preceptores p ON co.idComisiones = p.comisiones_idComisiones
+                        WHERE p.profesor_idProrfesor = $idProfesor
+                        GROUP BY co.idComisiones";
+    }
+    $resultComisiones = mysqli_query($conexion, $sqlComisiones);
+    if (!$resultComisiones) {
+        die("Error al consultar comisiones: " . mysqli_error($conexion));
+    }
 
-/* =============================
-   3) Consulta de Cursos
-   ============================= */
-if ($rolUsuario == '1') {
-    // Rol 1: Administrador => todos los cursos
-    $sqlCursos = "SELECT * FROM cursos";
-} else {
-    // Caso contrario: solo los cursos asignados al profesor
-    $sqlCursos = "SELECT cu.*
-                  FROM cursos cu
-                  JOIN preceptores p ON cu.idCursos = p.cursos_idCursos
-                  WHERE p.profesor_idProrfesor = $idProfesor";
-}
-$resultCursos = mysqli_query($conexion, $sqlCursos);
-if (!$resultCursos) {
-    die("Error al consultar cursos: " . mysqli_error($conexion));
-}
+    /* =============================
+    3) Consulta de Cursos
+    ============================= */
+    if ($rolUsuario == '1') {
+        // Rol 1: Administrador => todos los cursos
+        $sqlCursos = "SELECT * FROM cursos";
+    } else {
+        // Caso contrario: solo los cursos asignados al profesor
+        $sqlCursos = "SELECT cu.*
+                    FROM cursos cu
+                    JOIN preceptores p ON cu.idCursos = p.cursos_idCursos
+                    WHERE p.profesor_idProrfesor = $idProfesor
+                    GROUP BY cu.idCursos";
+    }
+    $resultCursos = mysqli_query($conexion, $sqlCursos);
+    if (!$resultCursos) {
+        die("Error al consultar cursos: " . mysqli_error($conexion));
+    }
 ?>
 
 <!-- Suponiendo que ya has hecho el include del PHP que obtiene $resultCarreras, $resultCursos, $resultComisiones -->
@@ -601,46 +604,32 @@ if (!$resultCursos) {
                 ?>
             </select>
 
-            
-            
             <!-- FILTRO: CURSO -->
-            <label for="curso">Seleccione un curso:</label>
+            <label for="selectCurso">Seleccione un curso:</label>
             <select id="selectCurso" name="curso" class="input-form" required>
                 <option value="">Seleccione un curso</option>
-                <?php
-                while ($rowC = mysqli_fetch_assoc($resultCursos)) {
-                    echo '<option value="' . $rowC['idCursos'] . '">' . $rowC['curso'] . '</option>';
-                }
-                ?>
             </select>
             
             <!-- FILTRO: COMISIÓN -->
-            <label for="comision">Seleccione una comisión:</label>
+            <label for="selectComision">Seleccione una comisión:</label>
             <select id="selectComision" name="comision" class="input-form" required>
                 <option value="">Seleccione una comisión</option>
-                <?php
-                while ($rowCo = mysqli_fetch_assoc($resultComisiones)) {
-                    echo '<option value="' . $rowCo['idComisiones'] . '">' . $rowCo['comision'] . '</option>';
-                }
-                ?>
             </select>
             
             <!-- FILTRO: MATERIA -->
-            <label for="materia">Seleccione una Unidad Curricular:</label>
+            <label for="selectMateria">Seleccione una Unidad Curricular:</label>
             <select id="selectMateria" name="materia" class="input-form" required>
                 <option value="">Seleccione una Unidad Curricular</option>
             </select>
 
             <!-- FILTRO: TURNO -->
-            <!-- FILTRO: TURNO -->
-<label for="turno">Seleccione un turno:</label>
-<select id="selectTurno" name="turno" class="input-form" required>
-    <option hidden value="">Selecciona un turno</option>
-</select>
-
+            <label for="selectTurno">Seleccione un turno:</label>
+            <select id="selectTurno" name="turno" class="input-form" required>
+                <option hidden value="">Selecciona un turno</option>
+            </select>
 
             <!-- FILTRO: AÑO -->
-            <label for="turno">Seleccione un año:</label>
+            <label for="año">Seleccione un año:</label>
             <select name="año" class="input-form" required>
                 <option hidden value="">Selecciona un año</option>
                 <?php for ($year = 2024; $year <= 2034; $year++) { ?>
@@ -653,18 +642,23 @@ if (!$resultCursos) {
     </div>
 </div>
 
+
 <!-- ================================
      INICIO DEL SCRIPT COMPLETO
    ================================ -->
-<script>
-   // 1) Lista de materias cuatrimestrales (IDs) para actualizar turnos
+   <script>
+// 1) Lista de materias cuatrimestrales (IDs) para actualizar turnos
 const materiasCuatrimestrales = ['146', '415', '426', '193', '444', '453'];
 
-// 2) Función que actualiza las opciones del turno según si la materia es cuatrimestral
-function actualizarTurnos(isCuatrimestral) {
-    const selectTurno = document.getElementById('selectTurno');
+// Selectores de los campos del formulario
+const selectCarrera  = document.getElementById('selectCarrera');
+const selectCurso    = document.getElementById('selectCurso');
+const selectComision = document.getElementById('selectComision');
+const selectMateria  = document.getElementById('selectMateria');
+const selectTurno    = document.getElementById('selectTurno');
 
-    // Definir las opciones de turno con los meses
+// 2) Función para actualizar las opciones del turno basado en si la materia es cuatrimestral
+function actualizarTurnos(isCuatrimestral) {
     const opcionesTurno = isCuatrimestral
         ? [
             { value: "1", text: "Turno 1 (Julio - Agosto)" },
@@ -685,10 +679,8 @@ function actualizarTurnos(isCuatrimestral) {
             { value: "7", text: "Turno 7 (Noviembre - Diciembre)" }
           ];
 
-    // Limpiar las opciones actuales del select de turnos
+    // Limpiar y agregar nuevas opciones dinámicamente
     selectTurno.innerHTML = '<option hidden value="">Selecciona un turno</option>';
-
-    // Agregar las nuevas opciones dinámicamente
     opcionesTurno.forEach(opc => {
         const optionElement = document.createElement('option');
         optionElement.value = opc.value;
@@ -697,108 +689,111 @@ function actualizarTurnos(isCuatrimestral) {
     });
 }
 
-    // 3) Escucha el cambio en "selectMateria" para cambiar turnos si la materia es cuatrimestral
-    document.getElementById('selectMateria').addEventListener('change', function() {
-        const materiaId = this.value;
-        const isCuatrimestral = materiasCuatrimestrales.includes(materiaId);
-        actualizarTurnos(isCuatrimestrales.includes(materiaId));
-    });
-
-   // 3) Detectar el cambio en el select de materias
-document.getElementById('selectMateria').addEventListener('change', function() {
-    const materiaId = this.value;
+// 3) Detectar cambios en el select de materias y actualizar turnos en tiempo real
+selectMateria.addEventListener('change', () => {
+    const materiaId = selectMateria.value;
     const isCuatrimestral = materiasCuatrimestrales.includes(materiaId);
     actualizarTurnos(isCuatrimestral);
 });
 
-// 4) Cargar materias dinámicamente (ajustado para asegurar que se actualicen correctamente)
-const selectCarrera  = document.getElementById('selectCarrera');
-const selectCurso    = document.getElementById('selectCurso');
-const selectComision = document.getElementById('selectComision');
-const selectMateria  = document.getElementById('selectMateria');
+// 4) Cargar cursos y comisiones dinámicamente en tiempo real al seleccionar carrera
+selectCarrera.addEventListener('change', () => {
+    const carreraId = selectCarrera.value;
+    if (!carreraId) return;
 
-function cargarMaterias() {
-    const carreraId  = selectCarrera.value;
-    const cursoId    = selectCurso.value;
-    const comisionId = selectComision.value;
+    // Cargar cursos dinámicamente
+    fetch('cargar_cursos.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: new URLSearchParams({idCarrera: carreraId})
+    })
+    .then(response => response.text())
+    .then(data => {
+        selectCurso.innerHTML = data;
+        selectCurso.disabled = false;
+    })
+    .catch(error => console.error('Error al cargar cursos:', error));
 
-    if (carreraId && cursoId && comisionId) {
-        const params = new URLSearchParams();
-        params.append('carrera_id',  carreraId);
-        params.append('curso_id',    cursoId);
-        params.append('comision_id', comisionId);
+    // Cargar comisiones dinámicamente
+    fetch('cargar_comisiones.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: new URLSearchParams({idCarrera: carreraId})
+    })
+    .then(response => response.text())
+    .then(data => {
+        selectComision.innerHTML = data;
+        selectComision.disabled = false;
+    })
+    .catch(error => console.error('Error al cargar comisiones:', error));
+});
 
-        fetch('obtener_materias_preces_mesas_final.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: params.toString()
-        })
-        .then(response => response.json())
-        .then(materias => {
-            console.log("Materias recibidas:", materias);
-            selectMateria.innerHTML = '<option value="">Seleccione una Unidad Curricular</option>';
-            
-            materias.forEach(m => {
-                const option = document.createElement('option');
-                option.value = m.idMaterias;
-                option.text  = m.Nombre;
-                selectMateria.appendChild(option);
-            });
-            selectMateria.disabled = false;
-        })
-        .catch(error => {
-            console.error('Error al cargar materias:', error);
-            selectMateria.innerHTML = '<option value="">Error cargando materias</option>';
-            selectMateria.disabled = true;
-        });
-    } else {
-        selectMateria.innerHTML = '<option value="">Seleccione una Unidad Curricular</option>';
-        selectMateria.disabled = true;
-    }
-}
+// 5) Cargar materias dinámicamente al seleccionar curso o comisión
+[selectCurso, selectComision].forEach(select => {
+    select.addEventListener('change', () => {
+        const carreraId  = selectCarrera.value;
+        const cursoId    = selectCurso.value;
+        const comisionId = selectComision.value;
 
-// Escuchar cambios en carrera, curso y comisión
-selectCarrera.addEventListener('change', cargarMaterias);
-selectCurso.addEventListener('change', cargarMaterias);
-selectComision.addEventListener('change', cargarMaterias);
+        if (carreraId && cursoId && comisionId) {
+            fetch('obtener_materias_preces_mesas_final.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: new URLSearchParams({
+                    carrera_id:  carreraId,
+                    curso_id:    cursoId,
+                    comision_id: comisionId
+                })
+            })
+            .then(response => response.json())
+            .then(materias => {
+                selectMateria.innerHTML = '<option value="">Seleccione una Unidad Curricular</option>';
+                materias.forEach(m => {
+                    const option = document.createElement('option');
+                    option.value = m.idMaterias;
+                    option.text  = m.Nombre;
+                    selectMateria.appendChild(option);
+                });
+                selectMateria.disabled = false;
+            })
+            .catch(error => console.error('Error al cargar materias:', error));
+        }
+    });
+});
 
-    // ==========================
-    // 5) Validar selects antes de enviar (ya lo tenías)
-    // ==========================
-    document.addEventListener("DOMContentLoaded", function () {
-        const form = document.querySelector("form");
-        const selects = document.querySelectorAll("select");
+// 6) Validar selects antes de enviar el formulario
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.querySelector("form");
+    const selects = document.querySelectorAll("select");
 
-        form.addEventListener("submit", function (event) {
-            let allSelected = true;
+    form.addEventListener("submit", event => {
+        let allSelected = true;
 
-            selects.forEach(select => {
-                if (select.value === "") {
-                    allSelected = false;
-                    select.classList.add("error"); // Agregar clase para indicar error visualmente
-                } else {
-                    select.classList.remove("error");
-                }
-            });
-
-            if (!allSelected) {
-                event.preventDefault(); // Detener el envío del formulario
-                alert("Por favor, selecciona todos los campos antes de continuar.");
+        selects.forEach(select => {
+            if (select.value === "") {
+                allSelected = false;
+                select.classList.add("error");
+            } else {
+                select.classList.remove("error");
             }
         });
 
-        // Remueve la clase de error al cambiar la selección
-        selects.forEach(select => {
-            select.addEventListener("change", function () {
-                if (select.value !== "") {
-                    select.classList.remove("error");
-                }
-            });
+        if (!allSelected) {
+            event.preventDefault();
+            alert("Por favor, selecciona todos los campos antes de continuar.");
+        }
+    });
+
+    selects.forEach(select => {
+        select.addEventListener("change", () => {
+            if (select.value !== "") {
+                select.classList.remove("error");
+            }
         });
     });
+});
 </script>
+
 <!-- ================================
      FIN DEL SCRIPT COMPLETO
    ================================ -->
