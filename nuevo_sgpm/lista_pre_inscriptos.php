@@ -550,7 +550,7 @@ $sql1 = "SELECT a.*, c.nombre_carrera
          INNER JOIN alumno a ON ia.alumno_legajo = a.legajo
          INNER JOIN preceptores p ON p.carreras_idCarrera = ia.carreras_idCarrera
          INNER JOIN carreras c ON ia.carreras_idCarrera = c.idCarrera
-         WHERE a.estado = '3'
+         WHERE ia.año_inscripcion = year(now())
          GROUP BY ia.alumno_legajo";
 
 $query1 = mysqli_query($conexion, $sql1);
