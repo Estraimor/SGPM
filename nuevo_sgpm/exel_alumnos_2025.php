@@ -42,7 +42,9 @@ foreach (range(1, count($encabezados)) as $columnIndex) {
 }
 
 // Consultar los registros de la tabla 'alumno' con estado = 3
-$sql = "SELECT * FROM alumno WHERE estado = 3";
+$sql = "SELECT * FROM alumno a
+JOIN inscripcion_asignatura ia on ia.alumno_legajo = a.legajo
+WHERE ia.año_inscripcion = 2025";
 $result = $conexion->query($sql);
 
 $rowIndex = 2; // Empezar en la fila 2 para los datos
