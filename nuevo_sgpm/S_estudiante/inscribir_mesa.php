@@ -2,23 +2,19 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-session_start();  // Asegurar que la sesión esté iniciada
+session_start();  
 
 include '../../conexion/conexion.php';
 
-// Verificar si la variable de sesión 'id' (legajo del estudiante) está configurada
+// Verificar si la variable de sesión 'id' está configurada
 if (!isset($_SESSION['id'])) {
     echo json_encode(['success' => false, 'message' => 'No se encontró el legajo del estudiante en la sesión.']);
     exit();
 }
 
-// Obtener el legajo del estudiante desde la sesión
 $alumno_legajo = $_SESSION['id'];
-
-// Obtener los datos enviados desde el frontend
 $data = json_decode(file_get_contents("php://input"), true);
 
-// Verificar que los datos se hayan recibido correctamente
 if (!$data || !isset($data['idFecha']) || !isset($data['tanda'])) {
     echo json_encode(['success' => false, 'message' => 'Datos inválidos recibidos.']);
     exit();
@@ -74,7 +70,7 @@ if ($rowVerificarFecha['count'] > 0) {
     exit();
 }
 
-// Verificar si hay cupo disponible para la mesa seleccionada
+// Verificar si hay cupo disponible
 $queryCupo = "
     SELECT t.cupo 
     FROM tandas t
@@ -95,7 +91,7 @@ if ($rowCupo['cupo'] <= 0) {
     exit();
 }
 
-// Obtener el ID de la materia principal y la materia pedagógica asociada desde la tabla mesas_pedagogicas, verificando en ambas direcciones
+// ✅ Obtener la materia pedagógica como en el código antiguo
 $queryMateriasPedagogicas = "
     SELECT 
         CASE 
@@ -105,7 +101,8 @@ $queryMateriasPedagogicas = "
         END AS materia_asociada,
         fm.materias_idMaterias AS materia_principal_id
     FROM fechas_mesas_finales fm
-    LEFT JOIN mesas_pedagogicas mp ON fm.materias_idMaterias IN (mp.materias_idMaterias, mp.materias_idMaterias1)
+    LEFT JOIN mesas_pedagogicas mp 
+        ON fm.materias_idMaterias IN (mp.materias_idMaterias, mp.materias_idMaterias1)
     WHERE fm.idfechas_mesas_finales = '$idFecha'";
 
 $resultMateriasPedagogicas = mysqli_query($conexion, $queryMateriasPedagogicas);
@@ -119,7 +116,7 @@ if ($resultMateriasPedagogicas && mysqli_num_rows($resultMateriasPedagogicas) > 
     $materiaAsociadaId = $rowMaterias['materia_asociada'];
 }
 
-// Función para inscribir al estudiante en una mesa
+// ✅ Funciones reutilizables
 function inscribirEnMesa($conexion, $alumno_legajo, $materiaId, $fechaMesaId) {
     $queryInscribir = "
         INSERT INTO mesas_finales (alumno_legajo, materias_idMaterias, fechas_mesas_finales_idfechas_mesas_finales)
@@ -127,7 +124,6 @@ function inscribirEnMesa($conexion, $alumno_legajo, $materiaId, $fechaMesaId) {
     return mysqli_query($conexion, $queryInscribir);
 }
 
-// Función para actualizar el cupo
 function actualizarCupo($conexion, $fechaMesaId) {
     $queryActualizarCupo = "
         UPDATE tandas t
@@ -137,14 +133,13 @@ function actualizarCupo($conexion, $fechaMesaId) {
     return mysqli_query($conexion, $queryActualizarCupo);
 }
 
-// Inscripción en la mesa principal (siempre se hace esta inscripción)
+// Inscripción en la mesa principal
 $inscripcionPrincipal = inscribirEnMesa($conexion, $alumno_legajo, $materiaPrincipalId, $idFecha);
 $cupoPrincipal = actualizarCupo($conexion, $idFecha);
 
 if ($inscripcionPrincipal && $cupoPrincipal) {
-    // Verificar si existe una materia pedagógica asociada
+    // Si hay materia pedagógica, inscribirla
     if ($materiaAsociadaId) {
-        // Obtener el idFecha correspondiente a la materia asociada con el mismo tanda y llamado
         $queryFechaPedagogica = "
             SELECT idfechas_mesas_finales 
             FROM fechas_mesas_finales fm
@@ -160,17 +155,12 @@ if ($inscripcionPrincipal && $cupoPrincipal) {
             $rowFechaPedagogica = mysqli_fetch_assoc($resultFechaPedagogica);
             $idFechaPedagogica = $rowFechaPedagogica['idfechas_mesas_finales'];
 
-            // Inscribir en la mesa pedagógica
             $inscripcionPedagogica = inscribirEnMesa($conexion, $alumno_legajo, $materiaAsociadaId, $idFechaPedagogica);
             $cupoPedagogico = actualizarCupo($conexion, $idFechaPedagogica);
 
-            if ($inscripcionPedagogica && $cupoPedagogico) {
-                echo json_encode(['success' => true, 'message' => 'Inscripción exitosa en ambas mesas.']);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Inscripción en la mesa principal exitosa, pero fallo en la pedagógica.']);
-            }
+            echo json_encode(['success' => ($inscripcionPedagogica && $cupoPedagogico), 'message' => 'Inscripción exitosa en ambas mesas.']);
         } else {
-            echo json_encode(['success' => true, 'message' => 'Inscripción exitosa solo en la mesa principal, sin mesa pedagógica.']);
+            echo json_encode(['success' => true, 'message' => 'Inscripción exitosa solo en la mesa principal.']);
         }
     } else {
         echo json_encode(['success' => true, 'message' => 'Inscripción exitosa solo en la mesa principal.']);
