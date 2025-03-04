@@ -51,11 +51,17 @@ if ($alumno_legajo) {
 
     // Obtener datos de las materias inscritas con fecha y tanda desde `tandas`
     $query = "SELECT m.Nombre, t.fecha, t.llamado, t.tanda 
-              FROM mesas_finales mf
-              JOIN materias m ON mf.materias_idMaterias = m.idMaterias
-              JOIN fechas_mesas_finales fm ON mf.fechas_mesas_finales_idfechas_mesas_finales = fm.idfechas_mesas_finales
-              JOIN tandas t ON fm.tandas_idtandas = t.idtandas
-              WHERE mf.alumno_legajo = ?";
+          FROM mesas_finales mf
+          JOIN materias m ON mf.materias_idMaterias = m.idMaterias
+          JOIN fechas_mesas_finales fm ON mf.fechas_mesas_finales_idfechas_mesas_finales = fm.idfechas_mesas_finales
+          JOIN tandas t ON fm.tandas_idtandas = t.idtandas
+          WHERE mf.alumno_legajo = ?
+          AND (
+              (MONTH(t.fecha) IN (2, 3)) OR 
+              (MONTH(t.fecha) IN (7, 8)) OR 
+              (MONTH(t.fecha) IN (11, 12))
+          )
+          AND YEAR(t.fecha) = YEAR(CURDATE())";
               
     $stmt = $conexion->prepare($query);
     $stmt->bind_param("i", $alumno_legajo);
