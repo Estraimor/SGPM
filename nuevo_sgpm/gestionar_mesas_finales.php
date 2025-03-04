@@ -771,7 +771,7 @@ if ($result && mysqli_num_rows($result) > 0) {
 
   <!-- Filtros adicionales -->
   <label for="filterFecha">Fecha:</label>
-  <input type="date" id="filterFecha">
+  <input type="datetime-local" id="filterFecha">
   <!-- Botón para limpiar la fecha -->
   <button type="button" id="clearFecha" title="Limpiar fecha">🗑️</button>
 
@@ -824,7 +824,8 @@ if ($result && mysqli_num_rows($result) > 0) {
               JOIN tandas t ON fm.tandas_idtandas = t.idtandas
               JOIN carreras c ON m.carreras_idCarrera  = c.idCarrera
               JOIN cursos cu on m.cursos_idCursos = cu.idCursos
-              JOIN comisiones com on m.comisiones_idComisiones = com.idComisiones";
+              JOIN comisiones com on m.comisiones_idComisiones = com.idComisiones
+              ORDER BY t.fecha DESC";
 
     $result = mysqli_query($conexion, $query);
 
