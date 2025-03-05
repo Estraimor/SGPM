@@ -29,7 +29,7 @@ if (!$conexion) {
     exit();
 }
 
-// Obtener la fecha de la mesa seleccionada
+// Obtener la fecha y llamado de la mesa seleccionada
 $queryFecha = "
     SELECT t.fecha, t.llamado 
     FROM tandas t
@@ -37,7 +37,6 @@ $queryFecha = "
     WHERE fm.idfechas_mesas_finales = '$idFecha'";
 
 $resultFecha = mysqli_query($conexion, $queryFecha);
-
 if (!$resultFecha) {
     echo json_encode(['success' => false, 'message' => 'Error al obtener la fecha de la mesa: ' . mysqli_error($conexion)]);
     exit();
@@ -57,14 +56,12 @@ $queryVerificarFecha = "
     AND DATE(t.fecha) = DATE('$fechaMesa')";
 
 $resultVerificarFecha = mysqli_query($conexion, $queryVerificarFecha);
-
 if (!$resultVerificarFecha) {
     echo json_encode(['success' => false, 'message' => 'Error en la verificación de inscripción en la misma fecha: ' . mysqli_error($conexion)]);
     exit();
 }
 
 $rowVerificarFecha = mysqli_fetch_assoc($resultVerificarFecha);
-
 if ($rowVerificarFecha['count'] > 0) {
     echo json_encode(['success' => false, 'message' => 'Solo puedes rendir una materia por día.']);
     exit();
@@ -78,20 +75,18 @@ $queryCupo = "
     WHERE fm.idfechas_mesas_finales = '$idFecha'";
 
 $resultCupo = mysqli_query($conexion, $queryCupo);
-
 if (!$resultCupo) {
     echo json_encode(['success' => false, 'message' => 'Error en la consulta de cupo: ' . mysqli_error($conexion)]);
     exit();
 }
 
 $rowCupo = mysqli_fetch_assoc($resultCupo);
-
 if ($rowCupo['cupo'] <= 0) {
     echo json_encode(['success' => false, 'message' => 'Cupo agotado para esta mesa.']);
     exit();
 }
 
-// ✅ Obtener la materia pedagógica como en el código antiguo
+// Obtener la materia pedagógica si existe
 $queryMateriasPedagogicas = "
     SELECT 
         CASE 
@@ -106,7 +101,6 @@ $queryMateriasPedagogicas = "
     WHERE fm.idfechas_mesas_finales = '$idFecha'";
 
 $resultMateriasPedagogicas = mysqli_query($conexion, $queryMateriasPedagogicas);
-
 $materiaPrincipalId = null;
 $materiaAsociadaId = null;
 
@@ -116,7 +110,7 @@ if ($resultMateriasPedagogicas && mysqli_num_rows($resultMateriasPedagogicas) > 
     $materiaAsociadaId = $rowMaterias['materia_asociada'];
 }
 
-// ✅ Funciones reutilizables
+// 📌 Funciones para inscripción y actualización de cupo
 function inscribirEnMesa($conexion, $alumno_legajo, $materiaId, $fechaMesaId) {
     $queryInscribir = "
         INSERT INTO mesas_finales (alumno_legajo, materias_idMaterias, fechas_mesas_finales_idfechas_mesas_finales)
@@ -133,39 +127,45 @@ function actualizarCupo($conexion, $fechaMesaId) {
     return mysqli_query($conexion, $queryActualizarCupo);
 }
 
-// Inscripción en la mesa principal
+// Inscripción en la materia principal
 $inscripcionPrincipal = inscribirEnMesa($conexion, $alumno_legajo, $materiaPrincipalId, $idFecha);
 $cupoPrincipal = actualizarCupo($conexion, $idFecha);
 
-if ($inscripcionPrincipal && $cupoPrincipal) {
-    // Si hay materia pedagógica, inscribirla
-    if ($materiaAsociadaId) {
-        $queryFechaPedagogica = "
-            SELECT idfechas_mesas_finales 
-            FROM fechas_mesas_finales fm
-            JOIN tandas t ON fm.tandas_idtandas = t.idtandas
-            WHERE fm.materias_idMaterias = '$materiaAsociadaId'
-            AND t.tanda = '$tanda' 
-            AND t.llamado = '$llamado'
-            LIMIT 1";
+if (!$inscripcionPrincipal || !$cupoPrincipal) {
+    echo json_encode(['success' => false, 'message' => 'Error al inscribirse en la mesa principal.']);
+    exit();
+}
 
-        $resultFechaPedagogica = mysqli_query($conexion, $queryFechaPedagogica);
-        
-        if ($resultFechaPedagogica && mysqli_num_rows($resultFechaPedagogica) > 0) {
-            $rowFechaPedagogica = mysqli_fetch_assoc($resultFechaPedagogica);
-            $idFechaPedagogica = $rowFechaPedagogica['idfechas_mesas_finales'];
+$mensaje = "✅ Inscripción exitosa en la materia principal.";
 
-            $inscripcionPedagogica = inscribirEnMesa($conexion, $alumno_legajo, $materiaAsociadaId, $idFechaPedagogica);
-            $cupoPedagogico = actualizarCupo($conexion, $idFechaPedagogica);
+// 📌 Si hay una materia pedagógica, inscribirla también
+if ($materiaAsociadaId) {
+    $queryFechaPedagogica = "
+        SELECT idfechas_mesas_finales 
+        FROM fechas_mesas_finales 
+        WHERE materias_idMaterias = '$materiaAsociadaId'
+        AND tandas_idtandas = (SELECT tandas_idtandas FROM fechas_mesas_finales WHERE idfechas_mesas_finales = '$idFecha')
+        LIMIT 1";
 
-            echo json_encode(['success' => ($inscripcionPedagogica && $cupoPedagogico), 'message' => 'Inscripción exitosa en ambas mesas.']);
+    $resultFechaPedagogica = mysqli_query($conexion, $queryFechaPedagogica);
+    
+    if ($resultFechaPedagogica && mysqli_num_rows($resultFechaPedagogica) > 0) {
+        $rowFechaPedagogica = mysqli_fetch_assoc($resultFechaPedagogica);
+        $idFechaPedagogica = $rowFechaPedagogica['idfechas_mesas_finales'];
+
+        // Inscribir en la materia pedagógica
+        $inscripcionPedagogica = inscribirEnMesa($conexion, $alumno_legajo, $materiaAsociadaId, $idFechaPedagogica);
+        $cupoPedagogico = actualizarCupo($conexion, $idFechaPedagogica);
+
+        if ($inscripcionPedagogica && $cupoPedagogico) {
+            $mensaje .= " También inscripto en la materia pedagógica.";
         } else {
-            echo json_encode(['success' => true, 'message' => 'Inscripción exitosa solo en la mesa principal.']);
+            $mensaje .= " ⚠️ Error al inscribirse en la materia pedagógica.";
         }
     } else {
-        echo json_encode(['success' => true, 'message' => 'Inscripción exitosa solo en la mesa principal.']);
+        $mensaje .= " ❌ No se encontró una mesa disponible para la materia pedagógica.";
     }
-} else {
-    echo json_encode(['success' => false, 'message' => 'Error al inscribirse en la mesa principal.']);
 }
+
+echo json_encode(['success' => true, 'message' => $mensaje]);
 ?>
