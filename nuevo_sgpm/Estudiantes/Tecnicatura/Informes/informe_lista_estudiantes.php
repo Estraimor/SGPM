@@ -517,54 +517,60 @@ if ($result && mysqli_num_rows($result) > 0) {
 	</div>
 	
 </div>
+<?php
+
+$idPreceptor = $_SESSION['id'];
+$rolUsuario = $_SESSION["roles"];
+
+// Consulta para obtener las carreras según el rol del usuario
+if ($rolUsuario == 1) {
+    $sql_carreras = "SELECT DISTINCT c.idCarrera, c.nombre_carrera FROM carreras c";
+} else {
+    $sql_carreras = "SELECT DISTINCT c.idCarrera, c.nombre_carrera 
+                     FROM carreras c
+                     INNER JOIN preceptores p ON c.idCarrera = p.carreras_idCarrera
+                     WHERE p.profesor_idProfesor = '{$idPreceptor}'";
+}
+$consulta_carreras = mysqli_query($conexion, $sql_carreras);
+
+// Consulta para obtener cursos según la carrera seleccionada y el rol del usuario
+if ($rolUsuario == 1) {
+    $sql_cursos = "SELECT DISTINCT cu.idCursos, cu.curso FROM cursos cu";
+} else {
+    $sql_cursos = "SELECT DISTINCT cu.idCursos, cu.curso 
+                   FROM cursos cu
+                   INNER JOIN preceptores p ON cu.idCursos = p.cursos_idCursos
+                   WHERE p.profesor_idProfesor = '{$idPreceptor}'";
+}
+$consulta_cursos = mysqli_query($conexion, $sql_cursos);
+?>
+
 <div class="contenido" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; padding: 20px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
-    <!-- Cuadro para el select -->
     <div class="select-container" style="flex: 1; padding: 20px; background-color: #f9f9f9; border-radius: 8px; border: 1px solid #ddd;">
         <h2 class="titulo-informe" style="color: #f3545d; font-family: 'Arial', sans-serif; font-weight: bold; margin-bottom: 20px;">Selecciona una carrera</h2>
+        
         <form action="../../../../indexs/generar_exel_alumnos.php" method="post">
-            <?php
-            // Obtener el ID del preceptor y el rol desde la sesión
-            $idPreceptor = $_SESSION['id'];  // Asegúrate de tener el ID del preceptor guardado en la sesión
-            $rolUsuario = $_SESSION["roles"]; // Asegúrate de tener el rol guardado en la sesión
-
-            // Definimos la consulta dependiendo del rol
-            if ($rolUsuario == 1) {
-                // Si el rol es 1, mostrar todas las carreras que tienen materias con personas asociadas en inscripcion_asignatura
-                $sql_mater = "
-                    SELECT DISTINCT c.idCarrera, c.nombre_carrera
-                    FROM carreras c
-                    INNER JOIN materias m ON c.idCarrera = m.carreras_idCarrera
-                    INNER JOIN inscripcion_asignatura ia ON ia.carreras_idCarrera = c.idCarrera
-                ";
-            } elseif ($rolUsuario == 5) {
-                // Si el rol es 5, mostrar todas las carreras asignadas a las materias del preceptor y con personas asociadas en inscripcion_asignatura
-                $sql_mater = "
-                    SELECT DISTINCT c.idCarrera, c.nombre_carrera
-                    FROM carreras c
-                    INNER JOIN materias m ON c.idCarrera = m.carreras_idCarrera
-                    INNER JOIN inscripcion_asignatura ia ON ia.carreras_idCarrera = c.idCarrera
-                    WHERE c.profesor_idProrfesor = '{$idPreceptor}'
-                ";
-            } else {
-                // Si el rol no es 1 ni 5, mostrar solo las carreras asignadas al preceptor y con personas asociadas en inscripcion_asignatura
-                $sql_mater = "
-                    SELECT DISTINCT c.idCarrera, c.nombre_carrera
-                    FROM carreras c
-                    INNER JOIN materias m ON c.idCarrera = m.carreras_idCarrera
-                    INNER JOIN inscripcion_asignatura ia ON ia.carreras_idCarrera = c.idCarrera
-                    WHERE m.profesor_idProrfesor = '{$idPreceptor}'
-                ";
-            }
-
-            // Ejecutar la consulta
-            $peticion = mysqli_query($conexion, $sql_mater);
-            ?>      
-            <select name="carrera" class="seleccionar_carrera" style="width: 100%; padding: 12px; border: 1px solid #f3545d; border-radius: 5px; font-family: 'Arial', sans-serif; margin-bottom: 20px;"> 
+            <!-- Select de carrera -->
+            <select name="carrera" id="seleccionar_carrera" class="seleccionar_carrera" style="width: 100%; padding: 12px; border: 1px solid #f3545d; border-radius: 5px; font-family: 'Arial', sans-serif; margin-bottom: 20px;">
                 <option hidden>Selecciona una carrera</option>
-                <?php while ($informacion = mysqli_fetch_assoc($peticion)) { ?>
-                    <option value="<?php echo $informacion['idCarrera'] ?>"><?php echo $informacion['nombre_carrera'] ?></option>
+                <?php while ($fila = mysqli_fetch_assoc($consulta_carreras)) { ?>
+                    <option value="<?php echo $fila['idCarrera'] ?>"><?php echo $fila['nombre_carrera'] ?></option>
                 <?php } ?>
             </select>
+
+            <!-- Select de curso -->
+            <select name="curso" id="seleccionar_curso" class="seleccionar_curso" style="width: 100%; padding: 12px; border: 1px solid #f3545d; border-radius: 5px; font-family: 'Arial', sans-serif; margin-bottom: 20px;">
+                <option hidden>Selecciona un curso</option>
+                <?php while ($fila = mysqli_fetch_assoc($consulta_cursos)) { ?>
+                    <option value="<?php echo $fila['idCursos'] ?>"><?php echo $fila['curso'] ?></option>
+                <?php } ?>
+            </select>
+
+            <!-- Select de comisión (se genera dinámicamente) -->
+            <select name="comision" id="seleccionar_comision" style="width: 100%; padding: 12px; border: 1px solid #f3545d; border-radius: 5px; font-family: 'Arial', sans-serif; margin-bottom: 20px;">
+                <option hidden>Selecciona una comisión</option>
+            </select>
+
             <input type="submit" value="Generar Lista de Estudiantes" class="Generar-lista" style="width: 100%; padding: 12px; background-color: #f3545d; color: white; border: none; border-radius: 5px; font-family: 'Arial', sans-serif; font-size: 16px; cursor: pointer; transition: background-color 0.3s;">
         </form>
     </div>
@@ -579,15 +585,97 @@ if ($result && mysqli_num_rows($result) > 0) {
                     <th style="padding: 10px;">Nombre</th>
                     <th style="padding: 10px;">Apellido</th>
                     <th style="padding: 10px;">DNI</th>
-                  
                 </tr>
             </thead>
-            <tbody style="color: #333;">
-            </tbody>
+            <tbody style="color: #333;"></tbody>
         </table>
     </div>
 </div>
 
+<!--   Core JS Files   -->
+<script src="../../../assets/js/core/jquery.3.2.1.min.js"></script>
+<script src="../../../assets/js/core/bootstrap.min.js"></script>
+<!-- jQuery UI -->
+<script src="../../../assets/js/plugin/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>
+<!-- jQuery Scrollbar -->
+<script src="../../../assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
+<!-- Azzara JS -->
+<script src="../../../assets/js/ready.min.js"></script>
+
+<!-- jQuery para manejar AJAX -->
+<script>
+$(document).ready(function() {
+    $('#seleccionar_curso').on('change', function() {
+        let idCarrera = $('#seleccionar_carrera').val();
+        let idCurso = $(this).val();
+
+        if (idCarrera && idCurso) {
+            $.ajax({
+                url: './confi_lista_estu/obtener_comisiones.php',
+                type: 'GET',
+                data: { idCarrera: idCarrera, idCurso: idCurso },
+                dataType: 'json',
+                success: function(data) {
+                    let selectComision = $('#seleccionar_comision');
+                    selectComision.empty().append('<option hidden>Selecciona una comisión</option>');
+
+                    if (data.length > 0) {
+                        $.each(data, function(index, comision) {
+                            selectComision.append(`<option value="${comision.idComisiones}">${comision.comision}</option>`);
+                        });
+                    } else {
+                        selectComision.append('<option>No hay comisiones disponibles</option>');
+                    }
+                },
+                error: function() {
+                    alert('Error al obtener las comisiones.');
+                }
+            });
+        }
+    });
+
+    $('#seleccionar_comision').on('change', function() {
+    let idCarrera = $('#seleccionar_carrera').val();
+    let idCurso = $('#seleccionar_curso').val();
+    let idComision = $(this).val();
+
+    if (idCarrera && idCurso && idComision) {
+        $.ajax({
+            url: 'obtener_estudiantes.php',
+            type: 'GET',
+            data: { idCarrera: idCarrera, idCurso: idCurso, idComision: idComision },
+            dataType: 'json',
+            success: function(data) {
+                let tablaEstudiantes = $('#tablaEstudiantes');
+                let tbody = tablaEstudiantes.find('tbody');
+                tbody.empty();
+
+                if (data.length > 0) {
+                    $.each(data, function(index, estudiante) {
+                        let row = `<tr>
+                            <td>${index + 1}</td>
+                            <td>${estudiante.nombre_alumno}</td>
+                            <td>${estudiante.apellido_alumno}</td>
+                            <td>${estudiante.dni_alumno}</td>
+                        </tr>`;
+                        tbody.append(row);
+                    });
+
+                    $('#totalEstudiantes').text(data.length);
+                    tablaEstudiantes.show();
+                } else {
+                    tbody.append('<tr><td colspan="4" style="text-align: center;">No hay estudiantes matriculados.</td></tr>');
+                    tablaEstudiantes.show();
+                }
+            },
+            error: function() {
+                alert('Error al obtener los estudiantes.');
+            }
+        });
+    }
+});
+});
+</script>
 <style>
 	.contenido {
     position: absolute;
@@ -612,64 +700,10 @@ if ($result && mysqli_num_rows($result) > 0) {
  }
 </style>
 
-<!--   Core JS Files   -->
-<script src="../../../assets/js/core/jquery.3.2.1.min.js"></script>
-<script src="../../../assets/js/core/bootstrap.min.js"></script>
-<!-- jQuery UI -->
-<script src="../../../assets/js/plugin/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>
-<!-- jQuery Scrollbar -->
-<script src="../../../assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
-<!-- Azzara JS -->
-<script src="../../../assets/js/ready.min.js"></script>
-
-<!-- jQuery para manejar AJAX -->
 
 
-<script>
-$(document).ready(function() {
-    $('.seleccionar_carrera').on('change', function() {
-        let idCarrera = $(this).val();
-        
-        if (idCarrera) {
-            $.ajax({
-                url: 'obtener_estudiantes.php',
-                type: 'GET',
-                data: { idCarrera: idCarrera },
-                dataType: 'json',
-                success: function(data) {
-                    console.log(data); // Verificar los datos recibidos
-                    let tablaEstudiantes = $('#tablaEstudiantes');
-                    let tbody = tablaEstudiantes.find('tbody');
-                    tbody.empty(); // Limpiar la tabla antes de llenarla
 
-                    if (data.length > 0) {
-                        $.each(data, function(index, estudiante) {
-                            let row = `<tr style="border-bottom: 1px solid #ddd;">
-                                <td style="padding: 10px;">${index + 1}</td>
-                                <td style="padding: 10px;">${estudiante.nombre_alumno}</td>
-                                <td style="padding: 10px;">${estudiante.apellido_alumno}</td>
-                                <td style="padding: 10px;">${estudiante.dni_alumno}</td>
-                              
-                            </tr>`;
-                            tbody.append(row);
-                        });
 
-                        $('#totalEstudiantes').text(data.length);
-                        tablaEstudiantes.show(); // Mostrar la tabla
-                    } else {
-                        tbody.append('<tr><td colspan="5" style="padding: 10px; text-align: center;">No hay estudiantes en esta carrera.</td></tr>');
-                        tablaEstudiantes.show(); // Mostrar la tabla
-                    }
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    console.error('Error:', textStatus, errorThrown);
-                    alert('Hubo un error al obtener los datos de los estudiantes.');
-                }
-            });
-        }
-    });
-});
-</script>
 </body>
 </html>
 
