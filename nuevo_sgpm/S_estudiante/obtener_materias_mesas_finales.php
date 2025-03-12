@@ -7,12 +7,12 @@ include '../../conexion/conexion.php';
 
 session_start(); 
 
-// Obtener el legajo, la carrera y la comisión del alumno desde la sesión
+// Obtener datos del estudiante desde la sesión
 $alumno_legajo = $_SESSION['id'];
 $idCarrera     = $_SESSION['idCarrera']; 
-$idComision    = $_SESSION['idComision']; // Nuevo: la comisión del alumno
+$idComision    = $_SESSION['idComision']; 
 
-// Consulta para obtener las mesas finales y sus detalles, filtrando por carrera y comisión
+// Consulta SQL con todas las validaciones
 $query = "
     SELECT 
         fm.idfechas_mesas_finales, 
@@ -22,29 +22,59 @@ $query = "
         t.tanda, 
         t.cupo,
         ne.nota AS nota_final,
+
+        -- Obtener la última condición del alumno en la materia (Regular, Libre o Promoción)
         (SELECT condicion 
          FROM notas 
          WHERE alumno_legajo = '$alumno_legajo' 
            AND materias_idMaterias = m.idMaterias 
-           AND condicion IN ('Regular', 'Libre') 
-           AND condicion IS NOT NULL 
          ORDER BY fecha DESC
          LIMIT 1) AS condicion_alumno,
+
+        -- Verificar si ya está inscripto en esta mesa final específica
         IFNULL(
             (SELECT 1 
              FROM mesas_finales mf
              WHERE mf.alumno_legajo = '$alumno_legajo' 
                AND mf.fechas_mesas_finales_idfechas_mesas_finales = fm.idfechas_mesas_finales
              LIMIT 1), 0) AS inscrito,
+
+        -- Verificar si la materia ya está aprobada (nota >= 6)
         IFNULL(
             (SELECT 1 
-             FROM mesas_finales mf
-             JOIN fechas_mesas_finales fmf ON mf.fechas_mesas_finales_idfechas_mesas_finales = fmf.idfechas_mesas_finales
-             JOIN tandas tn ON fmf.tandas_idtandas = tn.idtandas
-             WHERE mf.alumno_legajo = '$alumno_legajo'
-               AND mf.materias_idMaterias = fm.materias_idMaterias
-               AND tn.llamado = t.llamado
-             LIMIT 1), 0) AS inscrito_mismo_llamado
+             FROM nota_examen_final ne
+             WHERE ne.alumno_legajo = '$alumno_legajo'
+               AND ne.materias_idMaterias = fm.materias_idMaterias
+               AND ne.nota >= 6
+             LIMIT 1), 0) AS materia_aprobada,
+
+        -- Verificar si la materia tiene condición Promocion
+        IFNULL(
+            (SELECT 1
+             FROM notas n
+             WHERE n.alumno_legajo = '$alumno_legajo'
+               AND n.materias_idMaterias = fm.materias_idMaterias
+               AND n.condicion = 'Promocion'
+             LIMIT 1), 0) AS promocionada,
+
+        -- Último turno en el que el estudiante rindió esta materia
+        IFNULL(
+            (SELECT MAX(ne.turno) 
+             FROM nota_examen_final ne
+             WHERE ne.alumno_legajo = '$alumno_legajo'
+               AND ne.materias_idMaterias = fm.materias_idMaterias
+             LIMIT 1), 0) AS ultimo_turno,
+
+        -- Bloquear inscripción si llegó al turno 7 y no aprobó
+        IFNULL(
+            (SELECT 1 
+             FROM nota_examen_final ne
+             WHERE ne.alumno_legajo = '$alumno_legajo'
+               AND ne.materias_idMaterias = fm.materias_idMaterias
+               AND ne.turno = 7
+               AND ne.nota < 6
+             LIMIT 1), 0) AS bloqueo_inscripcion
+
     FROM 
         fechas_mesas_finales fm
     JOIN 
@@ -56,7 +86,7 @@ $query = "
         AND ne.materias_idMaterias = m.idMaterias
     WHERE 
         m.carreras_idCarrera = '$idCarrera'
-        AND m.comisiones_idComisiones = '$idComision'  -- <-- Filtro adicional por la comisión
+        AND m.comisiones_idComisiones = '$idComision';
 ";
 
 // Ejecutar la consulta y procesar resultados
@@ -70,32 +100,28 @@ if ($result && mysqli_num_rows($result) > 0) {
         // 2) Timestamp de la hora actual
         $hora_actual = time();
         
-        // 3) Verificar si faltan más de 5 minutos (300 segundos)
-        //    para la fecha/hora de la mesa
+        // 3) Verificar si faltan más de 5 minutos (300 segundos) para la fecha/hora de la mesa
         $faltan_segundos = $fecha_mesa - $hora_actual;
         if ($faltan_segundos <= 300) {
             // Si faltan 5 min o menos, NO agregamos este registro
             continue; 
         }
-        
-        // (Opcional) Si quieres dejar el campo “disponible” en el JSON, 
-        // puedes hacerlo así:
+
+        // Campo disponible basado en el tiempo restante
         $row['disponible'] = $faltan_segundos > 300; 
-        //  o simplemente $row['disponible'] = true;
-        
-        // 4) Convertir valores o terminar de setear tus campos como antes
-        $row['llamado'] = (int) $row['llamado'];
-        $row['tanda']   = (int) $row['tanda'];
-        $row['cupo']    = (int) $row['cupo'];
+
+        // Convertir valores a enteros o flotantes
         $row['nota_final'] = $row['nota_final'] !== null ? (float) $row['nota_final'] : null;
         $row['inscrito'] = (int) $row['inscrito'];
-        $row['inscrito_mismo_llamado'] = (int) $row['inscrito_mismo_llamado'];
-    
+        $row['materia_aprobada'] = (int) $row['materia_aprobada'];
+        $row['promocionada'] = (int) $row['promocionada'];
+        $row['ultimo_turno'] = (int) $row['ultimo_turno'];
+        $row['bloqueo_inscripcion'] = (int) $row['bloqueo_inscripcion'];
+
         $mesas[] = $row;
     }
 }
 
-// Responder en formato JSON
+// Responder con JSON
 header('Content-Type: application/json');
 echo json_encode($mesas);
-?>

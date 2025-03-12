@@ -292,17 +292,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 if (fechasInscritas.has(materia.fecha)) {
                     inscribirseEnlace = '<span style="color:red;">Solo puedes rendir una unidad curricular por día</span>';
-                } else if (materia.inscrito && turnoMateria === turnoActual) {
+                } else if (materia.inscrito) {
                     inscribirseEnlace = '<span style="color:blue;">Ya estás inscripto en esta mesa en este turno</span>';
-                } else if (materia.nota_final >= 6) {
+                } else if (materia.nota_final >= 6 || materia.materia_aprobada == 1) {
                     inscribirseEnlace = '<span style="color:green;">Ya aprobaste esta unidad curricular</span>';
-                } else if (materia.inscrito_mismo_llamado == 1 && turnoMateria === turnoActual) {
+                } else if (materia.promocionada == 1) {  
+                    inscribirseEnlace = '<span style="color:green;">Promocionaste esta materia, no necesitas rendirla.</span>';
+                } else if (materia.bloqueo_inscripcion == 1) {  
+                    inscribirseEnlace = '<span style="color:red;">No puedes inscribirte más en esta materia. Debes recursarla.</span>';
+                } else if (materia.inscrito_mismo_llamado == 1) {
                     inscribirseEnlace = '<span style="color:red;">Ya estás inscrpito en esta unidad curricular para este llamado y turno</span>';
                 } else if (cupoDisponible > 0) {
                     inscribirseEnlace = `<a href="#" onclick="inscribirse(${materia.idfechas_mesas_finales}, '${materia.fecha}', ${materia.tanda}, ${cupoDisponible}); return false;">Inscribirse</a>`;
                 } else {
                     inscribirseEnlace = '<span style="color:red;">Cupo agotado</span>';
                 }
+
 
                 row.innerHTML = `
                     <td>${materia.materia}</td>
@@ -352,6 +357,7 @@ function inscribirse(idFecha, fecha, tanda, cupoActual) {
     })
     .catch(error => console.error('Error:', error));
 }
+
 </script>
 
 
