@@ -510,6 +510,7 @@ try {
     $sql_datos_alumno = "SELECT * FROM alumno a 
                          INNER JOIN inscripcion_asignatura ia ON ia.alumno_legajo = a.legajo 
                          INNER JOIN carreras c ON c.idCarrera = ia.carreras_idCarrera 
+                         INNER JOIN comisiones co on ia.Comisiones_idComisiones = co.idComisiones
                          WHERE legajo = '$legajo'";
     $query_datos_alumno = mysqli_query($conexion, $sql_datos_alumno);
 
@@ -595,6 +596,19 @@ $html_datos_laborales .= "<tr>
             <button type='submit' class='btn-restablecer'>Restablecer Contraseña</button>
         </form>
     </td>
+</tr>";
+$html_datos_laborales .= '</table>';
+echo $html_datos_laborales;
+
+
+
+    // **Usuario**
+$html_datos_laborales = '<h2 class="section-title">Comision</h2><br>';
+$html_datos_laborales .= '<table class="styled-table" id="datos-laborales">
+    <tr><th>Comision</th></tr>';
+$html_datos_laborales .= "<tr>
+    <td>{$row_datos_alumno['comision']}</td>
+    
 </tr>";
 $html_datos_laborales .= '</table>';
 echo $html_datos_laborales;
