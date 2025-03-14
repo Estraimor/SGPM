@@ -558,11 +558,6 @@ if ($result && mysqli_num_rows($result) > 0) {
         <option value="">Seleccione una comisión</option>
     </select><br>
 
-    <label>Año:</label>
-    <select id="anio" disabled>
-        <option value="">Seleccione un año</option>
-    </select><br>
-
     <h3>Materias</h3>
     <label>Seleccione una materia:</label>
     <select id="materiaSeleccionada" disabled>
@@ -570,23 +565,22 @@ if ($result && mysqli_num_rows($result) > 0) {
     </select><br>
 
     <!-- Tabla ya definida en el HTML -->
-<div id="tablaNotas" style="margin-top: 20px;">
-    <table border="1" style="width:100%; border-collapse: collapse;">
-        <thead>
-            <tr>
-                <th>Legajo</th>
-                <th>Nombre</th>
-                <th>Apellido</th>
-                <th>Nota Final</th>
-                <th>Condición</th>
-            </tr>
-        </thead>
-        <tbody id="tablaCuerpo">
-            <!-- Las filas se cargarán dinámicamente aquí -->
-        </tbody>
-    </table>
-</div>
-
+    <div id="tablaNotas" style="margin-top: 20px;">
+        <table border="1" style="width:100%; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th>Legajo</th>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>Nota Final</th>
+                    <th>Condición</th>
+                </tr>
+            </thead>
+            <tbody id="tablaCuerpo">
+                <!-- Las filas se cargarán dinámicamente aquí -->
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -630,93 +624,79 @@ $(document).ready(function() {
         });
     });
 
-    // Cargar años al seleccionar la materia
+    // Cargar estudiantes al seleccionar una materia
     $('#materiaSeleccionada').on('change', function() {
-        $('#anio').prop('disabled', false);
-        let anioActual = new Date().getFullYear();
-        let anioSelect = $('#anio');
-        anioSelect.empty();
-        anioSelect.append('<option value="">Seleccione un año</option>');
+        let idMateria = $('#materiaSeleccionada').val();
+        let comision = $('#comision').val();
+        let curso = $('#curso').val();
+        let carrera = $('#carrera').val();
 
-        for (let i = anioActual; i >= 2023; i--) {
-            anioSelect.append(`<option value="${i}">${i}</option>`);
-        }
-    });
+        $.post('./config_notas_pendientes/obtener_estudiantes_materia.php', 
+        { idMateria, comision, curso, carrera },  // Se eliminó el campo "anio"
+        function(data) {
+            console.log("Datos recibidos:", data);
 
-    $('#anio').on('change', function() {
-    let idMateria = $('#materiaSeleccionada').val();
-    let anio = $('#anio').val();
-    let comision = $('#comision').val();
-    let curso = $('#curso').val();
-    let carrera = $('#carrera').val();
+            if (data.error) {
+                console.error('Error desde el servidor:', data.error);
+                $('#tablaNotas').html(`<p style="color:red;">Error al cargar los datos: ${data.error}</p>`);
+                return;
+            }
 
-    $.post('./config_notas_pendientes/obtener_estudiantes_materia.php', 
-    { idMateria, anio, comision, curso, carrera }, 
-    function(data) {
-        console.log("Datos recibidos:", data);
+            if (Array.isArray(data)) {
+                let estudiantes = data;
+                let tableHtml = `
+                    <table border="1" style="width:100%; border-collapse: collapse;">
+                        <thead>
+                            <tr>
+                                <th>Legajo</th>
+                                <th>Nombre</th>
+                                <th>Apellido</th>
+                                <th>Nota Final</th>
+                                <th>Condición</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
 
-        if (data.error) {
-            console.error('Error desde el servidor:', data.error);
-            $('#tablaNotas').html(`<p style="color:red;">Error al cargar los datos: ${data.error}</p>`);
-            return;
-        }
-
-        if (Array.isArray(data)) {
-            let estudiantes = data;
-            let tableHtml = `
-                <table border="1" style="width:100%; border-collapse: collapse;">
-                    <thead>
+                estudiantes.forEach(est => {
+                    tableHtml += `
                         <tr>
-                            <th>Legajo</th>
-                            <th>Nombre</th>
-                            <th>Apellido</th>
-                            <th>Nota Final</th>
-                            <th>Condición</th>
-                        </tr>
-                    </thead>
-                    <tbody>`;
+                            <td>${est.legajo}</td>
+                            <td>${est.nombre}</td>
+                            <td>${est.apellido}</td>
+                            <td>
+                                <input type="number" 
+                                       class="notaFinal" 
+                                       data-legajo="${est.legajo}" 
+                                       value="${est.nota_final ?? ''}" 
+                                       step="0.1" 
+                                       placeholder="Ingrese nota">
+                            </td>
+                            <td>
+                                <select class="condicionSelect" data-legajo="${est.legajo}">
+                                    <option value="">Seleccione condición</option>
+                                    <option value="Regular" ${est.condicion === 'Regular' ? 'selected' : ''}>Regular</option>
+                                    <option value="Promoción" ${est.condicion === 'Promocion' ? 'selected' : ''}>Promoción</option>
+                                    <option value="Libre" ${est.condicion === 'Libre' ? 'selected' : ''}>Libre</option>
+                                </select>
+                            </td>
+                        </tr>`;
+                });
 
-            estudiantes.forEach(est => {
-                tableHtml += `
-                    <tr>
-                        <td>${est.legajo}</td>
-                        <td>${est.nombre}</td>
-                        <td>${est.apellido}</td>
-                        <td>
-                            <input type="number" 
-                                   class="notaFinal" 
-                                   data-legajo="${est.legajo}" 
-                                   value="${est.nota_final ?? ''}" 
-                                   step="0.1" 
-                                   placeholder="Ingrese nota">
-                        </td>
-                        <td>
-                            <select class="condicionSelect" data-legajo="${est.legajo}">
-                                <option value="">Seleccione condición</option>
-                                <option value="Regular" ${est.condicion === 'Regular' ? 'selected' : ''}>Regular</option>
-                                <option value="Promoción" ${est.condicion === 'Promocion' ? 'selected' : ''}>Promoción</option>
-                                <option value="Libre" ${est.condicion === 'Libre' ? 'selected' : ''}>Libre</option>
-                            </select>
-                        </td>
-                    </tr>`;
-            });
-
-            tableHtml += `</tbody></table>`;
-            $('#tablaNotas').html(tableHtml);
-        } else {
-            console.error('Respuesta no válida:', data);
-            $('#tablaNotas').html('<p style="color:red;">Error al cargar los datos de los estudiantes. Respuesta inválida.</p>');
-        }
-    }, 'json').fail(function(xhr, status, error) {
-        console.error('Error en la solicitud AJAX:', error);
-        $('#tablaNotas').html('<p style="color:red;">Error en la solicitud al servidor. Solicitud fallida.</p>');
+                tableHtml += `</tbody></table>`;
+                $('#tablaNotas').html(tableHtml);
+            } else {
+                console.error('Respuesta no válida:', data);
+                $('#tablaNotas').html('<p style="color:red;">Error al cargar los datos de los estudiantes. Respuesta inválida.</p>');
+            }
+        }, 'json').fail(function(xhr, status, error) {
+            console.error('Error en la solicitud AJAX:', error);
+            $('#tablaNotas').html('<p style="color:red;">Error en la solicitud al servidor. Solicitud fallida.</p>');
+        });
     });
-});
-
 
 });
-
 </script>
+
 
 
 
