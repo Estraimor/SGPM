@@ -60,7 +60,7 @@ $conexion->begin_transaction();
 try {
     // Preparar consultas de inserción y actualización
     $stmtInsert = $conexion->prepare("
-        INSERT INTO notas (alumno_legajo, carreras_idCarrera, materias_idMaterias, profesor_idProfesor, nota_final, condicion, fecha)
+        INSERT INTO notas (alumno_legajo, carreras_idCarrera, materias_idMaterias, profesor_idProrfesor, nota_final, condicion, fecha)
         VALUES (?, ?, ?, ?, ?, ?, ?)
     ");
 
