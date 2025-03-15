@@ -564,7 +564,6 @@ if ($result && mysqli_num_rows($result) > 0) {
         <option value="">Seleccione una materia</option>
     </select><br>
 
-    <!-- Tabla ya definida en el HTML -->
     <div id="tablaNotas" style="margin-top: 20px;">
         <table border="1" style="width:100%; border-collapse: collapse;">
             <thead>
@@ -581,6 +580,9 @@ if ($result && mysqli_num_rows($result) > 0) {
             </tbody>
         </table>
     </div>
+
+    <!-- Botón para enviar notas -->
+    <button id="guardarNotas" style="margin-top: 20px;">Guardar Notas</button>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -593,8 +595,9 @@ $(document).ready(function() {
 
     // Cargar cursos al seleccionar una carrera
     $('#carrera').on('change', function() {
-        let carrera = $(this).val();
+        $('#tablaNotas').html('');
         $('#curso').prop('disabled', false);
+        let carrera = $(this).val();
         $.post('./config_notas_pendientes/obtener_cursos.php', { carrera: carrera }, function(data) {
             $('#curso').html('<option value="">Seleccione un curso</option>' + data);
         });
@@ -602,6 +605,7 @@ $(document).ready(function() {
 
     // Cargar comisiones al seleccionar un curso
     $('#curso').on('change', function() {
+        $('#tablaNotas').html('');
         let idCarrera = $('#carrera').val();
         let idCurso = $(this).val();
         $.post('./config_notas_pendientes/obtener_comisiones.php', { idCarrera, idCurso }, function(data) {
@@ -610,103 +614,129 @@ $(document).ready(function() {
         });
     });
 
-    // Cargar materias al seleccionar la comisión
+    // Cargar materias al seleccionar una comisión
     $('#comision').on('change', function() {
+        $('#tablaNotas').html('');
         $('#materiaSeleccionada').prop('disabled', false);
         let carrera = $('#carrera').val();
         let curso = $('#curso').val();
         let comision = $('#comision').val();
 
-        $.post('./config_notas_pendientes/obtener_materias.php', 
-        { carrera, curso, comision }, 
-        function(data) {
+        $.post('./config_notas_pendientes/obtener_materias.php', { carrera, curso, comision }, function(data) {
             $('#materiaSeleccionada').html('<option value="">Seleccione una materia</option>' + data);
         });
     });
 
-    // Cargar estudiantes al seleccionar una materia
+    // Cargar estudiantes y sus notas
     $('#materiaSeleccionada').on('change', function() {
         let idMateria = $('#materiaSeleccionada').val();
         let comision = $('#comision').val();
         let curso = $('#curso').val();
         let carrera = $('#carrera').val();
 
-        $.post('./config_notas_pendientes/obtener_estudiantes_materia.php', 
-        { idMateria, comision, curso, carrera },  // Se eliminó el campo "anio"
-        function(data) {
-            console.log("Datos recibidos:", data);
+        if (!idMateria || !comision || !curso || !carrera) {
+            $('#tablaNotas').html('<p style="color:red;">Debe seleccionar todos los campos antes de continuar.</p>');
+            return;
+        }
 
+        $.post('./config_notas_pendientes/obtener_estudiantes_materia.php', 
+        { idMateria, comision, curso, carrera }, 
+        function(data) {
             if (data.error) {
-                console.error('Error desde el servidor:', data.error);
                 $('#tablaNotas').html(`<p style="color:red;">Error al cargar los datos: ${data.error}</p>`);
                 return;
             }
 
             if (Array.isArray(data)) {
-                let estudiantes = data;
-                let tableHtml = `
-                    <table border="1" style="width:100%; border-collapse: collapse;">
-                        <thead>
-                            <tr>
-                                <th>Legajo</th>
-                                <th>Nombre</th>
-                                <th>Apellido</th>
-                                <th>Nota Final</th>
-                                <th>Condición</th>
-                            </tr>
-                        </thead>
-                        <tbody>`;
-
-                estudiantes.forEach(est => {
-                    tableHtml += `
+                let tableHtml = `<table border="1" style="width:100%; border-collapse: collapse;">
+                    <thead>
                         <tr>
-                            <td>${est.legajo}</td>
-                            <td>${est.nombre}</td>
-                            <td>${est.apellido}</td>
-                            <td>
-                                <input type="number" 
-                                       class="notaFinal" 
-                                       data-legajo="${est.legajo}" 
-                                       value="${est.nota_final ?? ''}" 
-                                       step="0.1" 
-                                       placeholder="Ingrese nota">
-                            </td>
-                            <td>
-                                <select class="condicionSelect" data-legajo="${est.legajo}">
-                                    <option value="">Seleccione condición</option>
-                                    <option value="Regular" ${est.condicion === 'Regular' ? 'selected' : ''}>Regular</option>
-                                    <option value="Promoción" ${est.condicion === 'Promocion' ? 'selected' : ''}>Promoción</option>
-                                    <option value="Libre" ${est.condicion === 'Libre' ? 'selected' : ''}>Libre</option>
-                                </select>
-                            </td>
-                        </tr>`;
+                            <th>Legajo</th>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
+                            <th>Nota Final</th>
+                            <th>Condición</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+                data.forEach(est => {
+                    tableHtml += `<tr>
+                        <td>${est.legajo}</td>
+                        <td>${est.nombre}</td>
+                        <td>${est.apellido}</td>
+                        <td>
+                            <input type="number" class="notaFinal" 
+                                   data-legajo="${est.legajo}" 
+                                   value="${est.nota_final ?? ''}" 
+                                   step="0.1" placeholder="Ingrese nota">
+                        </td>
+                        <td>
+                            <select class="condicionSelect" data-legajo="${est.legajo}">
+                                <option value="">Seleccione condición</option>
+                                <option value="Regular" ${est.condicion === 'Regular' ? 'selected' : ''}>Regular</option>
+                                <option value="Promoción" ${est.condicion === 'Promocion' ? 'selected' : ''}>Promoción</option>
+                                <option value="Libre" ${est.condicion === 'Libre' ? 'selected' : ''}>Libre</option>
+                            </select>
+                        </td>
+                    </tr>`;
                 });
 
                 tableHtml += `</tbody></table>`;
                 $('#tablaNotas').html(tableHtml);
-            } else {
-                console.error('Respuesta no válida:', data);
-                $('#tablaNotas').html('<p style="color:red;">Error al cargar los datos de los estudiantes. Respuesta inválida.</p>');
             }
         }, 'json').fail(function(xhr, status, error) {
-            console.error('Error en la solicitud AJAX:', error);
-            $('#tablaNotas').html('<p style="color:red;">Error en la solicitud al servidor. Solicitud fallida.</p>');
+            $('#tablaNotas').html('<p style="color:red;">Error en la solicitud al servidor.</p>');
         });
     });
 
+    // Enviar notas al servidor
+    $('#guardarNotas').on('click', function() {
+        let comision = $('#comision').val();
+        let curso = $('#curso').val();
+        let carrera = $('#carrera').val();
+        let materia = $('#materiaSeleccionada').val();
+        let estudiantes = [];
+
+        if (!comision || !curso || !carrera || !materia) {
+            alert("Debe seleccionar todos los campos antes de enviar.");
+            return;
+        }
+
+        $('.notaFinal').each(function() {
+            let legajo = $(this).data('legajo');
+            let notaFinal = $(this).val();
+            let condicion = $(this).closest('tr').find('.condicionSelect').val();
+
+            if (notaFinal !== '') { 
+                estudiantes.push({
+                    legajo: legajo,
+                    nota_final: parseFloat(notaFinal),
+                    condicion: condicion
+                });
+            }
+        });
+
+        if (estudiantes.length === 0) {
+            alert("No hay notas cargadas para guardar.");
+            return;
+        }
+
+        $.post('./config_notas_pendientes/guardar_notas.php', 
+            { comision, curso, carrera, materia, estudiantes }, 
+            function(response) {
+                if (response.success) {
+                    alert(`✅ Notas guardadas correctamente.\n📌 Insertadas: ${response.insertados}\n✏️ Actualizadas: ${response.actualizados}`);
+                    $('#tablaNotas').html('');
+                } else {
+                    alert(`❌ Error: ${response.error}`);
+                }
+            }, 'json').fail(function(xhr, status, error) {
+                alert('❌ Error en la solicitud al servidor.');
+            });
+    });
 });
 </script>
-
-
-
-
-
-
-
-
-
-
-
 <!--   Core JS Files   -->
 
 
