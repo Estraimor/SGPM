@@ -1,4 +1,5 @@
 <?php
+session_start();
 include '../../conexion/conexion.php';
 
 $idCarrera = intval($_POST['idCarrera']);
@@ -7,13 +8,13 @@ $rolUsuario = $_SESSION['roles'];
 
 if ($rolUsuario == '1') {
     // Administrador: todos los cursos de la carrera seleccionada
-    $sql = "SELECT * FROM cursos WHERE carreras_idCarrera = $idCarrera";
+    $sql = "SELECT * FROM cursos";
 } else {
     // Profesores: solo los cursos asignados al profesor en la carrera seleccionada
     $sql = "SELECT cu.*
             FROM cursos cu
             JOIN preceptores p ON cu.idCursos = p.cursos_idCursos
-            WHERE p.profesor_idProfesor = $idProfesor
+            WHERE p.profesor_idProrfesor = $idProfesor
             AND p.carreras_idCarrera = $idCarrera
             GROUP BY cu.idCursos";
 }
@@ -22,6 +23,6 @@ $result = mysqli_query($conexion, $sql);
 
 echo '<option value="">Seleccione un curso</option>';
 while ($row = mysqli_fetch_assoc($result)) {
-    echo '<option value="' . $row['idCursos'] . '">' . $row['nombreCurso'] . '</option>';
+    echo '<option value="' . $row['idCursos'] . '">' . $row['curso'] . '</option>';
 }
 ?>

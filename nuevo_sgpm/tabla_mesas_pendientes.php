@@ -5,6 +5,12 @@ if (empty($_SESSION["id"])) {
     exit;
 }
 
+// Verificación de la contraseña específica "0123456789"
+if (isset($_SESSION["contraseña"]) && $_SESSION["contraseña"] === "0123456789") {
+    header('Location: cambio_contrasena_profe.php');
+    exit;
+}
+
 // Asumimos que también almacenas el rol en la sesión.
 $rolUsuario = $_SESSION["roles"];
 
@@ -23,6 +29,7 @@ $idPreceptor = $_SESSION['id'];
 include '../conexion/conexion.php';
 
 
+
 // Set inactivity limit in seconds
 $inactivity_limit = 1200;
 
@@ -36,6 +43,7 @@ if (isset($_SESSION['time']) && (time() - $_SESSION['time'] > $inactivity_limit)
     $_SESSION['time'] = time();
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -43,7 +51,8 @@ if (isset($_SESSION['time']) && (time() - $_SESSION['time'] > $inactivity_limit)
 	<title>SGPM</title>
 	<meta content='width=device-width, initial-scale=1.0, shrink-to-fit=no' name='viewport' />
 	<link rel="icon" href="assets/img/Logo ISPM 2 transparante.png" type="image/x-icon"/>
-
+	<link rel="manifest" href="../manifest.json">
+    
 	<!-- Fonts and icons -->
 	<script src="assets/js/plugin/webfont/webfont.min.js"></script>
 	<script>
@@ -56,10 +65,12 @@ if (isset($_SESSION['time']) && (time() - $_SESSION['time'] > $inactivity_limit)
 		});
 	</script>
 
+
 	<!-- CSS Files -->
 	<link rel="stylesheet" href="assets/css/bootstrap.min.css">
 	<link rel="stylesheet" href="assets/css/azzara.min.css">
 	<link rel="stylesheet" href="assets/css/estilos.css">
+	
 
 	<!-- CSS Just for demo purpose, don't include it in your project -->
 	<link rel="stylesheet" href="assets/css/demo.css">
@@ -202,8 +213,7 @@ if ($result && mysqli_num_rows($result) > 0) {
 							</li>
 								<li>
 									<div class="dropdown-divider"></div>
-									<a class="dropdown-item" href="proximamente.php">Mi Perfil</a>
-									<a class="dropdown-item" href="proximamente.php">Cambiar Contraseña</a>
+									<a class="dropdown-item" href="Perfil.php">Mi Perfil</a>
 									<a class="dropdown-item" href="../login/cerrar_sesion.php">Cerrar Sesión</a>
 								</li>
 							</ul>
@@ -215,14 +225,14 @@ if ($result && mysqli_num_rows($result) > 0) {
 			<!-- End Navbar -->
 		</div>
 
-					<!-- Sidebar -->
-					<div class="sidebar">
+		<!-- Sidebar -->
+		<div class="sidebar">
 			
 			<div class="sidebar-background"></div>
 			<div class="sidebar-wrapper scrollbar-inner">
 				
 					<ul class="nav">
-						<li class="nav-item">
+						<li class="nav-item active">
 							<a href="index.php">
 								<i class="fas fa-home"></i>
 								<p>Panel Principal</p>
@@ -389,6 +399,11 @@ if ($result && mysqli_num_rows($result) > 0) {
 							<span class="sub-item">Gestión de Mesas</span>
 						</a>
 					</li>
+					<li>
+						<a href="./ver_inscriptos_mesas.php">
+							<span class="sub-item">Contador de Inscriptos a Mesas</span>
+						</a>
+					</li>
 					
 					<li>
                             <a href="proximamente.php">
@@ -459,13 +474,13 @@ if ($result && mysqli_num_rows($result) > 0) {
             </li>
 			<?php endif; ?>
 			<?php if ($rolUsuario == '1' || $rolUsuario == '2'|| $rolUsuario == '3'): ?>
-<li class="nav-item active">
+<li class="nav-item">
     <a data-toggle="collapse" href="#preceptorUtilities">
         <i class="fas fa-toolbox"></i>
         <p>Utilidades<br> del Preceptor</p>
         <span class="caret"></span>
     </a>
-    <div class="collapse show" id="preceptorUtilities">
+    <div class="collapse" id="preceptorUtilities">
         <ul class="nav nav-collapse">
             <li>
                 <a href="./Administracion/Profesores/pre_lista_promocionados.php">
@@ -477,7 +492,7 @@ if ($result && mysqli_num_rows($result) > 0) {
                     <span class="sub-item">Actas Volantes Regulares</span>
                 </a>
             </li>
-			<li >
+			<li>
                 <a href="./actas_volante_estudiantes_libres.php">
                     <span class="sub-item">Actas Volantes Libres</span>
                 </a>
@@ -487,9 +502,14 @@ if ($result && mysqli_num_rows($result) > 0) {
                     <span class="sub-item">Gestión de Comunicados</span>
                 </a>
             </li>
-			<li class="active">
+			<li>
                 <a href="./pre_nota_final.php">
                     <span class="sub-item">Cargar Notas de Mesas</span>
+                </a>
+            </li>
+            <li>
+                <a href="#">
+                    <span class="sub-item">Notas Pendientes</span>
                 </a>
             </li>
         </ul>
@@ -520,322 +540,197 @@ if ($result && mysqli_num_rows($result) > 0) {
 	</div>
 	
 </div>
-
-<?php
-
-
-    // Obtener el ID del profesor y el rol desde la sesión
-    $idProfesor = $_SESSION['id'];
-    $rolUsuario = $_SESSION['roles'];
-
-    /* =============================
-    1) Consulta de Carreras
-    ============================= */
-    if ($rolUsuario == '1') {
-        // Rol 1: Administrador => todas las carreras
-        $sqlCarreras = "SELECT * FROM carreras";
-    } else {
-        // Caso contrario: solo las carreras asignadas al profesor
-        $sqlCarreras = "SELECT c.*
-                        FROM carreras c
-                        JOIN preceptores p ON c.idCarrera = p.carreras_idCarrera
-                        WHERE p.profesor_idProrfesor = $idProfesor
-                        GROUP BY c.idCarrera";
-    }
-    $resultCarreras = mysqli_query($conexion, $sqlCarreras);
-    if (!$resultCarreras) {
-        die("Error al consultar carreras: " . mysqli_error($conexion));
-    }
-
-    
-?>
-
-<!-- Suponiendo que ya has hecho el include del PHP que obtiene $resultCarreras, $resultCursos, $resultComisiones -->
-
 <div class="contenido">
-    <div class="form-container">
-        <form action="nota_examen_final.php" method="POST">
-            <h2>Asignar Notas Finales</h2>
+    <h2>Registro de Notas Finales</h2>
 
-            <!-- FILTRO: CARRERA -->
-            <label for="selectCarrera">Seleccione una carrera:</label>
-            <select id="selectCarrera" name="carrera" class="input-form" required>
-                <option value="">Seleccione una carrera</option>
-                <?php
-                while ($row = mysqli_fetch_assoc($resultCarreras)) {
-                    echo '<option value="' . $row['idCarrera'] . '">' . $row['nombre_carrera'] . '</option>';
-                }
-                ?>
-            </select>
+    <label>Carrera:</label>
+    <select id="carrera">
+        <option value="">Seleccione una carrera</option>
+    </select><br>
 
-            <!-- FILTRO: CURSO -->
-            <label for="selectCurso">Seleccione un curso:</label>
-            <select id="selectCurso" name="curso" class="input-form" required>
-                <option value="">Seleccione un curso</option>
-            </select>
-            
-            <!-- FILTRO: COMISIÓN -->
-            <label for="selectComision">Seleccione una comisión:</label>
-            <select id="selectComision" name="comision" class="input-form" required>
-                <option value="">Seleccione una comisión</option>
-            </select>
-            
-            <!-- FILTRO: MATERIA -->
-            <label for="selectMateria">Seleccione una Unidad Curricular:</label>
-            <select id="selectMateria" name="materia" class="input-form" required>
-                <option value="">Seleccione una Unidad Curricular</option>
-            </select>
+    <label>Curso:</label>
+    <select id="curso" disabled>
+        <option value="">Seleccione un curso</option>
+    </select><br>
 
-            <!-- FILTRO: TURNO -->
-            <label for="selectTurno">Seleccione un turno:</label>
-            <select id="selectTurno" name="turno" class="input-form" required>
-                <option hidden value="">Selecciona un turno</option>
-            </select>
+    <label>Comisión:</label>
+    <select id="comision" disabled>
+        <option value="">Seleccione una comisión</option>
+    </select><br>
 
-            <!-- FILTRO: AÑO -->
-            <label for="año">Seleccione un año:</label>
-            <select name="año" class="input-form" required>
-                <option hidden value="">Selecciona un año</option>
-                <?php for ($year = 2024; $year <= 2034; $year++) { ?>
-                    <option value="<?php echo $year; ?>"><?php echo $year; ?></option>
-                <?php } ?>
-            </select>
+    <label>Materia:</label>
+    <select id="materiaSeleccionada" disabled>
+        <option value="">Seleccione una materia</option>
+    </select><br>
 
-            <button type="submit" class="btn-submit">Mostrar Alumnos</button>
-        </form>
-    </div>
+    <label>Turno:</label>
+    <select id="turno" disabled>
+        <option value="">Seleccione un turno</option>
+        <option value="1">Primer Turno</option>
+        <option value="2">Segundo Turno</option>
+    </select><br>
+
+    <h3>Primer Llamado</h3>
+    <div id="tablaNotas1" class="tabla-container"></div>
+
+    <h3>Segundo Llamado</h3>
+    <div id="tablaNotas2" class="tabla-container"></div>
+
+    <button id="guardarNotas" style="margin-top: 20px;">Guardar Notas</button>
 </div>
 
-<!-- Core JS Files (si los requieres) -->
-<script src="assets/js/core/jquery.3.2.1.min.js"></script>
-<script src="assets/js/core/bootstrap.min.js"></script>
-<script src="assets/js/plugin/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>
-<script src="assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
-<script src="assets/js/ready.min.js"></script>
-<!-- ================================
-     INICIO DEL SCRIPT COMPLETO
-   ================================ -->
-   <script>
-// 1) Lista de materias cuatrimestrales (IDs) para actualizar turnos
-const materiasCuatrimestrales = ['146', '415', '426', '193', '444', '453'];
-
-// Selectores de los campos del formulario
-const selectCarrera  = document.getElementById('selectCarrera');
-const selectCurso    = document.getElementById('selectCurso');
-const selectComision = document.getElementById('selectComision');
-const selectMateria  = document.getElementById('selectMateria');
-const selectTurno    = document.getElementById('selectTurno');
-
-// 2) Función para actualizar las opciones del turno basado en si la materia es cuatrimestral
-function actualizarTurnos(isCuatrimestral) {
-    const opcionesTurno = isCuatrimestral
-        ? [
-            { value: "1", text: "Turno 1 (Julio - Agosto)" },
-            { value: "2", text: "Turno 2 (Noviembre - Diciembre)" },
-            { value: "3", text: "Turno 3 (Febrero - Marzo)" },
-            { value: "4", text: "Turno 4 (Julio - Agosto)" },
-            { value: "5", text: "Turno 5 (Noviembre - Diciembre)" },
-            { value: "6", text: "Turno 6 (Febrero - Marzo)" },
-            { value: "7", text: "Turno 7 (Julio - Agosto)" }
-          ]
-        : [
-            { value: "1", text: "Turno 1 (Noviembre - Diciembre)" },
-            { value: "2", text: "Turno 2 (Febrero - Marzo)" },
-            { value: "3", text: "Turno 3 (Julio - Agosto)" },
-            { value: "4", text: "Turno 4 (Noviembre - Diciembre)" },
-            { value: "5", text: "Turno 5 (Febrero - Marzo)" },
-            { value: "6", text: "Turno 6 (Julio - Agosto)" },
-            { value: "7", text: "Turno 7 (Noviembre - Diciembre)" }
-          ];
-
-    // Limpiar y agregar nuevas opciones dinámicamente
-    selectTurno.innerHTML = '<option hidden value="">Selecciona un turno</option>';
-    opcionesTurno.forEach(opc => {
-        const optionElement = document.createElement('option');
-        optionElement.value = opc.value;
-        optionElement.textContent = opc.text;
-        selectTurno.appendChild(optionElement);
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Cargar carreras al iniciar
+    $.post('./config_notas_pendientes/obtener_carreras.php', function(data) {
+        $('#carrera').html('<option value="">Seleccione una carrera</option>' + data);
     });
-}
 
-// 3) Detectar cambios en el select de materias y actualizar turnos en tiempo real
-selectMateria.addEventListener('change', () => {
-    const materiaId = selectMateria.value;
-    const isCuatrimestral = materiasCuatrimestrales.includes(materiaId);
-    actualizarTurnos(isCuatrimestral);
-});
+    // Cargar cursos al seleccionar una carrera
+    $('#carrera').on('change', function() {
+        $('#tablaNotas1, #tablaNotas2').html('');
+        $('#curso').prop('disabled', false);
+        let carrera = $(this).val();
+        $.post('./config_notas_pendientes/obtener_cursos.php', { carrera: carrera }, function(data) {
+            $('#curso').html('<option value="">Seleccione un curso</option>' + data);
+        });
+    });
 
-// 4) Cargar cursos y comisiones dinámicamente en tiempo real al seleccionar carrera
-selectCarrera.addEventListener('change', () => {
-    const carreraId = selectCarrera.value;
-    if (!carreraId) return;
+    // Cargar comisiones al seleccionar un curso
+    $('#curso').on('change', function() {
+        $('#tablaNotas1, #tablaNotas2').html('');
+        let idCarrera = $('#carrera').val();
+        let idCurso = $(this).val();
+        $.post('./config_notas_pendientes/obtener_comisiones.php', { idCarrera, idCurso }, function(data) {
+            $('#comision').html('<option value="">Seleccione una comisión</option>' + data);
+            $('#comision').prop('disabled', false);
+        });
+    });
 
-    // Cargar cursos dinámicamente
-    fetch('./config_cu_co_precep/cargar_cursos.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: new URLSearchParams({idCarrera: carreraId})
-    })
-    .then(response => response.text())
-    .then(data => {
-        selectCurso.innerHTML = data;
-        selectCurso.disabled = false;
-    })
-    .catch(error => console.error('Error al cargar cursos:', error));
+    // Cargar materias al seleccionar una comisión
+    $('#comision').on('change', function() {
+        $('#tablaNotas1, #tablaNotas2').html('');
+        $('#materiaSeleccionada').prop('disabled', false);
+        let carrera = $('#carrera').val();
+        let curso = $('#curso').val();
+        let comision = $('#comision').val();
+        $.post('./config_notas_pendientes/obtener_materias.php', { carrera, curso, comision }, function(data) {
+            $('#materiaSeleccionada').html('<option value="">Seleccione una materia</option>' + data);
+        });
+    });
 
-    // Cargar comisiones dinámicamente
-    fetch('./config_cu_co_precep/cargar_comisiones.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: new URLSearchParams({idCarrera: carreraId})
-    })
-    .then(response => response.text())
-    .then(data => {
-        selectComision.innerHTML = data;
-        selectComision.disabled = false;
-    })
-    .catch(error => console.error('Error al cargar comisiones:', error));
-});
+    // Habilitar el turno al seleccionar una materia
+    $('#materiaSeleccionada').on('change', function() {
+        $('#turno').prop('disabled', false);
+    });
 
-// 5) Cargar materias dinámicamente al seleccionar curso o comisión
-[selectCurso, selectComision].forEach(select => {
-    select.addEventListener('change', () => {
-        const carreraId  = selectCarrera.value;
-        const cursoId    = selectCurso.value;
-        const comisionId = selectComision.value;
+    // Cargar estudiantes y notas según turno
+    $('#turno').on('change', function() {
+        let idMateria = $('#materiaSeleccionada').val();
+        let comision = $('#comision').val();
+        let curso = $('#curso').val();
+        let carrera = $('#carrera').val();
+        let turno = $('#turno').val();
 
-        if (carreraId && cursoId && comisionId) {
-            fetch('obtener_materias_preces_mesas_final.php', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: new URLSearchParams({
-                    carrera_id:  carreraId,
-                    curso_id:    cursoId,
-                    comision_id: comisionId
-                })
-            })
-            .then(response => response.json())
-            .then(materias => {
-                selectMateria.innerHTML = '<option value="">Seleccione una Unidad Curricular</option>';
-                materias.forEach(m => {
-                    const option = document.createElement('option');
-                    option.value = m.idMaterias;
-                    option.text  = m.Nombre;
-                    selectMateria.appendChild(option);
+        if (!idMateria || !comision || !curso || !carrera || !turno) {
+            $('#tablaNotas1, #tablaNotas2').html('<p style="color:red;">Debe seleccionar todos los campos antes de continuar.</p>');
+            return;
+        }
+
+        $.post('./config_notas_pendientes/obtener_estudiantes_materia.php', { idMateria, comision, curso, carrera, turno }, function(data) {
+            if (data.error) {
+                $('#tablaNotas1, #tablaNotas2').html(`<p style="color:red;">Error al cargar los datos: ${data.error}</p>`);
+                return;
+            }
+
+            if (Array.isArray(data)) {
+                let tableHtml1 = '<table border="1"><thead><tr><th>Legajo</th><th>Nombre</th><th>Apellido</th><th>Nota</th><th>Tomo</th><th>Folio</th></tr></thead><tbody>';
+                let tableHtml2 = '<table border="1"><thead><tr><th>Legajo</th><th>Nombre</th><th>Apellido</th><th>Nota</th><th>Tomo</th><th>Folio</th></tr></thead><tbody>';
+
+                data.forEach(est => {
+                    let rowHtml = `<tr>
+                        <td>${est.legajo}</td>
+                        <td>${est.nombre}</td>
+                        <td>${est.apellido}</td>
+                        <td><input type="number" class="notaFinal" data-legajo="${est.legajo}" step="0.1"></td>
+                        <td><input type="text" class="tomoFinal" data-legajo="${est.legajo}"></td>
+                        <td><input type="text" class="folioFinal" data-legajo="${est.legajo}"></td>
+                    </tr>`;
+
+                    if (turno == 1) {
+                        tableHtml1 += rowHtml;
+                    } else {
+                        tableHtml2 += rowHtml;
+                    }
                 });
-                selectMateria.disabled = false;
-            })
-            .catch(error => console.error('Error al cargar materias:', error));
-        }
+
+                tableHtml1 += '</tbody></table>';
+                tableHtml2 += '</tbody></table>';
+
+                if (turno == 1) {
+                    $('#tablaNotas1').html(tableHtml1);
+                } else {
+                    $('#tablaNotas2').html(tableHtml2);
+                }
+            }
+        }, 'json');
     });
-});
 
-// 6) Validar selects antes de enviar el formulario
-document.addEventListener("DOMContentLoaded", () => {
-    const form = document.querySelector("form");
-    const selects = document.querySelectorAll("select");
+    // Enviar notas al servidor
+    $('#guardarNotas').on('click', function() {
+        let comision = $('#comision').val();
+        let curso = $('#curso').val();
+        let carrera = $('#carrera').val();
+        let materia = $('#materiaSeleccionada').val();
+        let turno = $('#turno').val();
+        let estudiantes = [];
 
-    form.addEventListener("submit", event => {
-        let allSelected = true;
+        if (!comision || !curso || !carrera || !materia || !turno) {
+            alert("Debe seleccionar todos los campos antes de enviar.");
+            return;
+        }
 
-        selects.forEach(select => {
-            if (select.value === "") {
-                allSelected = false;
-                select.classList.add("error");
-            } else {
-                select.classList.remove("error");
+        $('.notaFinal').each(function() {
+            let legajo = $(this).data('legajo');
+            let nota = $(this).val();
+            let tomo = $(this).closest('tr').find('.tomoFinal').val();
+            let folio = $(this).closest('tr').find('.folioFinal').val();
+
+            if (nota !== '') {
+                estudiantes.push({ legajo, nota, tomo, folio, turno });
             }
         });
 
-        if (!allSelected) {
-            event.preventDefault();
-            alert("Por favor, selecciona todos los campos antes de continuar.");
+        if (estudiantes.length === 0) {
+            alert("No hay notas cargadas para guardar.");
+            return;
         }
-    });
 
-    selects.forEach(select => {
-        select.addEventListener("change", () => {
-            if (select.value !== "") {
-                select.classList.remove("error");
-            }
-        });
+        $.post('./config_notas_pendientes/guardar_notas_final.php', { comision, curso, carrera, materia, turno, estudiantes }, function(response) {
+            alert(response.success ? "Notas guardadas correctamente." : "Error al guardar notas.");
+        }, 'json');
     });
 });
 </script>
 
-<!-- ================================
-     FIN DEL SCRIPT COMPLETO
-   ================================ -->
+<!--   Core JS Files   -->
 
 
+<script src="assets/js/core/bootstrap.min.js"></script>
+
+<!-- jQuery UI -->
+<script src="assets/js/plugin/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>
 
 
+<!-- jQuery Scrollbar -->
+<script src="assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
 
-<style>
-	/* Cuadro semitransparente */
-.form-container {
-    max-width: 500px;
-    margin: 50px auto;
-    padding: 30px;
-    background-color: rgba(255, 255, 255, 0.9);
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    text-align: center;
-}
-
-/* Estilo para inputs y selects */
-input.input-form, select.input-form {
-    width: 90%;
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 16px;
-    transition: border 0.3s;
-}
-
-input.input-form:focus, select.input-form:focus {
-    border-color: #f3545d;
-    outline: none;
-}
-
-/* Estilo para el botón */
-button.btn-submit {
-    background-color: #f3545d;
-    color: #fff;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-button.btn-submit:hover {
-    background-color: #d8444a;
-}
-
-/* Etiquetas del formulario */
-form label {
-    font-weight: bold;
-    margin-top: 10px;
-    display: block;
-    color: #333;
-}
-
-
-
-select:disabled {
-    background-color: #f0f0f0;
-}
-
-
-.error {
-        border: 2px solid red; /* Destaca visualmente los selects no seleccionados */
-    }
-</style>
+<!-- Azzara JS -->
+<script src="assets/js/ready.min.js"></script>
 
 
 
 </body>
 </html>
+
