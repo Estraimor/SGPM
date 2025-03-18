@@ -221,6 +221,14 @@ if ($_SESSION['contraseña'] === '0123456789') {header('Location: cambio_contras
         Para inscribirse en la mesa de examen, seleccione una materia con cupos disponibles y presione el botón que dice "Inscribirse".<br> 
         <strong>Importante:</strong> la inscripción estará disponible hasta 36 horas antes del inicio de la mesa de examen. Asegúrese de completar el proceso con tiempo suficiente.
     </p>
+    <div class="contenido">
+    <h1 style="text-align: center; margin-bottom: 20px; color: #f3545d; font-weight: 900;">
+        Inscripción a Mesas de Exámenes del ISPM N°1
+    </h1>
+    <p class="instrucciones">
+        Para inscribirse en la mesa de examen, seleccione una materia con cupos disponibles y presione el botón que dice "Inscribirse".<br> 
+        <strong>Importante:</strong> la inscripción estará disponible hasta 36 horas antes del inicio de la mesa de examen. Asegúrese de completar el proceso con tiempo suficiente.
+    </p>
     <div class="tabla-contenedor">
         <table id="tabla-materias">
             <thead>
