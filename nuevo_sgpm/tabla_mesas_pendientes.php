@@ -541,7 +541,7 @@ if ($result && mysqli_num_rows($result) > 0) {
 	
 </div>
 <div class="contenido">
-    <h2>Registro de Notas Finales</h2>
+    <h2>Registro de Mesas Finales Pendientes</h2>
 
     <label>Carrera:</label>
     <select id="carrera">
@@ -582,6 +582,37 @@ if ($result && mysqli_num_rows($result) > 0) {
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(document).ready(function() {
+    // Lista de materias cuatrimestrales (IDs) para actualizar turnos
+    const materiasCuatrimestrales = ['146', '415', '426', '193', '444', '453'];
+
+    // Función para actualizar las opciones del turno basado en si la materia es cuatrimestral
+    function actualizarTurnos(isCuatrimestral) {
+        const opcionesTurno = isCuatrimestral
+            ? [
+                { value: "1", text: "Turno 1 (Julio - Agosto)" },
+                { value: "2", text: "Turno 2 (Noviembre - Diciembre)" },
+                { value: "3", text: "Turno 3 (Febrero - Marzo)" },
+                { value: "4", text: "Turno 4 (Julio - Agosto)" },
+                { value: "5", text: "Turno 5 (Noviembre - Diciembre)" },
+                { value: "6", text: "Turno 6 (Febrero - Marzo)" },
+                { value: "7", text: "Turno 7 (Julio - Agosto)" }
+              ]
+            : [
+                { value: "1", text: "Turno 1 (Noviembre - Diciembre)" },
+                { value: "2", text: "Turno 2 (Febrero - Marzo)" },
+                { value: "3", text: "Turno 3 (Julio - Agosto)" },
+                { value: "4", text: "Turno 4 (Noviembre - Diciembre)" },
+                { value: "5", text: "Turno 5 (Febrero - Marzo)" },
+                { value: "6", text: "Turno 6 (Julio - Agosto)" },
+                { value: "7", text: "Turno 7 (Noviembre - Diciembre)" }
+              ];
+
+        $('#turno').html('<option value="">Seleccione un turno</option>');
+        opcionesTurno.forEach(opc => {
+            $('#turno').append(`<option value="${opc.value}">${opc.text}</option>`);
+        });
+    }
+
     // Cargar carreras al iniciar
     $.post('./config_notas_pendientes/obtener_carreras.php', function(data) {
         $('#carrera').html('<option value="">Seleccione una carrera</option>' + data);
@@ -620,8 +651,11 @@ $(document).ready(function() {
         });
     });
 
-    // Habilitar el turno al seleccionar una materia
+    // Habilitar el turno al seleccionar una materia y actualizar opciones de turno
     $('#materiaSeleccionada').on('change', function() {
+        let idMateria = $(this).val();
+        let isCuatrimestral = materiasCuatrimestrales.includes(idMateria);
+        actualizarTurnos(isCuatrimestral);
         $('#turno').prop('disabled', false);
     });
 
@@ -677,7 +711,7 @@ $(document).ready(function() {
         }, 'json');
     });
 
-    // Enviar notas al servidor
+    // Enviar notas al servidor con validaciones mejoradas
     $('#guardarNotas').on('click', function() {
         let comision = $('#comision').val();
         let curso = $('#curso').val();
@@ -687,31 +721,35 @@ $(document).ready(function() {
         let estudiantes = [];
 
         if (!comision || !curso || !carrera || !materia || !turno) {
-            alert("Debe seleccionar todos los campos antes de enviar.");
+            alert("⚠️ Debe seleccionar todos los campos antes de enviar.");
             return;
         }
 
         $('.notaFinal').each(function() {
             let legajo = $(this).data('legajo');
-            let nota = $(this).val();
-            let tomo = $(this).closest('tr').find('.tomoFinal').val();
-            let folio = $(this).closest('tr').find('.folioFinal').val();
+            let nota = $(this).val().trim();
+            let tomo = $(this).closest('tr').find('.tomoFinal').val().trim();
+            let folio = $(this).closest('tr').find('.folioFinal').val().trim();
 
-            if (nota !== '') {
+            if (nota !== '' && !isNaN(nota) && nota >= 0 && nota <= 10) { 
                 estudiantes.push({ legajo, nota, tomo, folio, turno });
+            } else if (nota !== '') {
+                alert(`⚠️ La nota de ${legajo} no es válida. Debe estar entre 0 y 10.`);
+                return;
             }
         });
 
         if (estudiantes.length === 0) {
-            alert("No hay notas cargadas para guardar.");
+            alert("⚠️ No hay notas cargadas para guardar.");
             return;
         }
 
         $.post('./config_notas_pendientes/guardar_notas_final.php', { comision, curso, carrera, materia, turno, estudiantes }, function(response) {
-            alert(response.success ? "Notas guardadas correctamente." : "Error al guardar notas.");
+            alert(response.success ? "✅ Notas guardadas correctamente." : "❌ Error al guardar notas.");
         }, 'json');
     });
 });
+
 </script>
 
 <!--   Core JS Files   -->
