@@ -1,0 +1,104 @@
+[2025-03-18 22:47:49] 
+    SELECT t.fecha, t.llamado 
+    FROM tandas t
+    JOIN fechas_mesas_finales fm ON t.idtandas = fm.tandas_idtandas
+    WHERE fm.idfechas_mesas_finales = '690' - Resultado: Éxito
+[2025-03-18 22:47:49] 
+    SELECT COUNT(*) AS count 
+    FROM mesas_finales mf
+    JOIN fechas_mesas_finales fm ON mf.fechas_mesas_finales_idfechas_mesas_finales = fm.idfechas_mesas_finales
+    JOIN tandas t ON fm.tandas_idtandas = t.idtandas
+    WHERE mf.alumno_legajo = '937' 
+    AND DATE(t.fecha) = DATE('2025-03-20 19:30:00') - Resultado: Éxito
+[2025-03-18 22:47:49] 
+    SELECT t.cupo 
+    FROM tandas t
+    JOIN fechas_mesas_finales fm ON t.idtandas = fm.tandas_idtandas
+    WHERE fm.idfechas_mesas_finales = '690' - Resultado: Éxito
+[2025-03-18 22:47:49] 
+    SELECT 
+        CASE 
+            WHEN mp.materias_idMaterias = fm.materias_idMaterias THEN mp.materias_idMaterias1
+            WHEN mp.materias_idMaterias1 = fm.materias_idMaterias THEN mp.materias_idMaterias
+            ELSE NULL
+        END AS materia_asociada,
+        fm.materias_idMaterias AS materia_principal_id
+    FROM fechas_mesas_finales fm
+    LEFT JOIN mesas_pedagogicas mp 
+        ON fm.materias_idMaterias IN (mp.materias_idMaterias, mp.materias_idMaterias1)
+    WHERE fm.idfechas_mesas_finales = '690' - Resultado: Éxito
+[2025-03-18 22:47:49] 
+    INSERT INTO mesas_finales (alumno_legajo, materias_idMaterias, fechas_mesas_finales_idfechas_mesas_finales)
+    VALUES ('937', '408', '690') - Resultado: Éxito
+[2025-03-18 22:47:49] 
+    UPDATE tandas t
+    JOIN fechas_mesas_finales fm ON t.idtandas = fm.tandas_idtandas
+    SET t.cupo = t.cupo - 1
+    WHERE fm.idfechas_mesas_finales = '690' - Resultado: Éxito
+[2025-03-18 22:47:49] 
+        INSERT INTO mesas_finales (alumno_legajo, materias_idMaterias, fechas_mesas_finales_idfechas_mesas_finales)
+        VALUES ('937', '413', '690') - Resultado: Éxito
+[2025-03-18 22:47:52] 
+    SELECT t.fecha, t.llamado 
+    FROM tandas t
+    JOIN fechas_mesas_finales fm ON t.idtandas = fm.tandas_idtandas
+    WHERE fm.idfechas_mesas_finales = '708' - Resultado: Éxito
+[2025-03-18 22:47:52] 
+    SELECT COUNT(*) AS count 
+    FROM mesas_finales mf
+    JOIN fechas_mesas_finales fm ON mf.fechas_mesas_finales_idfechas_mesas_finales = fm.idfechas_mesas_finales
+    JOIN tandas t ON fm.tandas_idtandas = t.idtandas
+    WHERE mf.alumno_legajo = '937' 
+    AND DATE(t.fecha) = DATE('2025-03-25 19:30:00') - Resultado: Éxito
+[2025-03-18 22:47:52] 
+    SELECT t.cupo 
+    FROM tandas t
+    JOIN fechas_mesas_finales fm ON t.idtandas = fm.tandas_idtandas
+    WHERE fm.idfechas_mesas_finales = '708' - Resultado: Éxito
+[2025-03-18 22:47:52] 
+    SELECT 
+        CASE 
+            WHEN mp.materias_idMaterias = fm.materias_idMaterias THEN mp.materias_idMaterias1
+            WHEN mp.materias_idMaterias1 = fm.materias_idMaterias THEN mp.materias_idMaterias
+            ELSE NULL
+        END AS materia_asociada,
+        fm.materias_idMaterias AS materia_principal_id
+    FROM fechas_mesas_finales fm
+    LEFT JOIN mesas_pedagogicas mp 
+        ON fm.materias_idMaterias IN (mp.materias_idMaterias, mp.materias_idMaterias1)
+    WHERE fm.idfechas_mesas_finales = '708' - Resultado: Éxito
+[2025-03-18 22:47:52] 
+    INSERT INTO mesas_finales (alumno_legajo, materias_idMaterias, fechas_mesas_finales_idfechas_mesas_finales)
+    VALUES ('937', '416', '708') - Resultado: Éxito
+[2025-03-18 22:47:52] 
+    UPDATE tandas t
+    JOIN fechas_mesas_finales fm ON t.idtandas = fm.tandas_idtandas
+    SET t.cupo = t.cupo - 1
+    WHERE fm.idfechas_mesas_finales = '708' - Resultado: Éxito
+[2025-03-18 22:47:52] 
+        INSERT INTO mesas_finales (alumno_legajo, materias_idMaterias, fechas_mesas_finales_idfechas_mesas_finales)
+        VALUES ('937', '417', '708') - Resultado: Éxito
+[2025-03-18 22:48:06] 
+    SELECT t.fecha, t.llamado 
+    FROM tandas t
+    JOIN fechas_mesas_finales fm ON t.idtandas = fm.tandas_idtandas
+    WHERE fm.idfechas_mesas_finales = '690' - Resultado: Éxito
+[2025-03-18 22:48:06] 
+    SELECT COUNT(*) AS count 
+    FROM mesas_finales mf
+    JOIN fechas_mesas_finales fm ON mf.fechas_mesas_finales_idfechas_mesas_finales = fm.idfechas_mesas_finales
+    JOIN tandas t ON fm.tandas_idtandas = t.idtandas
+    WHERE mf.alumno_legajo = '937' 
+    AND DATE(t.fecha) = DATE('2025-03-20 19:30:00') - Resultado: Éxito
+[2025-03-18 22:48:27] 
+    SELECT t.fecha, t.llamado 
+    FROM tandas t
+    JOIN fechas_mesas_finales fm ON t.idtandas = fm.tandas_idtandas
+    WHERE fm.idfechas_mesas_finales = '690' - Resultado: Éxito
+[2025-03-18 22:48:27] 
+    SELECT COUNT(*) AS count 
+    FROM mesas_finales mf
+    JOIN fechas_mesas_finales fm ON mf.fechas_mesas_finales_idfechas_mesas_finales = fm.idfechas_mesas_finales
+    JOIN tandas t ON fm.tandas_idtandas = t.idtandas
+    WHERE mf.alumno_legajo = '937' 
+    AND DATE(t.fecha) = DATE('2025-03-20 19:30:00') - Resultado: Éxito

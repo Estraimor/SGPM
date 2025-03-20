@@ -521,11 +521,6 @@ if ($result && mysqli_num_rows($result) > 0) {
                     <span class="sub-item">Tabla Notas Pendientes</span>
                 </a>
             </li>
-			<li>
-                <a href="./tabla_mesas_pendientes.php">
-                    <span class="sub-item">Tabla Mesass Pendientes</span>
-                </a>
-            </li>
         </ul>
     </div>
 </li>

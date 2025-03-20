@@ -17,6 +17,7 @@ $query = "
     SELECT 
         fm.idfechas_mesas_finales, 
         m.Nombre AS materia, 
+        m.idMaterias,
         t.fecha, 
         t.llamado, 
         t.tanda, 
