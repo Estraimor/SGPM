@@ -523,7 +523,7 @@ if ($result && mysqli_num_rows($result) > 0) {
             </li>
 			<li>
                 <a href="./tabla_mesas_pendientes.php">
-                    <span class="sub-item">Tabla Mesas Pendientes</span>
+                    <span class="sub-item">Tabla Mesass Pendientes</span>
                 </a>
             </li>
         </ul>
