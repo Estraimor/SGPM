@@ -726,36 +726,53 @@ $(document).ready(function() {
         $(`.tomoFinal2[data-legajo="${legajo}"], .folioFinal2[data-legajo="${legajo}"]`).prop('disabled', this.checked);
     });
 
-    // Enviar notas con validación
     $('#guardarNotas').on('click', function() {
-        let comision = $('#comision').val();
-        let curso = $('#curso').val();
-        let carrera = $('#carrera').val();
-        let materia = $('#materiaSeleccionada').val();
-        let turno = $('#turno').val();
-        let estudiantes = [];
+    let comision = $('#comision').val();
+    let curso = $('#curso').val();
+    let carrera = $('#carrera').val();
+    let materia = $('#materiaSeleccionada').val();
+    let turno = $('#turno').val();
+    let estudiantes = [];
 
-        if (!comision || !curso || !carrera || !materia || !turno) {
-            alert("⚠️ Debe seleccionar todos los campos antes de enviar.");
-            return;
-        }
+    if (!comision || !curso || !carrera || !materia || !turno) {
+        alert("⚠️ Debe seleccionar todos los campos antes de enviar.");
+        return;
+    }
 
-        $('.notaFinal1, .notaFinal2').each(function() {
-            let legajo = $(this).data('legajo');
-            let nota = $(this).val().trim();
+    $('.notaFinal1, .notaFinal2').each(function() {
+        let legajo = $(this).data('legajo');
+        let nota1 = $(`.notaFinal1[data-legajo="${legajo}"]`).val().trim();
+        let tomo1 = $(`.tomoFinal1[data-legajo="${legajo}"]`).val().trim();
+        let folio1 = $(`.folioFinal1[data-legajo="${legajo}"]`).val().trim();
+        let bloquear1 = $(`.bloquear1[data-legajo="${legajo}"]`).is(':checked');
 
-            if (nota !== '' && (!isNaN(nota) && nota >= 0 && nota <= 10)) {
-                estudiantes.push({ legajo, nota });
-            } else if (nota !== '') {
-                alert(`⚠️ La nota de ${legajo} no es válida.`);
-                return;
-            }
-        });
+        let nota2 = $(`.notaFinal2[data-legajo="${legajo}"]`).val().trim();
+        let tomo2 = $(`.tomoFinal2[data-legajo="${legajo}"]`).val().trim();
+        let folio2 = $(`.folioFinal2[data-legajo="${legajo}"]`).val().trim();
+        let bloquear2 = $(`.bloquear2[data-legajo="${legajo}"]`).is(':checked');
 
-        $.post('./config_notas_pendientes/guardar_notas_final.php', { comision, curso, carrera, materia, turno, estudiantes }, function(response) {
-            alert(response.success ? "✅ Notas guardadas correctamente." : "❌ Error al guardar notas.");
-        }, 'json');
+        let llamado = bloquear2 ? null : 2; // Si el checkbox está marcado, se guarda NULL
+
+        let estudiante = {
+            legajo,
+            nota1: (nota1 !== '' && !isNaN(nota1) && nota1 >= 0 && nota1 <= 10) ? nota1 : null,
+            tomo1: bloquear1 ? null : tomo1 || null,
+            folio1: bloquear1 ? null : folio1 || null,
+            nota2: (nota2 !== '' && !isNaN(nota2) && nota2 >= 0 && nota2 <= 10) ? nota2 : null,
+            tomo2: bloquear2 ? null : tomo2 || null,
+            folio2: bloquear2 ? null : folio2 || null,
+            llamado
+        };
+
+        estudiantes.push(estudiante);
     });
+
+    $.post('./config_notas_pendientes/guardar_nota_mesas_pendientes.php', {
+        comision, curso, carrera, materia, turno, estudiantes
+    }, function(response) {
+        alert(response.success ? "✅ Notas guardadas correctamente." : "❌ Error al guardar notas.");
+    }, 'json');
+});
 });
 </script>
 
