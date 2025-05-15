@@ -541,50 +541,52 @@ if ($result && mysqli_num_rows($result) > 0) {
 	
 </div>
 <div class="contenido">
-    <h2>Registro de Notas</h2>
+  <h2 class="titulo-registro">Registro de Notas</h2>
 
-    <label>Carrera:</label>
-    <select id="carrera">
-        <option value="">Seleccione una carrera</option>
-    </select><br>
+  <label class="label-field">Carrera:</label>
+  <select id="carrera" class="select-field">
+    <option value="">Seleccione una carrera</option>
+  </select><br>
 
-    <label>Curso:</label>
-    <select id="curso" disabled>
-        <option value="">Seleccione un curso</option>
-    </select><br>
+  <label class="label-field">Curso:</label>
+  <select id="curso" class="select-field" disabled>
+    <option value="">Seleccione un curso</option>
+  </select><br>
 
-    <label>Comisión:</label>
-    <select id="comision" disabled>
-        <option value="">Seleccione una comisión</option>
-    </select><br>
+  <label class="label-field">Comisión:</label>
+  <select id="comision" class="select-field" disabled>
+    <option value="">Seleccione una comisión</option>
+  </select><br>
 
-    <h3>Materias</h3>
-    <label>Seleccione una materia:</label>
-    <select id="materiaSeleccionada" disabled>
-        <option value="">Seleccione una materia</option>
-    </select><br>
+  <h3 class="subtitulo">Materias</h3>
+  <label class="label-field">Seleccione una materia:</label>
+  <select id="materiaSeleccionada" class="select-field" disabled>
+    <option value="">Seleccione una materia</option>
+  </select><br>
 
-    <div id="tablaNotas" style="margin-top: 20px;">
-        <table border="1" style="width:100%; border-collapse: collapse;">
-            <thead>
-                <tr>
-                    <th>Legajo</th>
-                    <th>Nombre</th>
-                    <th>Apellido</th>
-                    <th>Nota Final</th>
-                    <th>Condición</th>
-                </tr>
-            </thead>
-            <tbody id="tablaCuerpo">
-                <!-- Las filas se cargarán dinámicamente aquí -->
-            </tbody>
-        </table>
-    </div>
+  <div id="tablaNotas" class="tabla-container">
+    <table class="notas-table" border="1">
+      <thead>
+        <tr>
+            <th>#</th>
+          <th>Legajo</th>
+          <th>Nombre</th>
+          <th>Apellido</th>
+          <th>Nota Final</th>
+          <th>Condición</th>
+        </tr>
+      </thead>
+      <tbody id="tablaCuerpo">
+        <!-- Las filas se cargarán dinámicamente aquí -->
+      </tbody>
+    </table>
+  </div>
 
-    <!-- Botón para enviar notas -->
-    <button id="guardarNotas" style="margin-top: 20px;">Guardar Notas</button>
+  <!-- Botón para enviar notas -->
+  <button id="guardarNotas" class="btn-guardar">Guardar Notas</button>
 </div>
 
+<!-- Se mantienen los scripts existentes -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(document).ready(function() {
@@ -648,39 +650,41 @@ $(document).ready(function() {
             }
 
             if (Array.isArray(data)) {
-                let tableHtml = `<table border="1" style="width:100%; border-collapse: collapse;">
+                let tableHtml = `<table class="notas-table" border="1">
                     <thead>
                         <tr>
+                            <th>#</th>
                             <th>Legajo</th>
-                            <th>Nombre</th>
                             <th>Apellido</th>
+                            <th>Nombre</th>
                             <th>Nota Final</th>
                             <th>Condición</th>
                         </tr>
                     </thead>
                     <tbody>`;
 
-                data.forEach(est => {
-                    tableHtml += `<tr>
-                        <td>${est.legajo}</td>
-                        <td>${est.nombre}</td>
-                        <td>${est.apellido}</td>
-                        <td>
-                            <input type="number" class="notaFinal" 
-                                   data-legajo="${est.legajo}" 
-                                   value="${est.nota_final ?? ''}" 
-                                   step="0.1" placeholder="Ingrese nota">
-                        </td>
-                        <td>
-                            <select class="condicionSelect" data-legajo="${est.legajo}">
-                                <option value="">Seleccione condición</option>
-                                <option value="Regular" ${est.condicion === 'Regular' ? 'selected' : ''}>Regular</option>
-                                <option value="Promoción" ${est.condicion === 'Promocion' ? 'selected' : ''}>Promoción</option>
-                                <option value="Libre" ${est.condicion === 'Libre' ? 'selected' : ''}>Libre</option>
-                            </select>
-                        </td>
-                    </tr>`;
-                });
+               data.forEach((est, index) => {
+    tableHtml += `<tr>
+        <td>${index + 1}</td>
+        <td>${est.legajo}</td>
+        <td>${est.apellido}</td>
+        <td>${est.nombre}</td>
+        <td>
+            <input type="number" class="notaFinal nota-input" 
+                   data-legajo="${est.legajo}" 
+                   value="${est.nota_final ?? ''}" 
+                   step="0.1" placeholder="Ingrese nota">
+        </td>
+        <td>
+            <select class="condicionSelect condicion-select" data-legajo="${est.legajo}">
+                <option value="">Seleccione condición</option>
+                <option value="Regular" ${est.condicion === 'Regular' ? 'selected' : ''}>Regular</option>
+                <option value="Promoción" ${est.condicion === 'Promocion' ? 'selected' : ''}>Promoción</option>
+                <option value="Libre" ${est.condicion === 'Libre' ? 'selected' : ''}>Libre</option>
+            </select>
+        </td>
+    </tr>`;
+});
 
                 tableHtml += `</tbody></table>`;
                 $('#tablaNotas').html(tableHtml);
@@ -738,21 +742,126 @@ $(document).ready(function() {
 });
 </script>
 <!--   Core JS Files   -->
-
-
 <script src="assets/js/core/bootstrap.min.js"></script>
-
 <!-- jQuery UI -->
 <script src="assets/js/plugin/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>
-
-
 <!-- jQuery Scrollbar -->
 <script src="assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
-
 <!-- Azzara JS -->
 <script src="assets/js/ready.min.js"></script>
 
+<style>
+    /* Estilos para etiquetas y select */
+.label-field {
+  display: inline-block;
+  margin-bottom: 5px;
+  font-weight: 600;
+}
 
+.select-field {
+  max-width: 300px;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+  background-color: #fff;
+  color: #333;
+}
+
+.select-field:focus {
+  border-color: #f3545d;
+  outline: none;
+}
+
+/* Títulos y subtítulos */
+.titulo-registro {
+  margin-bottom: 15px;
+}
+
+.subtitulo {
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+/* Botón */
+.btn-guardar {
+  background-color: #f3545d;
+  border: none;
+  padding: 10px 20px;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+  margin-top: 20px;
+}
+
+.btn-guardar:hover {
+  background-color: #d43a46;
+}
+
+/* Tabla de notas */
+.tabla-container {
+  overflow-x: auto;
+  margin-top: 20px;
+}
+
+.notas-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.notas-table th,
+.notas-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.notas-table th {
+  background-color: #f3545d;
+  color: #fff;
+}
+
+/* Inputs de nota: ancho de 80px para admitir 2 enteros y 2 decimales */
+.nota-input {
+  width: 80px;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+}
+
+/* Desactivar spinner en inputs number para Webkit y Firefox */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Opcional: estilos para el select de condición */
+.condicion-select {
+  max-width: 200px;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+  background-color: #fff;
+  color: #333;
+}
+
+.condicion-select:focus {
+  border-color: #f3545d;
+  outline: none;
+}
+</style>
 
 </body>
 </html>

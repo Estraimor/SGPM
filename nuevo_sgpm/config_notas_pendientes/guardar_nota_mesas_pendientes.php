@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../../conexion/conexion.php'; // Conexión a la BD
+include '../../conexion/conexion.php';
 
 header("Content-Type: application/json");
 
@@ -9,7 +9,7 @@ if (!isset($_SESSION["id"])) {
     exit;
 }
 
-$profesor_id = $_SESSION["id"]; // ID del profesor desde la sesión
+$profesor_id = $_SESSION["id"];
 $data = json_decode(file_get_contents("php://input"), true);
 
 if (!$data) {
@@ -17,64 +17,76 @@ if (!$data) {
     exit;
 }
 
-// Validación de datos esenciales
 $comision = $data["comision"] ?? null;
-$curso = $data["curso"] ?? null;
 $carrera = $data["carrera"] ?? null;
 $materia = $data["materia"] ?? null;
 $turno = $data["turno"] ?? null;
 $estudiantes = $data["estudiantes"] ?? [];
 
-if (!$comision || !$curso || !$carrera || !$materia || !$turno || empty($estudiantes)) {
+if (!$comision || !$carrera || !$materia || !$turno || empty($estudiantes)) {
     echo json_encode(["success" => false, "error" => "Faltan datos obligatorios"]);
     exit;
 }
 
-$query = "INSERT INTO nota_examen_final (alumno_legajo, profesor_idProrfesor, materias_idMaterias, nota, fecha, turno, tomo, folio, llamado)
-          VALUES (?, ?, ?, ?, NOW(), ?, ?, ?, ?)
-          ON DUPLICATE KEY UPDATE 
-          nota = VALUES(nota), fecha = VALUES(fecha), turno = VALUES(turno), 
-          tomo = VALUES(tomo), folio = VALUES(folio), llamado = VALUES(llamado)";
-
-$stmt = $conexion->prepare($query);
-
-if (!$stmt) {
-    echo json_encode(["success" => false, "error" => "Error en la preparación de la consulta"]);
-    exit;
-}
-
+// Recorremos estudiantes
 foreach ($estudiantes as $est) {
     $legajo = $est["legajo"];
 
-    // Verifica si el primer llamado tiene nota válida (mayor o igual a 0)
-    if (isset($est["nota1"]) && $est["nota1"] !== "" && $est["nota1"] !== null) {
-        $nota1 = is_numeric($est["nota1"]) ? $est["nota1"] : null;
-        
-        // Si la nota es 0 (ausente), tomo y folio deben ser NULL
+    // === PRIMER LLAMADO ===
+    if (isset($est["nota1"]) && $est["nota1"] !== "") {
+        $nota1 = is_numeric($est["nota1"]) ? floatval($est["nota1"]) : 0.0;
         $tomo1 = ($nota1 == 0) ? null : ($est["tomo1"] ?? null);
         $folio1 = ($nota1 == 0) ? null : ($est["folio1"] ?? null);
         $llamado1 = 1;
 
-        $stmt->bind_param("iiidisss", $legajo, $profesor_id, $materia, $nota1, $turno, $tomo1, $folio1, $llamado1);
-        $stmt->execute();
+        $verificar = $conexion->prepare("SELECT idnota_examen_final FROM nota_examen_final WHERE alumno_legajo = ? AND materias_idMaterias = ? AND llamado = ?");
+        $verificar->bind_param("iii", $legajo, $materia, $llamado1);
+        $verificar->execute();
+        $verificar->store_result();
+
+        if ($verificar->num_rows > 0) {
+            $update = $conexion->prepare("UPDATE nota_examen_final SET nota = ?, fecha = NOW(), turno = ?, tomo = ?, folio = ?, profesor_idProrfesor = ? WHERE alumno_legajo = ? AND materias_idMaterias = ? AND llamado = ?");
+            $update->bind_param("dissiiii", $nota1, $turno, $tomo1, $folio1, $profesor_id, $legajo, $materia, $llamado1);
+            $update->execute();
+            $update->close();
+        } else {
+            $insert = $conexion->prepare("INSERT INTO nota_examen_final (alumno_legajo, profesor_idProrfesor, materias_idMaterias, nota, fecha, turno, tomo, folio, llamado) VALUES (?, ?, ?, ?, NOW(), ?, ?, ?, ?)");
+            $insert->bind_param("iiidisss", $legajo, $profesor_id, $materia, $nota1, $turno, $tomo1, $folio1, $llamado1);
+            $insert->execute();
+            $insert->close();
+        }
+
+        $verificar->close();
     }
 
-    // Verifica si el segundo llamado tiene nota válida (mayor o igual a 0)
-    if (isset($est["nota2"]) && $est["nota2"] !== "" && $est["nota2"] !== null) {
-        $nota2 = is_numeric($est["nota2"]) ? $est["nota2"] : null;
-        
-        // Si la nota es 0 (ausente), tomo y folio deben ser NULL
-        $tomo2 = ($nota2 == 0) ? null : ($est["tomo2"] ?? null);
-        $folio2 = ($nota2 == 0) ? null : ($est["folio2"] ?? null);
-        $llamado2 = 2;
+   // === SEGUNDO LLAMADO ===
+if (array_key_exists("nota2", $est) && ($est["nota2"] !== null)) {
+    $nota2 = is_numeric($est["nota2"]) ? floatval($est["nota2"]) : 0.0;
+    $tomo2 = ($nota2 == 0) ? null : ($est["tomo2"] ?? null);
+    $folio2 = ($nota2 == 0) ? null : ($est["folio2"] ?? null);
+    $llamado2 = 2;
 
-        $stmt->bind_param("iiidisss", $legajo, $profesor_id, $materia, $nota2, $turno, $tomo2, $folio2, $llamado2);
-        $stmt->execute();
+    $verificar = $conexion->prepare("SELECT idnota_examen_final FROM nota_examen_final WHERE alumno_legajo = ? AND materias_idMaterias = ? AND llamado = ?");
+    $verificar->bind_param("iii", $legajo, $materia, $llamado2);
+    $verificar->execute();
+    $verificar->store_result();
+
+    if ($verificar->num_rows > 0) {
+        $update = $conexion->prepare("UPDATE nota_examen_final SET nota = ?, fecha = NOW(), turno = ?, tomo = ?, folio = ?, profesor_idProrfesor = ? WHERE alumno_legajo = ? AND materias_idMaterias = ? AND llamado = ?");
+        $update->bind_param("dissiiii", $nota2, $turno, $tomo2, $folio2, $profesor_id, $legajo, $materia, $llamado2);
+        $update->execute();
+        $update->close();
+    } else {
+        $insert = $conexion->prepare("INSERT INTO nota_examen_final (alumno_legajo, profesor_idProrfesor, materias_idMaterias, nota, fecha, turno, tomo, folio, llamado) VALUES (?, ?, ?, ?, NOW(), ?, ?, ?, ?)");
+        $insert->bind_param("iiidisss", $legajo, $profesor_id, $materia, $nota2, $turno, $tomo2, $folio2, $llamado2);
+        $insert->execute();
+        $insert->close();
     }
+
+    $verificar->close();
+}
 }
 
-$stmt->close();
 $conexion->close();
-
 echo json_encode(["success" => true, "message" => "Notas guardadas correctamente"]);
 ?>

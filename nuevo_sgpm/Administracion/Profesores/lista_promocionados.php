@@ -430,11 +430,14 @@ if (isset($_SESSION['time']) && (time() - $_SESSION['time'] > $inactivity_limit)
 	</div>
 
 <?php
-$idCarrera = isset($_GET['comision']) ? $_GET['comision'] : (isset($_POST['comision']) ? $_POST['comision'] : '');
-$idMateria = isset($_GET['materia']) ? $_GET['materia'] : (isset($_POST['materia']) ? $_POST['materia'] : '');
-$anio_actual = date("Y"); // Obtiene el año actual
+// Obtener parámetros enviados por GET o POST
+$idCarrera = $_GET['carrera'] ?? $_POST['carrera'] ?? '';
+$idMateria = $_GET['materia'] ?? $_POST['materia'] ?? '';
+$idCurso   = $_GET['curso'] ?? $_POST['curso'] ?? '';
+$idComision = $_GET['comision'] ?? $_POST['comision'] ?? '';
+$anioSeleccionado = $_GET['anio'] ?? $_POST['anio'] ?? date("Y"); // Usa el año seleccionado o el actual por defecto
 
-// Consulta SQL para obtener estudiantes promocionados con tomo y folio si existen
+// Consulta SQL para obtener estudiantes promocionados
 $query = "
     SELECT a.nombre_alumno, a.apellido_alumno, a.dni_alumno, 
            n.alumno_legajo, n.nota_final, n.condicion, 
@@ -450,7 +453,7 @@ $query = "
 ";
 
 $stmt = $conexion->prepare($query);
-$stmt->bind_param("iii", $idCarrera, $idMateria, $anio_actual);
+$stmt->bind_param("iii", $idCarrera, $idMateria, $anioSeleccionado);
 $stmt->execute();
 $result = $stmt->get_result();
 ?>
@@ -459,8 +462,7 @@ $result = $stmt->get_result();
     <h2 class="titulo-pagina">Estudiantes Promocionados</h2>
 
     <?php if ($result->num_rows > 0) { ?>
-        <!-- Formulario para enviar tomo, folio y materia -->
-        <form action="guardar_notas _mesas_promocionados.php" method="POST">
+        <form action="guardar_notas_mesas_promocionados.php" method="POST">
             <table class="tabla-promocionados">
                 <thead>
                     <tr>
@@ -482,8 +484,11 @@ $result = $stmt->get_result();
                             <td><?php echo $contador++; ?></td>
                             <td>
                                 <input type="hidden" name="legajo[]" value="<?php echo $row['alumno_legajo']; ?>">
-                                <input type="hidden" name="comision" value="<?php echo $idCarrera; ?>">
+                                <input type="hidden" name="carrera" value="<?php echo $idCarrera; ?>">
                                 <input type="hidden" name="materia" value="<?php echo $idMateria; ?>">
+                                <input type="hidden" name="curso" value="<?php echo $idCurso; ?>">
+                                <input type="hidden" name="carrrera" value="<?php echo $idComision; ?>">
+                                <input type="hidden" name="anio" value="<?php echo $anioSeleccionado; ?>">
                                 <?php echo htmlspecialchars($row['alumno_legajo']); ?>
                             </td>
                             <td><?php echo htmlspecialchars($row['apellido_alumno']); ?></td>
@@ -493,7 +498,6 @@ $result = $stmt->get_result();
                                 <input type="hidden" name="nota[]" value="<?php echo $row['nota_final']; ?>">
                                 <?php echo htmlspecialchars($row['nota_final']); ?>
                             </td>
-                            <!-- Mostrar valores de tomo y folio si existen -->
                             <td>
                                 <input type="number" name="tomo[]" 
                                        value="<?php echo htmlspecialchars($row['tomo'] ?? ''); ?>" 
@@ -508,19 +512,15 @@ $result = $stmt->get_result();
                     <?php } ?>
                 </tbody>
             </table>
+
             <a href="promocionados_pdf.php?materia=<?php echo urlencode($idMateria); ?>" target="_blank" class="btn-imprimir icono-imprimir"></a>
 
-            <!-- Botón para enviar los datos -->
             <button type="submit" class="btn-guardar">Guardar Datos</button>
         </form>
     <?php } else { ?>
-        <p>No hay estudiantes promocionados en esta materia y carrera en el año actual.</p>
+        <p>No hay estudiantes promocionados en esta materia y carrera en el año seleccionado.</p>
     <?php } ?>
 </div>
-
-
-
-
 <!--   Core JS Files   -->
 <script src="../../assets/js/core/jquery.3.2.1.min.js"></script>
 

@@ -1,694 +1,124 @@
 <?php
-session_start();
-if (empty($_SESSION["id"])) {
-    header('Location: ../login/login.php');
-    exit;
-}
-
-// Asumimos que también almacenas el rol en la sesión.
-$rolUsuario = $_SESSION["roles"];
-
-// Definimos los roles permitidos para esta página.
-$rolesPermitidos = ['1', '2', '3', '4'];
-
-// Verificar si el rol del usuario está en la lista de roles permitidos.
-if (!in_array($rolUsuario, $rolesPermitidos)) {
-    echo "<script>alert('Acceso restringido a esta página.');</script>";
-    // Opcional: redirigir al usuario a otra página
-    // header('Location: pagina_principal.php');
-    exit; // Detener la ejecución del script.
-}
-
-$idPreceptor = $_SESSION['id'];
-include '../conexion/conexion.php';
-
-// Consulta para obtener las carreras asociadas al preceptor
-$queryCarreras = "SELECT p.carreras_idCarrera, c.nombre_carrera FROM preceptores p
-                  INNER JOIN carreras c ON c.idCarrera = p.carreras_idCarrera
-                  WHERE p.profesor_idProrfesor = $idPreceptor";
-$resultCarreras = mysqli_query($conexion, $queryCarreras);
-$carreras = mysqli_fetch_all($resultCarreras, MYSQLI_ASSOC);
-
-// Set inactivity limit in seconds
-$inactivity_limit = 1200;
-
-// Check if the user has been inactive for too long
-if (isset($_SESSION['time']) && (time() - $_SESSION['time'] > $inactivity_limit)) {
-    session_unset();
-    session_destroy();
-    header("Location: ../../login/login.php");
-    exit;
-} else {
-    $_SESSION['time'] = time();
-}
+include './layout.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-	<title>SGPM</title>
-	<meta content='width=device-width, initial-scale=1.0, shrink-to-fit=no' name='viewport' />
-	<link rel="icon" href="assets/img/Logo ISPM 2 transparante.png" type="image/x-icon"/>
-
-	<!-- Fonts and icons -->
-	<script src="assets/js/plugin/webfont/webfont.min.js"></script>
-	<script>
-		WebFont.load({
-			google: {"families":["Open+Sans:300,400,600,700"]},
-			custom: {"families":["Flaticon", "Font Awesome 5 Solid", "Font Awesome 5 Regular", "Font Awesome 5 Brands"], urls: ['./assets/css/fonts.css']},
-			active: function() {
-				sessionStorage.fonts = true;
-			}
-		});
-	</script>
-
-	<!-- CSS Files -->
-	<link rel="stylesheet" href="assets/css/bootstrap.min.css">
-	<link rel="stylesheet" href="assets/css/azzara.min.css">
-
-
-	<!-- CSS Just for demo purpose, don't include it in your project -->
-	<link rel="stylesheet" href="assets/css/demo.css">
-</head>
-<body>
-	<div class="wrapper">
-		
-		<div class="main-header" data-background-color="red">
-			<div class="logo-header">
-				
-				<a href="index.php" class="logo">
-					<img src="assets/img/Logo ISPM 2 transparante.png" width="45px" alt="navbar brand" class="navbar-brand">
-				</a>
-				<button class="navbar-toggler sidenav-toggler ml-auto" type="button" data-toggle="collapse" data-target="collapse" aria-expanded="false" aria-label="Toggle navigation">
-					<span class="navbar-toggler-icon">
-						<i class="fa fa-bars"></i>
-					</span>
-				</button>
-				<button class="topbar-toggler more"><i class="fa fa-ellipsis-v"></i></button>
-				<div class="navbar-minimize">
-					<button class="btn btn-minimize btn-rounded">
-						<i class="fa fa-bars"></i>
-					</button>
-				</div>
-			</div>
-			<!-- End Logo Header -->
-
-			<!-- Navbar Header -->
-			<nav class="navbar navbar-header navbar-expand-lg">
-				
-				<div class="container-fluid">
-					<div class="collapse" id="search-nav">
-						<form class="navbar-left navbar-form nav-search mr-md-3">
-							
-						</form>
-					</div>
-					<ul class="navbar-nav topbar-nav ml-md-auto align-items-center">
-						<li class="nav-item toggle-nav-search hidden-caret">
-							<a class="nav-link" data-toggle="collapse" href="#search-nav" role="button" aria-expanded="false" aria-controls="search-nav">
-								<i class="fa fa-search"></i>
-							</a>
-						</li>
-						
-						
-						<li class="nav-item dropdown hidden-caret">
-							<a class="dropdown-toggle profile-pic" data-toggle="dropdown" href="#" aria-expanded="false">
-								<div class="avatar-sm">
-									<?php $idProfesor = $_SESSION["id"];
-$sql = "SELECT avatar FROM profesor WHERE idProrfesor = '$idProfesor'";
-$result = mysqli_query($conexion, $sql);
-
-$imagenBase64 = ""; // Inicializar la variable para la imagen en caso de que no haya una
-
-if ($result && mysqli_num_rows($result) > 0) {
-    $row = mysqli_fetch_assoc($result);
-    $avatar = $row['avatar'];
-
-    if ($avatar) {
-        // Convertir la imagen binaria a base64
-        $imagenBase64 = 'data:image/jpeg;base64,' . base64_encode($avatar);
-    } else {
-        // Usar la imagen por defecto si no hay avatar en la base de datos
-        $imagenBase64 = 'assets/img/1361728.png';
-    }
-} else {
-    echo "Error al cargar la imagen.";
-}
-
-
-?>
-
-<!-- HTML para mostrar la imagen -->
-<?php if ($imagenBase64 === 'assets/img/1361728.png') : ?>
-    <!-- Mostrar imagen por defecto si no hay avatar -->
-    <img src="assets/img/1361728.png" alt="image profile" class="avatar-img rounded" style="width: 100%; height: auto;">
-<?php else : ?>
-    <!-- Mostrar imagen del avatar en base64 -->
-    <img src="<?php echo $imagenBase64; ?>" alt="Avatar" class="avatar-img rounded-circle">
-<?php endif; ?>
-								</div>
-							</a>
-							<ul class="dropdown-menu dropdown-user animated fadeIn">
-							<li>
-								<div class="user-box">
-									<div class="avatar-lg">
-									    <?php $idProfesor = $_SESSION["id"];
-$sql = "SELECT avatar FROM profesor WHERE idProrfesor = '$idProfesor'";
-$result = mysqli_query($conexion, $sql);
-
-$imagenBase64 = ""; // Inicializar la variable para la imagen en caso de que no haya una
-
-if ($result && mysqli_num_rows($result) > 0) {
-    $row = mysqli_fetch_assoc($result);
-    $avatar = $row['avatar'];
-
-    if ($avatar) {
-        // Convertir la imagen binaria a base64
-        $imagenBase64 = 'data:image/jpeg;base64,' . base64_encode($avatar);
-    } else {
-        // Usar la imagen por defecto si no hay avatar en la base de datos
-        $imagenBase64 = 'assets/img/1361728.png';
-    }
-} else {
-    echo "Error al cargar la imagen.";
-}
-
-
-?>
-
-<!-- HTML para mostrar la imagen -->
-<?php if ($imagenBase64 === 'assets/img/1361728.png') : ?>
-    <!-- Mostrar imagen por defecto si no hay avatar -->
-    <img src="assets/img/1361728.png" alt="image profile" class="avatar-img rounded" style="width: 100%; height: auto;">
-<?php else : ?>
-    <!-- Mostrar imagen del avatar en base64 -->
-    <img src="<?php echo $imagenBase64; ?>" alt="Avatar" class="avatar-img rounded-circle">
-<?php endif; ?>
-									    </div>
-									<div class="u-text">
-										<?php 
-										$sql_profe = "SELECT p.idProrfesor, p.nombre_profe, p.apellido_profe, p.email FROM profesor p WHERE p.idProrfesor = '{$_SESSION["id"]}'";
-										$query_nombre = mysqli_query($conexion, $sql_profe);
-
-										// Comprobar si la consulta devolvió algún resultado
-										if (mysqli_num_rows($query_nombre) > 0) {
-											// Recorrer los resultados y hacer echo del nombre y apellido del profesor
-											while ($row = mysqli_fetch_assoc($query_nombre)) { ?>
-												<h4><?php echo $row['nombre_profe'] . " " . $row['apellido_profe']; ?></h4>
-												<p class="text-muted email-text"><?php echo $row['email']; ?></p>
-											<?php 
-											} 
-										} else {
-											echo "<h4>Usuario</h4>";
-											echo "<p class='text-muted'>Correo Electronico</p>";
-										}
-										?>
-			
-									</div>
-								</div>
-							</li>
-								<li>
-									<div class="dropdown-divider"></div>
-									<a class="dropdown-item" href="Perfil.php">Mi Perfil</a>
-									<a class="dropdown-item" href="../login/cerrar_sesion.php">Cerrar Sesión</a>
-								</li>
-							</ul>
-						</li>
-						
-					</ul>
-				</div>
-			</nav>
-			<!-- End Navbar -->
-		</div>
-
-		<!-- Sidebar -->
-		<div class="sidebar">
-			
-			<div class="sidebar-background"></div>
-			<div class="sidebar-wrapper scrollbar-inner">
-				
-					<ul class="nav">
-						<li class="nav-item active">
-							<a href="index.php">
-								<i class="fas fa-home"></i>
-								<p>Panel Principal</p>
-							</a>
-						</li>
-						<li class="nav-section">
-							<span class="sidebar-mini-icon">
-								<i class="fa fa-ellipsis-h"></i>
-							</span>
-							<h4 class="text-section">Herramientas</h4>
-						</li>
-						<?php if ($rolUsuario == '1' || $rolUsuario == '2'|| $rolUsuario == '3'): ?>
-						<li class="nav-item">
-							<a data-toggle="collapse" href="#base">
-								<i class="fas fa-child"></i>
-								<p>Estudiantes</p>
-								<span class="caret"></span>
-							</a>
-							<div class="collapse" id="base">
-								<ul class="nav nav-collapse">
-									<?php if ($rolUsuario == '1' || $rolUsuario == '2'): ?>
-									<li>
-										<a href="./Estudiantes/Tecnicatura/ABM_estudiante/nuevo_estudiante.php">
-											<span class="sub-item">Nuevo Estudiante</span>
-										</a>
-									</li>
-									<?php endif; ?>
-									<?php if ($rolUsuario == '1' || $rolUsuario == '2'): ?>
-									<li>
-										<a href="./Estudiantes/FP/nuevo_estudianteFP.php">
-											<span class="sub-item">Nuevo Estudiante FP</span>
-										</a>
-									</li>
-									<?php endif; ?>
-									<li>
-										<a href="./Estudiantes/Tecnicatura/lista_estudiantes.php">
-											<span class="sub-item">Lista Estudiantes</span>
-										</a>
-									</li>
-									<?php if ($rolUsuario == '1' || $rolUsuario == '2'): ?>
-									<li>
-										<a href="./Estudiantes/Tecnicatura/lista_estudiantes_2025.php">
-											<span class="sub-item">Lista Estudiantes 2025</span>
-										</a>
-									</li>
-									<?php endif; ?>
-									<?php if ($rolUsuario == '1' || $rolUsuario == '2'): ?>
-									<li>
-										<a href="./Estudiantes/FP/lista_estudianteFP.php">
-											<span class="sub-item">Lista Estudiantes FP</span>
-										</a>
-									</li>
-									<?php endif; ?>
-									<li>
-										<a href="./Estudiantes/Tecnicatura/Informes/informe_asistencia_tecnicaturas.php">
-											<span class="sub-item">Informe de Asistencias Técnicaturas</span>
-										</a>
-									</li>
-									<?php if ($rolUsuario == '1' || $rolUsuario == '2'): ?>
-									<li>
-										<a href="proximamente.php">
-											<span class="sub-item">Informe de Asistencias FP</span>
-										</a>
-									</li>
-									<?php endif; ?>
-									<li>
-										<a href="./Estudiantes/Tecnicatura/Informes/informe_lista_estudiantes.php">
-											<span class="sub-item">Imprimir Lista de Estudiantes Técnicaturas</span>
-										</a>
-									</li>
-									<?php if ($rolUsuario == '1' || $rolUsuario == '2'): ?>
-									<li>
-										<a href="./Estudiantes/FP/informesFP/informe_lista_estudiantesFP.php">
-											<span class="sub-item">Imprimir Lista de Estudiantes FP</span>
-										</a>
-									</li>
-									<?php endif; ?>
-									<?php if ($rolUsuario == '1' || $rolUsuario == '2'|| $rolUsuario == '3'): ?>
-									<li>
-										<a href="./Estudiantes/Tecnicatura/Falta_justificada/falta_justificada.php">
-											<span class="sub-item">Justificar Falta</span>
-										</a>
-									</li>
-									<?php endif; ?>
-									<li>
-										<a href="./Estudiantes/Tecnicatura/Retirados/estudiantes_retirados.php">
-											<span class="sub-item">Retirados Antes de Tiempo</span>
-										</a>
-									</li>
-								</ul>
-							</div>
-						</li>
-						<?php endif; ?>
-						<?php if ($rolUsuario == '1' || $rolUsuario == '2'|| $rolUsuario == '3'): ?>
-						<li class="nav-item">
-                			<a data-toggle="collapse" href="#takeAttendance">
-                    			<i class="fas fa-pen-square"></i>
-                    			<p>Tomar Asistencia</p>
-                    			<span class="caret"></span>
-                			</a>
-                			<div class="collapse" id="takeAttendance">
-								
-                    <ul class="nav nav-collapse">
-					<?php if ($rolUsuario == '1' || $rolUsuario == '2'|| $rolUsuario == '3'): ?>
-                        <li>
-                            <a href="index_asistencia.php">
-                                <span class="sub-item">Estudiantes Técnicaturas</span>
-                            </a>
-                        </li>
-						<?php endif; ?>
-					<?php if ($rolUsuario == '1' || $rolUsuario == '2'): ?>
-                        <li>
-                            <a href="./Estudiantes/FP/ver_FPS.php">
-                                <span class="sub-item">Estudiantes FP</span>
-                            </a>
-                        </li>
-						<?php endif; ?>
-                    </ul>
-                </div>
-            </li>
-			<?php endif; ?>
-			<?php if ($rolUsuario == '1' || $rolUsuario == '2' || $rolUsuario == '3'): ?>
-            <li class="nav-item">
-                <a data-toggle="collapse" href="#viewAttendance">
-                    <i class="fas fa-clipboard-list"></i>
-                    <p>Ver Asistencia</p>
-                    <span class="caret"></span>
-                </a>
-                <div class="collapse" id="viewAttendance">
-                    <ul class="nav nav-collapse">
-						<?php if ($rolUsuario == '1' || $rolUsuario == '2'|| $rolUsuario == '3'): ?>
-                        <li>
-                            <a href="ver_carreras.php">
-                                <span class="sub-item">Estudiantes Técnicaturas</span>
-                            </a>
-                        </li>
-						<?php endif; ?>
-						<?php if ($rolUsuario == '1' || $rolUsuario == '2'): ?>
-                        <li>
-                            <a href="./Estudiantes/FP/ver_asistenciaFPS.php">
-                                <span class="sub-item">Estudiantes FP</span>
-                            </a>
-                        </li>
-						<?php endif; ?>
-                    </ul>
-                </div>
-            </li>
-			<?php endif; ?>
-				<?php if ($rolUsuario == '1' || $rolUsuario == '2'): ?>
-						<li class="nav-item">
-							<a data-toggle="collapse" href="#tables">
-								<i class="fas fa-chalkboard-teacher"></i>
-								<p>Profesores</p>
-								<span class="caret"></span>
-							</a>
-							<div class="collapse" id="tables">
-								<ul class="nav nav-collapse">
-									<li>
-										<a href="./Administracion/Profesores/alta_docente.php">
-											<span class="sub-item">Alta Docentes</span>
-										</a>
-									</li>
-									<li>
-										<a href="./Administracion/Profesores/lista_profesores.php">
-											<span class="sub-item">Lista de Docentes</span>
-										</a>
-									</li>
-									<li>
-										<a href="./Administracion/Profesores/materia_profesor.php">
-											<span class="sub-item">Asignar Materia a Profesor</span>
-										</a>
-									</li>	
-									
-								</ul>
-							</div>
-						</li>
-						<?php endif; ?>
-						<?php if ($rolUsuario == '1'): ?>
-						<li class="nav-item">
-                			<a data-toggle="collapse" href="#preceptors">
-                    		<i class="fas fa-user-friends"></i>
-                    		<p>Preceptores</p>
-                    		<span class="caret"></span>
-                			</a>
-                			<div class="collapse" id="preceptors">
-                    <ul class="nav nav-collapse">
-                        <li>
-                            <a href="proximamente.php">
-                                <span class="sub-item">Nuevo Preceptor</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="proximamente.php">
-                                <span class="sub-item">Lista de Preceptores</span>
-                            </a>
-                        </li>
-                       
-						<li>
-							<a href="proximamente.php">
-								<span class="sub-item">Asignar carrera a Preceptor</span>
-							</a>
-						</li>
-                    </ul>
-                </div>
-            </li>
-			<?php endif; ?>
-			<?php if ($rolUsuario == '1' || $rolUsuario == '2'): ?>
-			<li class="nav-item">
-                <a data-toggle="collapse" href="#alumnos">
-                    <i class="fas fa-user-graduate"></i>
-                    <p>Sistema Estudiantes</p>
-                    <span class="caret"></span>
-                </a>
-                <div class="collapse" id="alumnos">
-                    <ul class="nav nav-collapse">
-					<li>
-						<a href="./Administracion/Profesores/acta_volante_materias.php">
-							<span class="sub-item">Actas Volantes</span>
-						</a>
-					</li>
-                       
-                    </ul>
-                </div>
-            </li>
-			<?php endif; ?>
-			<?php if ($rolUsuario == '4' || $rolUsuario == '1'): ?>
-			<li class="nav-item">
-                <a data-toggle="collapse" href="#newMenu">
-                    <i class="fas fa-book"></i>
-                    <p>Utilidades</p>
-                    <span class="caret"></span>
-                </a>
-                <div class="collapse" id="newMenu">
-                    <ul class="nav nav-collapse">
-                        <li>
-                            <a href="./Administracion/Profesores/pre_parciales.php">
-                                <span class="sub-item">Gestión de Notas</span>
-                            </a>
-                        </li>
-						<li>
-                            <a href="./pre_libro.php">
-                                <span class="sub-item">Libro de Temas</span>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </li>
-			<?php endif; ?>
-			<?php if ($rolUsuario == '1' || $rolUsuario == '2'): ?>
-			<li class="nav-item">
-    <a data-toggle="collapse" href="#preinscriptos">
-        <i class="fas fa-user-plus"></i>
-        <p>Preinscriptos</p>
-        <span class="caret"></span>
-    </a>
-    <div class="collapse" id="preinscriptos">
-        <ul class="nav nav-collapse">
-            <li>
-                <a href="./lista_pre_inscriptos.php">
-                    <span class="sub-item">Lista de Preinscriptos</span>
-                </a>
-            </li>
-            
-        </ul>
-    </div>
-	<?php endif; ?>
-</li>
-		</div>
-		<!-- End Sidebar -->
-	</div>
-	
-</div>
 <?php
-
-
-// Definir un array de IDs de materias cuatrimestrales
+// Materias cuatrimestrales
 $materias_cuatrimestrales = ['146','415','426','193','444','453'];
 
-// Obtener el ID de la materia y el turno seleccionado
+// Obtener variables
 $idMateria = $_POST['materia'] ?? $_GET['materia'] ?? null;
 $turno_seleccionado = $_POST['turno'] ?? $_GET['turno'] ?? null;
 $año = $_POST['año'] ?? $_GET['año'] ?? null;
-// Variables adicionales para el curso y la comisión
 $idCurso = $_POST['curso'] ?? $_GET['curso'] ?? null;
 $idComision = $_POST['comision'] ?? $_GET['comision'] ?? null;
+$idCarrera = $_POST['carrera'] ?? $_GET['carrera'] ?? null;
 
+// Validación
+if (!$idMateria || !$turno_seleccionado || !$año || !$idCurso || !$idComision || !$idCarrera) {
+    echo "<script>alert('Faltan datos para generar la consulta.'); window.location.href='pre_nota_final.php';</script>";
+    exit;
+}
 
-// Determinar si la materia es cuatrimestral o anual
 $es_cuatrimestral = in_array($idMateria, $materias_cuatrimestrales);
 
-// Ajustar fechas de inicio y fin según el turno y tipo de materia
+// Determinar fechas según el turno
 switch ($turno_seleccionado) {
-    case 1:
-        if ($es_cuatrimestral) {
-            $fecha_inicio = "$año-07-01";
-            $fecha_fin = "$año-08-31";
-            $num_llamados = 1;
-        } else {
-            $fecha_inicio = "$año-11-01";
-            $fecha_fin = "$año-12-31";
-            $num_llamados = 2;
-        }
-        break;
-    case 2:
-        if ($es_cuatrimestral) {
-            $fecha_inicio = "$año-11-01";
-            $fecha_fin = "$año-12-31";
-            $num_llamados = 2;
-        } else {
-            $fecha_inicio = "$año-02-01";
-            $fecha_fin = "$año-03-31";
-            $num_llamados = 2;
-        }
-        break;
-    case 3:
-        if ($es_cuatrimestral) {
-            $fecha_inicio = "$año-02-01";
-            $fecha_fin = "$año-03-31";
-            $num_llamados = 2;
-        } else {
-            $fecha_inicio = "$año-07-01";
-            $fecha_fin = "$año-08-31";
-            $num_llamados = 1;
-        }
-        break;
-    case 4:
-        if ($es_cuatrimestral) {
-            $fecha_inicio = "$año-07-01";
-            $fecha_fin = "$año-08-31";
-            $num_llamados = 1;
-        } else {
-            $fecha_inicio = "$año-11-01";
-            $fecha_fin = "$año-12-31";
-            $num_llamados = 2;
-        }
-        break;
-    case 5:
-        if ($es_cuatrimestral) {
-            $fecha_inicio = "$año-11-01";
-            $fecha_fin = "$año-12-31";
-            $num_llamados = 2;
-        } else {
-            $fecha_inicio = "$año-02-01";
-            $fecha_fin = "$año-03-31";
-            $num_llamados = 2;
-        }
-        break;
-    case 6:
-        if ($es_cuatrimestral) {
-            $fecha_inicio = "$año-02-01";
-            $fecha_fin = "$año-03-31";
-            $num_llamados = 2;
-        } else {
-            $fecha_inicio = "$año-07-01";
-            $fecha_fin = "$año-08-31";
-            $num_llamados = 1;
-        }
-        break;
-    case 7:
-        if ($es_cuatrimestral) {
-            $fecha_inicio = "$año-07-01";
-            $fecha_fin = "$año-08-31";
-            $num_llamados = 1;
-        } else {
-            $fecha_inicio = "$año-11-01";
-            $fecha_fin = "$año-12-31";
-            $num_llamados = 2;
-        }
-        break;
+    case 1: $fecha_inicio = $es_cuatrimestral ? "$año-07-01" : "$año-11-01";
+            $fecha_fin    = $es_cuatrimestral ? "$año-08-31" : "$año-12-31"; break;
+    case 2: $fecha_inicio = $es_cuatrimestral ? "$año-11-01" : "$año-02-01";
+            $fecha_fin    = $es_cuatrimestral ? "$año-12-31" : "$año-03-31"; break;
+    case 3: $fecha_inicio = $es_cuatrimestral ? "$año-02-01" : "$año-07-01";
+            $fecha_fin    = $es_cuatrimestral ? "$año-03-31" : "$año-08-31"; break;
+    case 4: $fecha_inicio = $es_cuatrimestral ? "$año-07-01" : "$año-11-01";
+            $fecha_fin    = $es_cuatrimestral ? "$año-08-31" : "$año-12-31"; break;
+    case 5: $fecha_inicio = $es_cuatrimestral ? "$año-11-01" : "$año-02-01";
+            $fecha_fin    = $es_cuatrimestral ? "$año-12-31" : "$año-03-31"; break;
+    case 6: $fecha_inicio = $es_cuatrimestral ? "$año-02-01" : "$año-07-01";
+            $fecha_fin    = $es_cuatrimestral ? "$año-03-31" : "$año-08-31"; break;
+    case 7: $fecha_inicio = $es_cuatrimestral ? "$año-07-01" : "$año-11-01";
+            $fecha_fin    = $es_cuatrimestral ? "$año-08-31" : "$año-12-31"; break;
     default:
-        echo "<script>
-            alert('Turno no válido.');
-            window.location.href = 'pre_nota_final.php';
-        </script>";
+        echo "<script>alert('Turno no válido.'); window.location.href='pre_nota_final.php';</script>";
         exit;
 }
 
-// Mostrar las fechas para depuración
-echo "Fecha Inicio: $fecha_inicio <br>";
-echo "Fecha Fin: $fecha_fin <br>";
-
-
-// Consulta SQL para obtener los estudiantes inscritos y sus notas en el período actual
+// CONSULTA FINAL USANDO RANGO DE FECHAS (NO FILTRA POR TURNO)
 $query = "
-    SELECT 
-        a.nombre_alumno, 
-        a.apellido_alumno, 
-        a.dni_alumno, 
-        mf.alumno_legajo,
-        nef1.nota AS nota_primer_llamado,
-        nef1.tomo AS tomo_primer_llamado,
-        nef1.folio AS folio_primer_llamado,
-        nef2.nota AS nota_segundo_llamado,
-        nef2.tomo AS tomo_segundo_llamado,
-        nef2.folio AS folio_segundo_llamado
-    FROM mesas_finales mf
-    JOIN alumno a ON mf.alumno_legajo = a.legajo
-    JOIN fechas_mesas_finales fmf ON mf.fechas_mesas_finales_idfechas_mesas_finales = fmf.idfechas_mesas_finales
-    JOIN tandas t ON fmf.tandas_idtandas = t.idtandas
-    LEFT JOIN nota_examen_final nef1 
-        ON mf.alumno_legajo = nef1.alumno_legajo 
-        AND nef1.llamado = 1 
-        AND nef1.materias_idMaterias = mf.materias_idMaterias
-    LEFT JOIN nota_examen_final nef2 
-        ON mf.alumno_legajo = nef2.alumno_legajo 
-        AND nef2.llamado = 2 
-        AND nef2.materias_idMaterias = mf.materias_idMaterias
-    WHERE mf.materias_idMaterias = ?
-      AND t.fecha BETWEEN ? AND ?
-    ORDER BY a.apellido_alumno ASC;
+SELECT  
+    a.nombre_alumno, 
+    a.apellido_alumno, 
+    a.dni_alumno, 
+    mf.alumno_legajo,
+    m.Nombre AS nombre_materia,
+    t.fecha AS fecha_tanda,
+    t.tanda,
+    t.llamado,
+    n.condicion,
+    nef1.nota AS nota_primer_llamado,
+    nef1.tomo AS tomo_primer_llamado,
+    nef1.folio AS folio_primer_llamado,
+    nef2.nota AS nota_segundo_llamado,
+    nef2.tomo AS tomo_segundo_llamado,
+    nef2.folio AS folio_segundo_llamado
+FROM mesas_finales mf
+JOIN alumno a ON mf.alumno_legajo = a.legajo
+JOIN fechas_mesas_finales fmf ON mf.fechas_mesas_finales_idfechas_mesas_finales = fmf.idfechas_mesas_finales
+JOIN tandas t ON fmf.tandas_idtandas = t.idtandas
+JOIN materias m ON mf.materias_idMaterias = m.idMaterias
+JOIN notas n ON n.alumno_legajo = mf.alumno_legajo AND n.materias_idMaterias = mf.materias_idMaterias
+LEFT JOIN nota_examen_final nef1 
+    ON mf.alumno_legajo = nef1.alumno_legajo 
+    AND nef1.materias_idMaterias = fmf.materias_idMaterias
+    AND nef1.llamado = 1
+    AND YEAR(nef1.fecha) = ?
+LEFT JOIN nota_examen_final nef2 
+    ON mf.alumno_legajo = nef2.alumno_legajo 
+    AND nef2.materias_idMaterias = fmf.materias_idMaterias
+    AND nef2.llamado = 2
+    AND YEAR(nef2.fecha) = ?
+WHERE 
+    fmf.materias_idMaterias = ?
+    AND m.carreras_idCarrera = ?
+    AND m.cursos_idCursos = ?
+    AND m.comisiones_idComisiones = ?
+    AND t.fecha BETWEEN ? AND ?
+    AND n.condicion IN ('Regular', 'Libre')
+GROUP BY a.legajo
+ORDER BY a.apellido_alumno ASC
 ";
 
-// Preparar la consulta con los parámetros necesarios
 $stmt = $conexion->prepare($query);
-$stmt->bind_param("iss", $idMateria, $fecha_inicio, $fecha_fin);
+$stmt->bind_param(
+     "iiiiisss",
+    $año, // año notas llamado 1
+    $año, // año notas llamado 2
+    $idMateria, $idCarrera, $idCurso, $idComision,
+    $fecha_inicio, $fecha_fin
+);
 $stmt->execute();
 $result = $stmt->get_result();
 
-// Obtener el nombre de la materia
+// Nombre de la materia
 $query_materia = "SELECT Nombre FROM materias WHERE idMaterias = ?";
 $stmt_materia = $conexion->prepare($query_materia);
 $stmt_materia->bind_param("i", $idMateria);
 $stmt_materia->execute();
 $result_materia = $stmt_materia->get_result();
-$materia_nombre = $result_materia->fetch_assoc()['Nombre'];
+$materia_nombre = $result_materia->fetch_assoc()['Nombre'] ?? 'Materia desconocida';
+$stmt_materia->close();
 
-// Array de materias cuatrimestrales (puedes mover esto a una configuración más centralizada si lo usas en varios lugares)
-$materiasCuatrimestrales = ['146', '415', '426', '193', '444', '453'];
+// Meses visibles
+$meses_turno = $es_cuatrimestral
+    ? ["1" => "Julio - Agosto", "2" => "Noviembre - Diciembre", "3" => "Febrero - Marzo", "4" => "Julio - Agosto", "5" => "Noviembre - Diciembre", "6" => "Febrero - Marzo", "7" => "Julio - Agosto"]
+    : ["1" => "Noviembre - Diciembre", "2" => "Febrero - Marzo", "3" => "Julio - Agosto", "4" => "Noviembre - Diciembre", "5" => "Febrero - Marzo", "6" => "Julio - Agosto", "7" => "Noviembre - Diciembre"];
 
-// Determinar si la materia es cuatrimestral
-$isCuatrimestral = in_array($idMateria, $materiasCuatrimestrales);
-
-// Definir los meses según el turno y el tipo de materia
-if ($isCuatrimestral) {
-    $meses_turno = [
-        "1" => "Julio - Agosto",
-        "2" => "Noviembre - Diciembre",
-        "3" => "Febrero - Marzo",
-        "4" => "Julio - Agosto",
-        "5" => "Noviembre - Diciembre",
-        "6" => "Febrero - Marzo",
-        "7" => "Julio - Agosto",
-    ];
-} else {
-    $meses_turno = [
-        "1" => "Noviembre - Diciembre",
-        "2" => "Febrero - Marzo",
-        "3" => "Julio - Agosto",
-        "4" => "Noviembre - Diciembre",
-        "5" => "Febrero - Marzo",
-        "6" => "Julio - Agosto",
-        "7" => "Noviembre - Diciembre",
-    ];
-}
-
-// Determinar los meses correspondientes al turno seleccionado
 $meses = $meses_turno[$turno_seleccionado] ?? "Meses no definidos";
 
-// Liberar recursos
-$stmt_materia->close();
+// Aquí ya se incluye automáticamente el HTML con las notas que corresponden
 ?>
+
+
+
 
 <div class="contenido">
     <div class="form-container">
@@ -719,98 +149,129 @@ $stmt_materia->close();
                             </tr>
                         </thead>
                         <tbody>
-    <?php 
-    $contador = 1;
-    while ($row = $result->fetch_assoc()) { 
-        $habilitarSegundoLlamado = ($row['nota_primer_llamado'] !== null && $row['nota_primer_llamado'] < 6);
-    ?>
-        <tr>
-            <td><?php echo $contador; ?></td>
-            <td><?php echo htmlspecialchars(strval($row['apellido_alumno']), ENT_QUOTES, 'UTF-8'); ?></td>
-            <td><?php echo htmlspecialchars(strval($row['nombre_alumno']), ENT_QUOTES, 'UTF-8'); ?></td>
-            <td><?php echo htmlspecialchars(strval($row['dni_alumno']), ENT_QUOTES, 'UTF-8'); ?></td>
-
-            <input type="hidden" name="alumno_legajo[<?php echo $contador; ?>]" 
-                   value="<?php echo htmlspecialchars(strval($row['alumno_legajo']), ENT_QUOTES, 'UTF-8'); ?>">
-
-            <!-- Primer Llamado -->
-            <td>
-                <?php if ($row['nota_primer_llamado'] === '0' || $row['nota_primer_llamado'] == 0): ?>
-                    <span class="ausente">A</span>
-                <?php else: ?>
-                    <input 
-                        type="number" 
-                        name="nota_final_1[<?php echo $contador; ?>]" 
-                        class="input-nota nota-1" 
-                        min="0" max="10" step="0.1" 
-                        onchange="evaluarNota(this)"
-                        value="<?php echo htmlspecialchars(strval($row['nota_primer_llamado'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
-                <?php endif; ?>
-            </td>
-
-            <td>
-                <input type="number" 
-                       name="tomo_1[<?php echo $contador; ?>]" 
-                       class="input-nota nota-1" 
-                       value="<?php echo htmlspecialchars(strval($row['tomo_primer_llamado'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
-            </td>
-
-            <td>
-                <input type="number" 
-                       name="folio_1[<?php echo $contador; ?>]" 
-                       class="input-nota nota-1" 
-                       value="<?php echo htmlspecialchars(strval($row['folio_primer_llamado'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
-            </td>
-
-            <td>
-                <input 
-                    type="checkbox" 
-                    name="ausente_1[<?php echo $contador; ?>]" 
-                    value="1" 
-                    onchange="toggleAusente(this)"
-                    <?php echo ($row['nota_primer_llamado'] !== null && $row['nota_primer_llamado'] !== '0') ? 'disabled' : ''; ?>
-                    <?php echo ($row['nota_primer_llamado'] === '0') ? 'checked' : ''; ?>>
-            </td>
-
-            <!-- Segundo Llamado -->
-            <td>
-                <input 
-                    type="number" 
-                    name="nota_final_2[<?php echo $contador; ?>]" 
-                    class="input-nota nota-2" 
-                    min="0" max="10" step="0.1" 
-                    value="<?php echo htmlspecialchars(strval($row['nota_segundo_llamado'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
-                    <?php echo !$habilitarSegundoLlamado ? 'disabled' : ''; ?>>
-            </td>
-
-            <td>
-                <input type="number" 
-                       name="tomo_2[<?php echo $contador; ?>]" 
-                       class="input-nota nota-1" 
-                       value="<?php echo htmlspecialchars(strval($row['tomo_segundo_llamado'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
-                       <?php echo !$habilitarSegundoLlamado ? 'disabled' : ''; ?>>
-            </td>
-
-            <td>
-                <input type="number" 
-                       name="folio_2[<?php echo $contador; ?>]" 
-                       class="input-nota nota-1" 
-                       value="<?php echo htmlspecialchars(strval($row['folio_segundo_llamado'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
-                       <?php echo !$habilitarSegundoLlamado ? 'disabled' : ''; ?>>
-            </td>
-
-            <td>
-                <input 
-                    type="checkbox" 
-                    name="ausente_2[<?php echo $contador; ?>]" 
-                    value="1" 
-                    onchange="toggleAusente(this)"
-                    <?php echo !$habilitarSegundoLlamado ? 'disabled' : ''; ?>
-                    <?php echo ($row['nota_segundo_llamado'] === '0') ? 'checked' : ''; ?>>
-            </td>
-        </tr>
-    <?php $contador++; } ?>
+                        <?php 
+                        $contador = 1;
+                        while ($row = $result->fetch_assoc()) { 
+                            $nota1 = $row['nota_primer_llamado'];
+                            $nota2 = $row['nota_segundo_llamado'];
+                        
+                            $tomo1 = $row['tomo_primer_llamado'];
+                            $folio1 = $row['folio_primer_llamado'];
+                            $tomo2 = $row['tomo_segundo_llamado'];
+                            $folio2 = $row['folio_segundo_llamado'];
+                        
+                            $nota1_guardada = (!is_null($tomo1) && $tomo1 !== '') || (!is_null($folio1) && $folio1 !== '');
+                            $nota2_guardada = (!is_null($tomo2) && $tomo2 !== '') || (!is_null($folio2) && $folio2 !== '');
+                        
+                            $esAusente1 = $nota1_guardada && (is_null($nota1) || $nota1 == 0 || $nota1 === '0.00');
+                            $esAusente2 = $nota2_guardada && (is_null($nota2) || $nota2 == 0 || $nota2 === '0.00');
+                        
+                            $habilitarSegundoLlamado = false;
+                        ?>
+                        <tr>
+                            <td><?php echo $contador; ?></td>
+                            <td><?php echo htmlspecialchars($row['apellido_alumno'], ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td><?php echo htmlspecialchars($row['nombre_alumno'], ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td><?php echo htmlspecialchars($row['dni_alumno'], ENT_QUOTES, 'UTF-8'); ?></td>
+                        
+                            <input type="hidden" name="alumno_legajo[<?php echo $contador; ?>]" 
+                                   value="<?php echo htmlspecialchars($row['alumno_legajo'], ENT_QUOTES, 'UTF-8'); ?>">
+                        
+                            <!-- PRIMER LLAMADO -->
+                            <td colspan="4" id="primer-llamado-<?php echo $contador; ?>">
+                                <div style="display: flex; gap: 5px; align-items: center;">
+                                    <div class="nota-contenedor" style="position: relative;">
+                                        <?php if ($esAusente1): ?>
+                                            <span class="ausente-label" style="font-weight: bold; color: red;">A</span>
+                                            <span class="editar-ausente" title="Editar nota" style="cursor: pointer; margin-left: 4px; color: #888;" onclick="mostrarInputNota(this)">✖</span>
+                                            <input type="number" 
+                                                name="nota_final_1[<?php echo $contador; ?>]" 
+                                                class="input-nota nota-1" 
+                                                min="0" max="10" step="0.1"
+                                                value=""
+                                                data-segundo-llamado="segundo-llamado-<?php echo $contador; ?>"
+                                                style="display: none;"
+                                                onchange="evaluarNota(this)">
+                                        <?php else: ?>
+                                            <input type="number" 
+                                                name="nota_final_1[<?php echo $contador; ?>]" 
+                                                class="input-nota nota-1" 
+                                                min="0" max="10" step="0.1"
+                                                value="<?php echo htmlspecialchars($nota1 ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                                                data-segundo-llamado="segundo-llamado-<?php echo $contador; ?>"
+                                                onchange="evaluarNota(this)">
+                                        <?php endif; ?>
+                                    </div>
+                        
+                                    <input type="number" 
+                                        name="tomo_1[<?php echo $contador; ?>]" 
+                                        class="input-nota nota-1"
+                                        value="<?php echo htmlspecialchars($tomo1 ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                        
+                                    <input type="number" 
+                                        name="folio_1[<?php echo $contador; ?>]" 
+                                        class="input-nota nota-1"
+                                        value="<?php echo htmlspecialchars($folio1 ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                        
+                                    <input 
+                                        type="checkbox" 
+                                        name="ausente_1[<?php echo $contador; ?>]" 
+                                        value="1"
+                                        data-llamado="primer-llamado-<?php echo $contador; ?>"
+                                        data-segundo-llamado="segundo-llamado-<?php echo $contador; ?>"
+                                        onchange="toggleAusente(this)"
+                                        <?php echo $esAusente1 ? 'checked' : ''; ?>>
+                                </div>
+                            </td>
+                        
+                            <!-- SEGUNDO LLAMADO -->
+                            <td colspan="4" id="segundo-llamado-<?php echo $contador; ?>">
+                                <div style="display: flex; gap: 5px; align-items: center;">
+                                    <div class="nota-contenedor" style="position: relative;">
+                                        <?php if ($esAusente2): ?>
+                                            <span class="ausente-label" style="font-weight: bold; color: red;">A</span>
+                                            <span class="editar-ausente" title="Editar nota" style="cursor: pointer; margin-left: 4px; color: #888;" onclick="mostrarInputNota(this)">✖</span>
+                                            <input type="number" 
+                                                name="nota_final_2[<?php echo $contador; ?>]" 
+                                                class="input-nota nota-2" 
+                                                min="0" max="10" step="0.1"
+                                                value=""
+                                                style="display: none;"
+                                                <?php echo !$habilitarSegundoLlamado ? 'disabled' : ''; ?>>
+                                        <?php else: ?>
+                                            <input type="number" 
+                                                name="nota_final_2[<?php echo $contador; ?>]" 
+                                                class="input-nota nota-2" 
+                                                min="0" max="10" step="0.1"
+                                                value="<?php echo htmlspecialchars($nota2 ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                                                <?php echo !$habilitarSegundoLlamado ? 'disabled' : ''; ?>>
+                                        <?php endif; ?>
+                                    </div>
+                        
+                                    <input type="number" 
+                                        name="tomo_2[<?php echo $contador; ?>]" 
+                                        class="input-nota nota-2"
+                                        value="<?php echo htmlspecialchars($tomo2 ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                                        <?php echo !$habilitarSegundoLlamado ? 'disabled' : ''; ?>>
+                        
+                                    <input type="number" 
+                                        name="folio_2[<?php echo $contador; ?>]" 
+                                        class="input-nota nota-2"
+                                        value="<?php echo htmlspecialchars($folio2 ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                                        <?php echo !$habilitarSegundoLlamado ? 'disabled' : ''; ?>>
+                        
+                                    <input 
+                                        type="checkbox" 
+                                        name="ausente_2[<?php echo $contador; ?>]" 
+                                        value="1"
+                                        <?php echo !$habilitarSegundoLlamado ? 'disabled' : ''; ?>
+                                        <?php echo $esAusente2 ? 'checked' : ''; ?>>
+                                </div>
+                            </td>
+                        </tr>
+                        <?php $contador++; } ?>
                         </tbody>
+
                     </table>
                 </div>
                 <input type="hidden" name="materia" value="<?php echo htmlspecialchars(strval($idMateria), ENT_QUOTES, 'UTF-8'); ?>">
@@ -827,79 +288,90 @@ $stmt_materia->close();
 
 <script>
     function evaluarNota(input) {
+    const index = input.name.match(/\[(\d+)\]/)[1];
+    const segundoLlamado = document.getElementById(`segundo-llamado-${index}`);
+
+    if (!segundoLlamado) return;
+
+    const notaInput = segundoLlamado.querySelector(`input[name="nota_final_2[${index}]"]`);
+    const tomoInput = segundoLlamado.querySelector(`input[name="tomo_2[${index}]"]`);
+    const folioInput = segundoLlamado.querySelector(`input[name="folio_2[${index}]"]`);
+    const ausenteCheckbox = segundoLlamado.querySelector(`input[name="ausente_2[${index}]"]`);
+
     const nota = parseFloat(input.value);
-    const segundoLlamadoId = input.getAttribute('data-segundo-llamado');
-    const segundoLlamado = document.getElementById(segundoLlamadoId);
 
-    // Seleccionar los campos del Segundo Llamado dentro del mismo contenedor
-    const notaInput = segundoLlamado.querySelector(`input[name="nota_final_2[${segundoLlamadoId.split('-')[2]}]"]`);
-    const tomoInput = segundoLlamado.parentElement.querySelector(`input[name="tomo_2[${segundoLlamadoId.split('-')[2]}]"]`);
-    const folioInput = segundoLlamado.parentElement.querySelector(`input[name="folio_2[${segundoLlamadoId.split('-')[2]}]"]`);
-    const ausenteCheckbox = segundoLlamado.parentElement.querySelector(`input[name="ausente_2[${segundoLlamadoId.split('-')[2]}]"]`);
-
-    if (nota >= 6) {
-        if (notaInput) notaInput.disabled = true, notaInput.value = '';
-        if (tomoInput) tomoInput.disabled = true, tomoInput.value = '';
-        if (folioInput) folioInput.disabled = true, folioInput.value = '';
-        if (ausenteCheckbox) ausenteCheckbox.disabled = true, ausenteCheckbox.checked = false;
+    if (!isNaN(nota) && nota >= 6) {
+        notaInput.disabled = true; notaInput.value = '';
+        tomoInput.disabled = true; tomoInput.value = '';
+        folioInput.disabled = true; folioInput.value = '';
+        ausenteCheckbox.disabled = true; ausenteCheckbox.checked = false;
     } else {
-        if (notaInput) notaInput.disabled = false;
-        if (tomoInput) tomoInput.disabled = false;
-        if (folioInput) folioInput.disabled = false;
-        if (ausenteCheckbox) ausenteCheckbox.disabled = false;
+        notaInput.disabled = false;
+        tomoInput.disabled = false;
+        folioInput.disabled = false;
+        ausenteCheckbox.disabled = false;
     }
-    
-    // Asegurarse de habilitar siempre tomo y folio
-    if (tomoInput) tomoInput.disabled = false;
-    if (folioInput) folioInput.disabled = false;
 }
 
 function toggleAusente(checkbox) {
-    const llamadoId = checkbox.getAttribute('data-llamado');
-    const llamado = document.getElementById(llamadoId);
+    const index = checkbox.name.match(/\[(\d+)\]/)[1];
+    const primerLlamado = document.getElementById(`primer-llamado-${index}`);
+    const segundoLlamado = document.getElementById(`segundo-llamado-${index}`);
+
+    if (!primerLlamado || !segundoLlamado) return;
+
+    const notaInput = primerLlamado.querySelector(`input[name="nota_final_1[${index}]"]`);
+
+    const notaInput2 = segundoLlamado.querySelector(`input[name="nota_final_2[${index}]"]`);
+    const tomoInput2 = segundoLlamado.querySelector(`input[name="tomo_2[${index}]"]`);
+    const folioInput2 = segundoLlamado.querySelector(`input[name="folio_2[${index}]"]`);
+    const ausenteCheckbox2 = segundoLlamado.querySelector(`input[name="ausente_2[${index}]"]`);
 
     if (checkbox.checked) {
-        const notaInput = llamado.querySelector(`input[name="nota_final_1[${llamadoId.split('-')[2]}]"]`);
-        if (notaInput) notaInput.value = '', notaInput.disabled = true;
+        notaInput.value = '';
+        notaInput.disabled = true;
 
-        const segundoLlamadoId = llamadoId.replace('primer-llamado', 'segundo-llamado');
-        const segundoLlamado = document.getElementById(segundoLlamadoId);
-
-        if (segundoLlamado) {
-            const notaInputSegundo = segundoLlamado.querySelector(`input[name="nota_final_2[${segundoLlamadoId.split('-')[2]}]"]`);
-            const tomoInputSegundo = segundoLlamado.parentElement.querySelector(`input[name="tomo_2[${segundoLlamadoId.split('-')[2]}]"]`);
-            const folioInputSegundo = segundoLlamado.parentElement.querySelector(`input[name="folio_2[${segundoLlamadoId.split('-')[2]}]"]`);
-            const ausenteCheckboxSegundo = segundoLlamado.parentElement.querySelector(`input[name="ausente_2[${segundoLlamadoId.split('-')[2]}]"]`);
-
-            if (notaInputSegundo) notaInputSegundo.disabled = false;
-            if (tomoInputSegundo) tomoInputSegundo.disabled = false;
-            if (folioInputSegundo) folioInputSegundo.disabled = false;
-            if (ausenteCheckboxSegundo) ausenteCheckboxSegundo.disabled = false;
-        }
+        notaInput2.disabled = false;
+        tomoInput2.disabled = false;
+        folioInput2.disabled = false;
+        ausenteCheckbox2.disabled = false;
     } else {
-        if (llamadoId.includes('primer-llamado')) {
-            const notaInput = llamado.querySelector(`input[name="nota_final_1[${llamadoId.split('-')[2]}]"]`);
-            if (notaInput) notaInput.disabled = false;
+        notaInput.disabled = false;
 
-            const segundoLlamadoId = llamadoId.replace('primer-llamado', 'segundo-llamado');
-            const segundoLlamado = document.getElementById(segundoLlamadoId);
+        notaInput2.disabled = true; notaInput2.value = '';
+        tomoInput2.disabled = true; tomoInput2.value = '';
+        folioInput2.disabled = true; folioInput2.value = '';
+        ausenteCheckbox2.checked = false;
+        ausenteCheckbox2.disabled = true;
+    }
+}
 
-            if (segundoLlamado) {
-                const notaInputSegundo = segundoLlamado.querySelector(`input[name="nota_final_2[${segundoLlamadoId.split('-')[2]}]"]`);
-                const tomoInputSegundo = segundoLlamado.parentElement.querySelector(`input[name="tomo_2[${segundoLlamadoId.split('-')[2]}]"]`);
-                const folioInputSegundo = segundoLlamado.parentElement.querySelector(`input[name="folio_2[${segundoLlamadoId.split('-')[2]}]"]`);
-                const ausenteCheckboxSegundo = segundoLlamado.parentElement.querySelector(`input[name="ausente_2[${segundoLlamadoId.split('-')[2]}]"]`);
+</script>
 
-                if (notaInputSegundo) notaInputSegundo.disabled = true, notaInputSegundo.value = '';
-                if (tomoInputSegundo) tomoInputSegundo.disabled = true, tomoInputSegundo.value = '';
-                if (folioInputSegundo) folioInputSegundo.disabled = true, folioInputSegundo.value = '';
-                if (ausenteCheckboxSegundo) ausenteCheckboxSegundo.checked = false, ausenteCheckboxSegundo.disabled = true;
-            }
-        }
+<script>
+function mostrarInputNota(span) {
+    const contenedor = span.parentElement;
+    const label = contenedor.querySelector(".ausente-label");
+    const input = contenedor.querySelector("input[type='number']");
+
+    // Buscar el checkbox hermano más cercano dentro del mismo <td>
+    const parentRow = contenedor.closest("td");
+    const checkbox = parentRow.querySelector("input[type='checkbox']");
+
+    if (label) label.remove();
+    span.remove();
+
+    if (input) {
+        input.style.display = "inline-block";
+        input.focus();
+    }
+
+    if (checkbox) {
+        checkbox.checked = false;
+        checkbox.disabled = false;
     }
 }
 </script>
-
 
 
 <?php
@@ -908,20 +380,7 @@ $conexion->close();
 ?>
 
 
-<!--   Core JS Files   -->
-<script src="assets/js/core/jquery.3.2.1.min.js"></script>
 
-<script src="assets/js/core/bootstrap.min.js"></script>
-
-<!-- jQuery UI -->
-<script src="assets/js/plugin/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>
-
-
-<!-- jQuery Scrollbar -->
-<script src="assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
-
-<!-- Azzara JS -->
-<script src="assets/js/ready.min.js"></script>
 
 <style>
       .llamados {

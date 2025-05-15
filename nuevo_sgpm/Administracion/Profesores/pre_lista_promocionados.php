@@ -466,59 +466,85 @@ if (isset($_SESSION['time']) && (time() - $_SESSION['time'] > $inactivity_limit)
 </div>
 
 	<?php
-// Incluimos el archivo de conexión a la base de datos
+session_start();
+$idPreceptor = $_SESSION['id'];
+$rolUsuario = $_SESSION["roles"];
+$anioActual = date("Y");
 
-// Obtenemos el ID del preceptor desde la sesión
-$idPreceptor = $_SESSION['id'];  // Asegúrate de tener el ID del preceptor guardado en la sesión
-$rolUsuario = $_SESSION["roles"]; // Asegúrate de tener el rol guardado en la sesión
-
-// Definimos la consulta dependiendo del rol
+// Consulta de materias según rol
 if ($rolUsuario == 1) {
-    // Si el rol es 1 (administrador, por ejemplo), se muestran todas las materias
     $queryCarreras = "
-        SELECT c.idCarrera, c.nombre_carrera, m.Nombre, m.idMaterias
-        FROM carreras c
-        INNER JOIN materias m ON m.carreras_idCarrera = c.idCarrera
-        INNER JOIN inscripcion_asignatura ia ON ia.carreras_idCarrera = c.idCarrera
+        SELECT 
+            c.idCarrera, 
+            c.nombre_carrera, 
+            m.Nombre, 
+            m.idMaterias,
+            cu.curso,
+            cu.idCursos,
+            co.comision,
+            co.idComisiones
+        FROM materias m
+        INNER JOIN carreras c ON c.idCarrera = m.carreras_idCarrera
+        INNER JOIN cursos cu ON cu.idCursos = m.cursos_idCursos
+        INNER JOIN comisiones co ON co.idComisiones = m.comisiones_idComisiones
         GROUP BY m.idMaterias
     ";
+    $stmt = $conexion->prepare($queryCarreras);
 } else {
-    // Si el rol es diferente de 1, se muestran solo las materias asignadas al preceptor
     $queryCarreras = "
-        SELECT c.idCarrera, c.nombre_carrera, m.Nombre, m.idMaterias
-        FROM carreras c
-        INNER JOIN materias m ON m.carreras_idCarrera = c.idCarrera
-        INNER JOIN preceptores p ON p.carreras_idCarrera = c.idCarrera
-        INNER JOIN inscripcion_asignatura ia ON ia.carreras_idCarrera = c.idCarrera
-        WHERE p.profesor_idProrfesor = ?
+        SELECT 
+            c.idCarrera, 
+            c.nombre_carrera, 
+            m.Nombre, 
+            m.idMaterias,
+            cu.curso,
+            cu.idCursos,
+            co.comision,
+            co.idComisiones
+        FROM materias m
+        INNER JOIN carreras c ON c.idCarrera = m.carreras_idCarrera
+        INNER JOIN cursos cu ON cu.idCursos = m.cursos_idCursos
+        INNER JOIN comisiones co ON co.idComisiones = m.comisiones_idComisiones
+        INNER JOIN preceptores p ON 
+            p.carreras_idCarrera = m.carreras_idCarrera AND 
+            p.cursos_idCursos = m.cursos_idCursos AND 
+            p.comisiones_idComisiones = m.comisiones_idComisiones AND 
+            p.profesor_idProfesor = ?
         GROUP BY m.idMaterias
     ";
-}
-
-// Preparamos y ejecutamos la consulta
-$stmt = $conexion->prepare($queryCarreras);
-
-if ($rolUsuario != 1) {
-    // Si no es administrador, se enlaza el ID del preceptor
+    $stmt = $conexion->prepare($queryCarreras);
     $stmt->bind_param("i", $idPreceptor);
 }
 
 $stmt->execute();
 $resultCarreras = $stmt->get_result();
-
-// Obtener los resultados en un array asociativo
 $carreras = $resultCarreras->fetch_all(MYSQLI_ASSOC);
 ?>
 
+<!-- HTML -->
 <div class="contenido">
     <div class="contenedor-materias">
         <h2 class="titulo">Acta Volantes de Promocionados</h2>
+
+        <!-- Selector de año -->
+        <div style="margin-bottom: 1rem;">
+            <label for="anio">Seleccionar año:</label>
+            <select id="anio" name="anio">
+                <option value="">Seleccione un año</option>
+                <?php for ($anio = 2023; $anio <= $anioActual; $anio++) { ?>
+                    <option value="<?php echo $anio; ?>"><?php echo $anio; ?></option>
+                <?php } ?>
+            </select>
+        </div>
        
         <div class="tabla-contenedor">
             <table id="tablaMaterias" class="tabla-materias">
                 <thead>
                     <tr>
-                        <th>Nombre de la Unidad Curricular y Carrera</th>
+                        <th>Carrera</th>
+                        <th>Unidad Curricular</th>
+                        <th>Curso</th>
+                        <th>Comisión</th>
                         <th>Seleccionar</th>
                     </tr>
                 </thead>
@@ -527,9 +553,16 @@ $carreras = $resultCarreras->fetch_all(MYSQLI_ASSOC);
                     if (!empty($carreras) && is_array($carreras)) {
                         foreach ($carreras as $carrera) { ?>
                             <tr>
-                                <td><?php echo htmlspecialchars($carrera['Nombre']) . " - " . htmlspecialchars($carrera['nombre_carrera']); ?></td>
+                                <td><?php echo htmlspecialchars($carrera['nombre_carrera']); ?></td>
+                                <td><?php echo htmlspecialchars($carrera['Nombre']); ?></td>
+                                <td><?php echo htmlspecialchars($carrera['curso']); ?></td>
+                                <td><?php echo htmlspecialchars($carrera['comision']); ?></td>
                                 <td>
-                                    <button class="btn-seleccionar" onclick="irParciales('<?php echo $carrera['idCarrera']; ?>', '<?php echo $carrera['idMaterias']; ?>')">
+                                    <button class="btn-seleccionar" onclick="validarYRedirigir(
+                                        '<?php echo $carrera['idCarrera']; ?>', 
+                                        '<?php echo $carrera['idMaterias']; ?>', 
+                                        '<?php echo $carrera['idCursos']; ?>', 
+                                        '<?php echo $carrera['idComisiones']; ?>')">
                                         <span class="icono">&#10003;</span> Seleccionar
                                     </button>
                                 </td>
@@ -537,7 +570,7 @@ $carreras = $resultCarreras->fetch_all(MYSQLI_ASSOC);
                         <?php }
                     } else { ?>
                         <tr>
-                            <td colspan="2">No hay carreras asignadas con personas asociadas.</td>
+                            <td colspan="5">No hay materias asociadas.</td>
                         </tr>
                     <?php } ?>
                 </tbody>
@@ -546,18 +579,25 @@ $carreras = $resultCarreras->fetch_all(MYSQLI_ASSOC);
     </div>
 </div>
 
+<!-- JavaScript -->
 <script>
-// Esta función redirige a la página de parciales con los parámetros de carrera y materia
-function irParciales(idCarrera, idMaterias) {
-    window.location.href = "lista_promocionados.php?comision=" + idCarrera + "&materia=" + idMaterias;
+function validarYRedirigir(idCarrera, idMaterias, idCurso, idComision) {
+    const anio = document.getElementById('anio').value;
+
+    if (!anio || anio.trim() === "") {
+        alert("Por favor, seleccioná un año antes de continuar.");
+        return;
+    }
+
+    window.location.href = "lista_promocionados.php?carrera=" + idCarrera + 
+                           "&materia=" + idMaterias + 
+                           "&curso=" + idCurso + 
+                           "&comision=" + idComision + 
+                           "&anio=" + anio;
 }
-var myTable = document.querySelector("#tablaMaterias");
-var dataTable = new DataTable(tablaMaterias);
+
+new DataTable(document.querySelector("#tablaMaterias"));
 </script>
-
-
-
-
 
 <!--   Core JS Files   -->
 <script src="../../assets/js/core/jquery.3.2.1.min.js"></script>

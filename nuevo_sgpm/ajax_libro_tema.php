@@ -2,45 +2,73 @@
 session_start();
 include '../conexion/conexion.php';
 
-$profesor_id = $_SESSION['id'];
-$carrera_id = $_GET['carrera'];  // Obtener el id de la carrera desde los parámetros GET
-$materia_ids = explode(',', $_GET['materias']);  // Obtener los ids de las materias desde los parámetros GET
+$profesor_id = $_SESSION['id'] ?? 0;
+$rol         = $_SESSION['roles'] ?? 0;
 
-// Verificar que los parámetros no estén vacíos
-if (!$carrera_id || empty($materia_ids)) {
-    echo json_encode([]);  // Devolver un JSON vacío si no se especifica carrera o materia
+$carrera_id = isset($_GET['carrera']) ? intval($_GET['carrera']) : 0;
+$anio       = isset($_GET['anio']) ? intval($_GET['anio']) : 0;
+
+$materia_ids_raw = isset($_GET['materias']) ? $_GET['materias'] : '';
+$materia_ids     = array_filter(array_map('intval', explode(',', $materia_ids_raw)));
+
+// Validación
+if (!$carrera_id || empty($materia_ids) || !$anio) {
+    echo json_encode([]);
     exit();
 }
 
-// Construir la consulta para filtrar por carrera y materias
-$materia_placeholders = implode(',', array_fill(0, count($materia_ids), '?'));  // Placeholder para la consulta IN
-$sql = "SELECT c.idCarrera, c.nombre_carrera, m.idMaterias, m.Nombre AS materia_nombre, 
-        lt.capacidades, lt.contenidos, lt.evaluacion, lt.fecha, lt.observacion_diaria 
+// Placeholders para IN
+$placeholders = implode(',', array_fill(0, count($materia_ids), '?'));
+
+// SQL base
+$sql = "SELECT  
+            c.idCarrera, 
+            c.nombre_carrera, 
+            m.idMaterias, 
+            m.Nombre AS materia_nombre, 
+            lt.capacidades, 
+            lt.contenidos, 
+            lt.evaluacion, 
+            lt.fecha,  
+            lt.observacion_diaria 
         FROM libro_tema lt
         INNER JOIN carreras c ON lt.carreras_idCarrera = c.idCarrera
         INNER JOIN materias m ON lt.materias_idMaterias = m.idMaterias
-        WHERE lt.profesor_idProrfesor = ? 
-        AND lt.carreras_idCarrera = ?
-        AND lt.materias_idMaterias IN ($materia_placeholders)";
+        WHERE lt.carreras_idCarrera = ?
+          AND YEAR(lt.fecha) = ?
+          AND lt.materias_idMaterias IN ($placeholders)";
 
-// Preparar la consulta
+// Si no es rol 1, filtrar por profesor
+if ($rol != 1) {
+    $sql .= " AND lt.profesor_idProrfesor = ?";
+}
+
 $stmt = $conexion->prepare($sql);
+if (!$stmt) {
+    echo json_encode(['error' => $conexion->error]);
+    exit();
+}
 
-// Vincular parámetros (id de profesor, id de carrera y lista de ids de materias)
-$params = array_merge([$profesor_id, $carrera_id], $materia_ids);
-$stmt->bind_param(str_repeat('i', count($params)), ...$params);
+// Armar tipos y parámetros
+$baseParams = [$carrera_id, $anio];
+$types = str_repeat('i', count($baseParams) + count($materia_ids) + ($rol != 1 ? 1 : 0));
+$params = array_merge($baseParams, $materia_ids);
+if ($rol != 1) {
+    $params[] = $profesor_id;
+}
 
-// Ejecutar la consulta
+// Ejecutar consulta
+$stmt->bind_param($types, ...$params);
 $stmt->execute();
 $result = $stmt->get_result();
 
-$data = array();
-if ($result->num_rows > 0) {
+$data = [];
+if ($result && $result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
         $data[] = $row;
     }
 }
 
-// Devolver los datos como JSON
 echo json_encode($data);
+exit;
 ?>

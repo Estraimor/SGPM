@@ -602,17 +602,114 @@ echo $html_datos_laborales;
 
 
 
-    // **Usuario**
-$html_datos_laborales = '<h2 class="section-title">Comision</h2><br>';
+   // === FORMULARIO de CAMBIO DE COMISIÓN ===
+$año_actual = date('Y');
+
+$sql_comision_actual = "SELECT c.comision, c.idComisiones
+                        FROM inscripcion_asignatura ia
+                        JOIN comisiones c ON c.idComisiones = ia.Comisiones_idComisiones
+                        WHERE ia.alumno_legajo = $legajo
+                        AND ia.año_inscripcion = $año_actual
+                        LIMIT 1";
+$res_com_actual = mysqli_query($conexion, $sql_comision_actual);
+$row_com_actual = mysqli_fetch_assoc($res_com_actual);
+$nombre_comision_actual = $row_com_actual['comision'] ?? 'No definida';
+$id_comision_actual = $row_com_actual['idComisiones'] ?? null;
+
+// Mostrar comisión actual
+$html_datos_laborales = '<h2 class="section-title">Comisión actual</h2><br>';
 $html_datos_laborales .= '<table class="styled-table" id="datos-laborales">
-    <tr><th>Comision</th></tr>';
+    <tr><th>Año</th><th>Comisión</th></tr>';
 $html_datos_laborales .= "<tr>
-    <td>{$row_datos_alumno['comision']}</td>
-    
+    <td>$año_actual</td>
+    <td>$nombre_comision_actual</td>
 </tr>";
 $html_datos_laborales .= '</table>';
 echo $html_datos_laborales;
 
+// Formulario para enviar a archivo externo
+echo '<h3 class="section-title">Cambiar Comisión</h3>';
+echo '<form method="post" action="procesar_cambio_comision.php" onsubmit="return confirm(\'¿Estás seguro que deseas cambiar la comisión?\')">
+        <label for="nueva_comision">Seleccionar nueva comisión:</label><br>
+        <select name="nueva_comision" required>
+            <option value="" disabled selected>Seleccionar</option>';
+
+$sql_comisiones = "SELECT * FROM comisiones";
+$query_comisiones = mysqli_query($conexion, $sql_comisiones);
+while ($row = mysqli_fetch_assoc($query_comisiones)) {
+    $disabled = ($row['idComisiones'] == $id_comision_actual) ? 'disabled' : '';
+    echo "<option value='{$row['idComisiones']}' $disabled>{$row['comision']}</option>";
+}
+
+echo '</select>
+      <input type="hidden" name="legajo" value="' . $legajo . '">
+      <button type="submit" name="cambiar_comision">Actualizar Comisión</button>
+    </form><br>';
+
+
+//  Notas del estudiante todos los años 
+   $sql = "
+        SELECT 
+            ia.Cursos_idCursos AS curso_id,
+            cu.curso AS nombre_curso,
+            m.Nombre AS nombre_materia,
+            (
+                SELECT n2.nota_final
+                FROM notas n2
+                WHERE n2.alumno_legajo = n.alumno_legajo
+                  AND n2.materias_idMaterias = n.materias_idMaterias
+                  AND n2.nota_final IS NOT NULL
+                ORDER BY n2.fecha DESC
+                LIMIT 1
+            ) AS nota_final,
+            (
+                SELECT n3.condicion
+                FROM notas n3
+                WHERE n3.alumno_legajo = n.alumno_legajo
+                  AND n3.materias_idMaterias = n.materias_idMaterias
+                  AND n3.condicion IS NOT NULL
+                ORDER BY n3.fecha DESC
+                LIMIT 1
+            ) AS condicion_final
+        FROM notas n
+        INNER JOIN materias m ON m.idMaterias = n.materias_idMaterias
+        INNER JOIN inscripcion_asignatura ia ON ia.alumno_legajo = n.alumno_legajo
+        INNER JOIN cursos cu ON cu.idCursos = ia.Cursos_idCursos
+        WHERE n.alumno_legajo = '$legajo'
+        GROUP BY ia.Cursos_idCursos, m.idMaterias
+        ORDER BY ia.Cursos_idCursos, m.Nombre
+    ";
+
+    $query = mysqli_query($conexion, $sql);
+    if (!$query) throw new Exception("Error al obtener resumen de materias: " . mysqli_error($conexion));
+
+    $materias_por_curso = [];
+    while ($row = mysqli_fetch_assoc($query)) {
+        $curso_id = $row['curso_id'];
+        $materias_por_curso[$curso_id]['nombre_curso'] = $row['nombre_curso'];
+        $materias_por_curso[$curso_id]['materias'][] = $row;
+    }
+
+    foreach ($materias_por_curso as $curso_id => $data) {
+        echo "<h2 class='section-title'>Resumen Académico - {$data['nombre_curso']}</h2><br>";
+        echo '<table class="styled-table">
+                <tr>
+                    <th>Unidad Curricular</th>
+                    <th>Nota Final</th>
+                    <th>Condición Final</th>
+                </tr>';
+        foreach ($data['materias'] as $materia) {
+            $nota_final = isset($materia['nota_final']) ? $materia['nota_final'] : 'No registrada';
+            $condicion = $materia['condicion_final'] ?? 'Sin condición';
+
+            echo "<tr>
+                    <td>{$materia['nombre_materia']}</td>
+                    <td>$nota_final</td>
+                    <td>$condicion</td>
+                </tr>";
+        }
+        echo '</table><br>';
+    }
 
     // // **Asistencias**
     // $html_asistencias = '<br><h2 class="section-title">Asistencias</h2><br>';

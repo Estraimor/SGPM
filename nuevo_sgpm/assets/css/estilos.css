@@ -767,5 +767,11 @@ input[type="date"] {
 .styled-table tr:hover {
     background-color: #f1f1f1;
 }
-
+.instrucciones {
+        background-color: #fff8b0; /* Fondo amarillo claro */
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 16px;
+        margin-bottom: 20px;
+    }
 

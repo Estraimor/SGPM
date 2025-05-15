@@ -11,12 +11,7 @@ if ($rolUsuario == '1') {
     $sql = "SELECT * FROM cursos";
 } else {
     // Profesores: solo los cursos asignados al profesor en la carrera seleccionada
-    $sql = "SELECT cu.*
-            FROM cursos cu
-            JOIN preceptores p ON cu.idCursos = p.cursos_idCursos
-            WHERE p.profesor_idProrfesor = $idProfesor
-            AND p.carreras_idCarrera = $idCarrera
-            GROUP BY cu.idCursos";
+    $sql = "SELECT * FROM cursos";
 }
 
 $result = mysqli_query($conexion, $sql);

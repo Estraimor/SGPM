@@ -1,32 +1,17 @@
 <?php
 include '../../conexion/conexion.php';
-session_start();
 
-$preceptor_id = $_SESSION['id']; // Obtener ID del preceptor de la sesión
-$rol = $_SESSION['roles']; // Obtener el rol de la sesión
+// Obtener todas las carreras sin importar el rol
+$query = "
+    SELECT idCarrera, nombre_carrera
+    FROM carreras
+";
 
-if ($rol == 1) {
-    // Si el rol es 1, mostrar todas las carreras
-    $query = "
-        SELECT DISTINCT idCarrera, nombre_carrera
-        FROM carreras
-    ";
-    $stmt = $conexion->prepare($query);
-} else {
-    // Si no, mostrar solo las carreras asignadas al preceptor
-    $query = "
-        SELECT DISTINCT c.idCarrera, c.nombre_carrera
-        FROM carreras c
-        JOIN preceptores p ON c.idCarrera = p.carreras_idCarrera
-        WHERE p.profesor_idProrfesor = ?
-    ";
-    $stmt = $conexion->prepare($query);
-    $stmt->bind_param("i", $preceptor_id);
-}
-
+$stmt = $conexion->prepare($query);
 $stmt->execute();
 $result = $stmt->get_result();
 
+$options = "";
 $carreras = []; // Para evitar duplicados
 
 while ($row = $result->fetch_assoc()) {

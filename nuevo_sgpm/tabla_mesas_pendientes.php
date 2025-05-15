@@ -541,46 +541,48 @@ if ($result && mysqli_num_rows($result) > 0) {
 	
 </div>
 <div class="contenido">
-    <h2>Registro de Notas Finales</h2>
+  <h2 class="titulo-registro">Registro de Notas Finales</h2>
 
-    <label>Carrera:</label>
-    <select id="carrera">
-        <option value="">Seleccione una carrera</option>
-    </select><br>
+  <label class="label-field">Carrera:</label>
+  <select id="carrera" class="select-field">
+    <option value="">Seleccione una carrera</option>
+  </select><br>
 
-    <label>Curso:</label>
-    <select id="curso" disabled>
-        <option value="">Seleccione un curso</option>
-    </select><br>
+  <label class="label-field">Curso:</label>
+  <select id="curso" class="select-field" disabled>
+    <option value="">Seleccione un curso</option>
+  </select><br>
 
-    <label>Comisión:</label>
-    <select id="comision" disabled>
-        <option value="">Seleccione una comisión</option>
-    </select><br>
+  <label class="label-field">Comisión:</label>
+  <select id="comision" class="select-field" disabled>
+    <option value="">Seleccione una comisión</option>
+  </select><br>
 
-    <label>Materia:</label>
-    <select id="materiaSeleccionada" disabled>
-        <option value="">Seleccione una materia</option>
-    </select><br>
+  <label class="label-field">Materia:</label>
+  <select id="materiaSeleccionada" class="select-field" disabled>
+    <option value="">Seleccione una materia</option>
+  </select><br>
 
-    <label>Turno:</label>
-    <select id="turno" disabled>
-        <option value="">Seleccione un turno</option>
-    </select><br>
+  <label class="label-field">Turno:</label>
+  <select id="turno" class="select-field" disabled>
+    <option value="">Seleccione un turno</option>
+  </select><br>
 
-    <h3>Lista de Estudiantes</h3>
-    <div id="tablaNotas" class="tabla-container"></div>
+  <h3 class="subtitulo">Lista de Estudiantes</h3>
+  <div id="tablaNotas" class="tabla-container"></div>
 
-    <button id="guardarNotas" style="margin-top: 20px;">Guardar Notas</button>
+  <button id="guardarNotas" class="btn-guardar">Guardar Notas</button>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-$(document).ready(function() {
-    // Lista de materias cuatrimestrales (IDs) para actualizar turnos
+$(document).ready(function () {
     const materiasCuatrimestrales = ['146', '415', '426', '193', '444', '453'];
 
-    // Función para actualizar las opciones del turno basado en si la materia es cuatrimestral
+    function limpiarTabla() {
+        $('#tablaNotas').html('');
+    }
+
     function actualizarTurnos(isCuatrimestral) {
         const opcionesTurno = isCuatrimestral
             ? [
@@ -608,173 +610,246 @@ $(document).ready(function() {
         });
     }
 
-    // Cargar carreras al iniciar
-    $.post('./config_notas_pendientes/obtener_carreras.php', function(data) {
+    $.post('./config_notas_pendientes/obtener_carreras.php', function (data) {
         $('#carrera').html('<option value="">Seleccione una carrera</option>' + data);
     });
 
-    // Cargar cursos al seleccionar una carrera
-    $('#carrera').on('change', function() {
-        $('#tablaNotas1, #tablaNotas2').html('');
+    $('#carrera').on('change', function () {
+        limpiarTabla();
         $('#curso').prop('disabled', false);
         let carrera = $(this).val();
-        $.post('./config_notas_pendientes/obtener_cursos.php', { carrera: carrera }, function(data) {
+        $.post('./config_notas_pendientes/obtener_cursos.php', { carrera }, function (data) {
             $('#curso').html('<option value="">Seleccione un curso</option>' + data);
         });
     });
 
-    // Cargar comisiones al seleccionar un curso
-    $('#curso').on('change', function() {
-        $('#tablaNotas1, #tablaNotas2').html('');
+    $('#curso').on('change', function () {
+        limpiarTabla();
         let idCarrera = $('#carrera').val();
         let idCurso = $(this).val();
-        $.post('./config_notas_pendientes/obtener_comisiones.php', { idCarrera, idCurso }, function(data) {
+        $.post('./config_notas_pendientes/obtener_comisiones.php', { idCarrera, idCurso }, function (data) {
             $('#comision').html('<option value="">Seleccione una comisión</option>' + data);
             $('#comision').prop('disabled', false);
         });
     });
 
-    // Cargar materias al seleccionar una comisión
-    $('#comision').on('change', function() {
-        $('#tablaNotas1, #tablaNotas2').html('');
+    $('#comision').on('change', function () {
+        limpiarTabla();
         $('#materiaSeleccionada').prop('disabled', false);
         let carrera = $('#carrera').val();
         let curso = $('#curso').val();
         let comision = $('#comision').val();
-        $.post('./config_notas_pendientes/obtener_materias.php', { carrera, curso, comision }, function(data) {
+        $.post('./config_notas_pendientes/obtener_materias.php', { carrera, curso, comision }, function (data) {
             $('#materiaSeleccionada').html('<option value="">Seleccione una materia</option>' + data);
         });
     });
 
-    $('#materiaSeleccionada').on('change', function() {
+    $('#materiaSeleccionada').on('change', function () {
+        limpiarTabla();
         let idMateria = $(this).val();
         let isCuatrimestral = materiasCuatrimestrales.includes(idMateria);
         actualizarTurnos(isCuatrimestral);
         $('#turno').prop('disabled', false);
     });
 
-    $('#turno').on('change', function() {
+    $('#turno').on('change', function () {
+        limpiarTabla();
         let idMateria = $('#materiaSeleccionada').val();
         let comision = $('#comision').val();
-        let curso = $('#curso').val();
         let carrera = $('#carrera').val();
         let turno = $('#turno').val();
 
-        if (!idMateria || !comision || !curso || !carrera || !turno) {
-            $('#tablaNotas').html('<p style="color:red;">Debe seleccionar todos los campos antes de continuar.</p>');
+        if (!idMateria || !comision || !carrera || !turno) return;
+
+        $.post('./config_notas_pendientes/obtener_notas_mesas_examenes.php',
+            { idMateria, comision, carrera, turno }, function (data) {
+                if (data.error) {
+                    $('#tablaNotas').html(`<p style="color:red;">Error: ${data.error}</p>`);
+                    return;
+                }
+
+                if (Array.isArray(data)) {
+                    let tableHtml = `<table border="1">
+                        <thead>
+                            <tr>
+                                <th>Legajo</th><th>Nombre</th><th>Apellido</th>
+                                <th colspan="3">Primer Llamado</th><th>Ausente</th>
+                                <th colspan="3">Segundo Llamado</th><th>Ausente</th>
+                            </tr>
+                            <tr>
+                                <th></th><th></th><th></th>
+                                <th>Nota</th><th>Tomo</th><th>Folio</th><th></th>
+                                <th>Nota</th><th>Tomo</th><th>Folio</th><th></th>
+                            </tr>
+                        </thead><tbody>`;
+
+                    data.forEach(est => {
+                        tableHtml += `<tr>
+                            <td>${est.legajo}</td>
+                            <td>${est.nombre}</td>
+                            <td>${est.apellido}</td>
+                           <td>
+  ${(est.nota1 !== null && est.nota1 !== undefined && Number(est.nota1) === 0)
+    ? `<span style="color:red;font-weight:bold;">A</span>
+       <input type="hidden" class="notaFinal1 nota-input" data-legajo="${est.legajo}" value="0">`
+    : `<input type="number" class="notaFinal1 nota-input" data-legajo="${est.legajo}" step="0.1" value="${est.nota1 || ''}" ${est.bloquear1 ? 'readonly' : ''}>`}
+</td>
+<td>
+  <input type="text" class="tomoFinal1 tomo-input" data-legajo="${est.legajo}" 
+         value="${est.tomo1 || ''}" ${est.bloquear1 ? 'disabled' : ''}>
+</td>
+<td>
+  <input type="text" class="folioFinal1 folio-input" data-legajo="${est.legajo}" 
+         value="${est.folio1 || ''}" ${est.bloquear1 ? 'disabled' : ''}>
+</td>
+<td>
+  <input type="checkbox" class="bloquear1" data-legajo="${est.legajo}" ${est.bloquear1 ? 'checked' : ''}>
+</td>
+
+<!-- Segundo llamado -->
+<td>
+  ${(est.nota2 !== null && est.nota2 !== undefined && Number(est.nota2) === 0)
+    ? `<span style="color:red;font-weight:bold;">A</span>
+       <input type="hidden" class="notaFinal2 nota-input" data-legajo="${est.legajo}" value="0">`
+    : `<input type="number" class="notaFinal2 nota-input" data-legajo="${est.legajo}" step="0.1" value="${est.nota2 || ''}" ${est.bloquear2 ? 'readonly' : ''}>`}
+</td>
+<td>
+  <input type="text" class="tomoFinal2 tomo-input"" data-legajo="${est.legajo}" 
+         value="${est.tomo2 || ''}" ${est.bloquear2 ? 'disabled' : ''}>
+</td>
+<td>
+  <input type="text" class="folioFinal2 folio-input" data-legajo="${est.legajo}" 
+         value="${est.folio2 || ''}" ${est.bloquear2 ? 'disabled' : ''}>
+</td>
+<td>
+  <input type="checkbox" class="bloquear2" data-legajo="${est.legajo}" ${est.bloquear2 ? 'checked' : ''}>
+</td>
+
+
+
+                        </tr>`;
+                    });
+
+                    tableHtml += '</tbody></table>';
+                    $('#tablaNotas').html(tableHtml);
+                }
+            }, 'json');
+    });
+
+   $(document).on('change', '.bloquear1', function () {
+    let legajo = $(this).data('legajo');
+    const checked = this.checked;
+
+    const notaTd = $(this).closest('tr').find(`.notaFinal1[data-legajo="${legajo}"]`).parent();
+
+    if (checked) {
+        // Reemplaza el input por un span A + hidden input
+        notaTd.html(`
+            <span style="color:red;font-weight:bold;">A</span>
+            <input type="hidden" class="notaFinal1 nota-input" data-legajo="${legajo}" value="0">
+        `);
+        $(`.tomoFinal1[data-legajo="${legajo}"]`).val('').prop('disabled', true);
+        $(`.folioFinal1[data-legajo="${legajo}"]`).val('').prop('disabled', true);
+    } else {
+        // Restaura el input editable
+        notaTd.html(`
+            <input type="number" class="notaFinal1 nota-input" data-legajo="${legajo}" step="0.1" value="">
+        `);
+        $(`.tomoFinal1[data-legajo="${legajo}"]`).prop('disabled', false);
+        $(`.folioFinal1[data-legajo="${legajo}"]`).prop('disabled', false);
+    }
+});
+
+
+$(document).on('change', '.bloquear2', function () {
+    let legajo = $(this).data('legajo');
+    const checked = this.checked;
+
+    const notaTd = $(this).closest('tr').find(`.notaFinal2[data-legajo="${legajo}"]`).parent();
+
+    if (checked) {
+        notaTd.html(`
+            <span style="color:red;font-weight:bold;">A</span>
+            <input type="hidden" class="notaFinal2 nota-input" data-legajo="${legajo}" value="0">
+        `);
+        $(`.tomoFinal2[data-legajo="${legajo}"]`).val('').prop('disabled', true);
+        $(`.folioFinal2[data-legajo="${legajo}"]`).val('').prop('disabled', true);
+    } else {
+        notaTd.html(`
+            <input type="number" class="notaFinal2 nota-input" data-legajo="${legajo}" step="0.1" value="">
+        `);
+        $(`.tomoFinal2[data-legajo="${legajo}"]`).prop('disabled', false);
+        $(`.folioFinal2[data-legajo="${legajo}"]`).prop('disabled', false);
+    }
+});
+
+
+
+    $('#guardarNotas').on('click', function () {
+        let comision = $('#comision').val();
+        let carrera = $('#carrera').val();
+        let materia = $('#materiaSeleccionada').val();
+        let turno = $('#turno').val();
+        let estudiantes = [];
+
+        if (!comision || !carrera || !materia || !turno) {
+            alert("⚠️ Debe seleccionar todos los campos.");
             return;
         }
 
-        $.post('./config_notas_pendientes/obtener_estudiantes_materia.php', { idMateria, comision, curso, carrera, turno }, function(data) {
-            if (data.error) {
-                $('#tablaNotas').html(`<p style="color:red;">Error al cargar los datos: ${data.error}</p>`);
-                return;
+        $('.notaFinal1').each(function () {
+            let legajo = $(this).data('legajo');
+            let nota1 = $(`.notaFinal1[data-legajo="${legajo}"]`).val().trim();
+            let tomo1 = $(`.tomoFinal1[data-legajo="${legajo}"]`).val().trim();
+            let folio1 = $(`.folioFinal1[data-legajo="${legajo}"]`).val().trim();
+            let bloquear1 = $(`.bloquear1[data-legajo="${legajo}"]`).is(':checked');
+
+            let nota2El = $(`.notaFinal2[data-legajo="${legajo}"]`);
+let tomo2El = $(`.tomoFinal2[data-legajo="${legajo}"]`);
+let folio2El = $(`.folioFinal2[data-legajo="${legajo}"]`);
+let bloquear2El = $(`.bloquear2[data-legajo="${legajo}"]`);
+
+let nota2 = nota2El.length ? nota2El.val().trim() : null;
+let tomo2 = tomo2El.length ? tomo2El.val().trim() : null;
+let folio2 = folio2El.length ? folio2El.val().trim() : null;
+let bloquear2 = bloquear2El.length ? bloquear2El.is(':checked') : false;
+
+
+            estudiantes.push({
+                legajo,
+                nota1: (nota1 !== '' && !isNaN(nota1)) ? nota1 : null,
+                tomo1: bloquear1 ? null : tomo1 || null,
+                folio1: bloquear1 ? null : folio1 || null,
+                nota2: (nota2 !== '' && !isNaN(nota2)) ? nota2 : null,
+                tomo2: bloquear2 ? null : tomo2 || null,
+                folio2: bloquear2 ? null : folio2 || null,
+            });
+        });
+
+        $.ajax({
+            url: './config_notas_pendientes/guardar_nota_mesas_pendientes.php',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                comision, carrera, materia, turno, estudiantes
+            }),
+            dataType: 'json',
+            success: function (response) {
+                if (response.success) {
+                    alert("✅ Notas guardadas correctamente.");
+                } else {
+                    alert(`❌ Error: ${response.error}`);
+                }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                alert(`🚨 Error de red: ${textStatus}`);
+                console.error(jqXHR.responseText);
             }
-
-            if (Array.isArray(data)) {
-                let tableHtml = `<table border="1">
-                    <thead>
-                        <tr>
-                            <th>Legajo</th>
-                            <th>Nombre</th>
-                            <th>Apellido</th>
-                            <th colspan="3">Primer Llamado</th>
-                            <th>Bloquear</th>
-                            <th colspan="3">Segundo Llamado</th>
-                            <th>Bloquear</th>
-                        </tr>
-                        <tr>
-                            <th></th><th></th><th></th>
-                            <th>Nota</th><th>Tomo</th><th>Folio</th>
-                            <th></th>
-                            <th>Nota</th><th>Tomo</th><th>Folio</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>`;
-
-                data.forEach(est => {
-                    tableHtml += `<tr>
-                        <td>${est.legajo}</td>
-                        <td>${est.nombre}</td>
-                        <td>${est.apellido}</td>
-                        <td><input type="number" class="notaFinal1" data-legajo="${est.legajo}" step="0.1"></td>
-                        <td><input type="text" class="tomoFinal1" data-legajo="${est.legajo}"></td>
-                        <td><input type="text" class="folioFinal1" data-legajo="${est.legajo}"></td>
-                        <td><input type="checkbox" class="bloquear1" data-legajo="${est.legajo}"></td>
-                        <td><input type="number" class="notaFinal2" data-legajo="${est.legajo}" step="0.1"></td>
-                        <td><input type="text" class="tomoFinal2" data-legajo="${est.legajo}"></td>
-                        <td><input type="text" class="folioFinal2" data-legajo="${est.legajo}"></td>
-                        <td><input type="checkbox" class="bloquear2" data-legajo="${est.legajo}"></td>
-                    </tr>`;
-                });
-
-                tableHtml += '</tbody></table>';
-                $('#tablaNotas').html(tableHtml);
-            }
-        }, 'json');
+        });
     });
-
-    // Bloquear Tomo y Folio
-    $(document).on('change', '.bloquear1', function() {
-        let legajo = $(this).data('legajo');
-        $(`.tomoFinal1[data-legajo="${legajo}"], .folioFinal1[data-legajo="${legajo}"]`).prop('disabled', this.checked);
-    });
-
-    $(document).on('change', '.bloquear2', function() {
-        let legajo = $(this).data('legajo');
-        $(`.tomoFinal2[data-legajo="${legajo}"], .folioFinal2[data-legajo="${legajo}"]`).prop('disabled', this.checked);
-    });
-
-    $('#guardarNotas').on('click', function() {
-    let comision = $('#comision').val();
-    let curso = $('#curso').val();
-    let carrera = $('#carrera').val();
-    let materia = $('#materiaSeleccionada').val();
-    let turno = $('#turno').val();
-    let estudiantes = [];
-
-    if (!comision || !curso || !carrera || !materia || !turno) {
-        alert("⚠️ Debe seleccionar todos los campos antes de enviar.");
-        return;
-    }
-
-    $('.notaFinal1, .notaFinal2').each(function() {
-        let legajo = $(this).data('legajo');
-        let nota1 = $(`.notaFinal1[data-legajo="${legajo}"]`).val().trim();
-        let tomo1 = $(`.tomoFinal1[data-legajo="${legajo}"]`).val().trim();
-        let folio1 = $(`.folioFinal1[data-legajo="${legajo}"]`).val().trim();
-        let bloquear1 = $(`.bloquear1[data-legajo="${legajo}"]`).is(':checked');
-
-        let nota2 = $(`.notaFinal2[data-legajo="${legajo}"]`).val().trim();
-        let tomo2 = $(`.tomoFinal2[data-legajo="${legajo}"]`).val().trim();
-        let folio2 = $(`.folioFinal2[data-legajo="${legajo}"]`).val().trim();
-        let bloquear2 = $(`.bloquear2[data-legajo="${legajo}"]`).is(':checked');
-
-        let llamado = bloquear2 ? null : 2; // Si el checkbox está marcado, se guarda NULL
-
-        let estudiante = {
-            legajo,
-            nota1: (nota1 !== '' && !isNaN(nota1) && nota1 >= 0 && nota1 <= 10) ? nota1 : null,
-            tomo1: bloquear1 ? null : tomo1 || null,
-            folio1: bloquear1 ? null : folio1 || null,
-            nota2: (nota2 !== '' && !isNaN(nota2) && nota2 >= 0 && nota2 <= 10) ? nota2 : null,
-            tomo2: bloquear2 ? null : tomo2 || null,
-            folio2: bloquear2 ? null : folio2 || null,
-            llamado
-        };
-
-        estudiantes.push(estudiante);
-    });
-
-    $.post('./config_notas_pendientes/guardar_nota_mesas_pendientes.php', {
-        comision, curso, carrera, materia, turno, estudiantes
-    }, function(response) {
-        alert(response.success ? "✅ Notas guardadas correctamente." : "❌ Error al guardar notas.");
-    }, 'json');
-});
 });
 </script>
+
 
 <!--   Core JS Files   -->
 
@@ -791,7 +866,104 @@ $(document).ready(function() {
 <!-- Azzara JS -->
 <script src="assets/js/ready.min.js"></script>
 
+<style>
+    /* Estilo para las etiquetas */
+.label-field {
+  display: inline-block;
+  margin-bottom: 5px;
+  font-weight: 600;
+}
 
+/* Estilos para los select y inputs (si se llegaran a usar inputs de texto o número) */
+.select-field,
+.input-field {
+  width: auto;
+  max-width: 300px;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+  background-color: #fff;
+  color: #333;
+}
+
+.select-field:focus,
+.input-field:focus {
+  border-color: #f3545d;
+  outline: none;
+}
+
+/* Botón de guardar */
+.btn-guardar {
+  background-color: #f3545d;
+  border: none;
+  padding: 10px 20px;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+  margin-top: 20px;
+}
+
+.btn-guardar:hover {
+  background-color: #d43a46;
+}
+
+/* Estilos para la tabla dentro de .tabla-container */
+.tabla-container table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.tabla-container table,
+.tabla-container th,
+.tabla-container td {
+  border: 1px solid #ddd;
+}
+
+.tabla-container th,
+.tabla-container td {
+  padding: 8px;
+  text-align: left;
+}
+
+.tabla-container th {
+  background-color: #f3545d;
+  color: #fff;
+}
+/* Inputs de nota: ancho de 80px */
+.nota-input {
+  width: 80px;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+/* Inputs de tomo y folio: ancho de 60px */
+.tomo-input,
+.folio-input {
+  width: 60px;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+/* Desactivar spinner en inputs number (para Webkit y Firefox) */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+</style>
 
 </body>
 </html>

@@ -6,31 +6,31 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 header('Content-Type: application/json');
 
-if (isset($_POST['idMateria']) && isset($_POST['carrera']) && isset($_POST['comision'])) {
+if (isset($_POST['idMateria'], $_POST['carrera'], $_POST['comision'])) {
     $idMateria = $_POST['idMateria'];
     $idCarrera = $_POST['carrera'];
-    $idComision = $_POST['comision']; // Nuevo parámetro recibido
-    $anioCursada = 2023; // Año fijo de consulta
+    $idComision = $_POST['comision'];
+    $anioCursada = 2023;
 
     $estudiantes = [];
 
-    // Obtener estudiantes y sus notas si existen
     $stmt = $conexion->prepare("
-        SELECT DISTINCT a.legajo, a.nombre_alumno, a.apellido_alumno, 
-                        n.nota_final, n.condicion 
-        FROM alumno a
-        JOIN inscripcion_asignatura ia ON ia.alumno_legajo = a.legajo
+        SELECT a.legajo, a.nombre_alumno, a.apellido_alumno,
+               n.nota_final, n.condicion
+        FROM inscripcion_asignatura ia
+        INNER JOIN alumno a ON ia.alumno_legajo = a.legajo
         LEFT JOIN notas n ON n.alumno_legajo = a.legajo 
-            AND n.materias_idMaterias = ? 
+            AND n.materias_idMaterias = ?
             AND n.carreras_idCarrera = ?
         WHERE ia.carreras_idCarrera = ?
-        AND ia.año_inscripcion = ?
-        AND ia.Comisiones_idComisiones = ? 
-        AND a.estado = 1
+          AND ia.Comisiones_idComisiones = ?
+          AND ia.año_inscripcion = ?
+          AND a.estado = 1
+        GROUP BY a.legajo
         ORDER BY a.apellido_alumno, a.nombre_alumno
     ");
 
-    $stmt->bind_param("iiiii", $idMateria, $idCarrera, $idCarrera, $anioCursada, $idComision);
+    $stmt->bind_param("iiiii", $idMateria, $idCarrera, $idCarrera, $idComision, $anioCursada);
     $stmt->execute();
     $result = $stmt->get_result();
 

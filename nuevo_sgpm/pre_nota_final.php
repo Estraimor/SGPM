@@ -536,11 +536,7 @@ if ($result && mysqli_num_rows($result) > 0) {
         $sqlCarreras = "SELECT * FROM carreras";
     } else {
         // Caso contrario: solo las carreras asignadas al profesor
-        $sqlCarreras = "SELECT c.*
-                        FROM carreras c
-                        JOIN preceptores p ON c.idCarrera = p.carreras_idCarrera
-                        WHERE p.profesor_idProrfesor = $idProfesor
-                        GROUP BY c.idCarrera";
+        $sqlCarreras = "SELECT * FROM carreras";
     }
     $resultCarreras = mysqli_query($conexion, $sqlCarreras);
     if (!$resultCarreras) {

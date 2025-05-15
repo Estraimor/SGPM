@@ -11,12 +11,7 @@ if ($rolUsuario == '1') {
     $sql = "SELECT * FROM comisiones";
 } else {
     // Profesores: solo las comisiones asignadas al profesor en la carrera seleccionada
-    $sql = "SELECT co.*
-            FROM comisiones co
-            JOIN preceptores p ON co.idComisiones = p.comisiones_idComisiones
-            WHERE p.profesor_idProrfesor = $idProfesor
-            AND p.carreras_idCarrera = $idCarrera
-            GROUP BY co.idComisiones";
+    $sql = "SELECT * FROM comisiones";
 }
 
 $result = mysqli_query($conexion, $sql);

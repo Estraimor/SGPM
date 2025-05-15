@@ -7,26 +7,33 @@ if (empty($_SESSION["id"])) {
 
 include '../conexion/conexion.php';
 
-$fecha = $_POST['fecha'];
-$materia = $_POST['materia'];
-$carrera = $_POST['carrera'];
+// Recibir los parámetros enviados por POST
+$fecha   = $_POST['fecha'];   
+$materia = intval($_POST['materia']); 
+$carrera = intval($_POST['carrera']);
 
-// Consulta DELETE
+// Usar prepared statement para mayor seguridad
 $sql = "DELETE FROM libro_tema 
-        WHERE fecha = '$fecha' 
-        AND profesor_idProrfesor = '{$_SESSION['id']}' 
-        AND carreras_idCarrera = '$carrera' 
-        AND materias_idMaterias = '$materia'";
+        WHERE fecha = ? 
+          AND profesor_idProrfesor = ? 
+          AND carreras_idCarrera = ? 
+          AND materias_idMaterias = ?";
 
-
-if (mysqli_query($conexion, $sql)) {
-    if (mysqli_affected_rows($conexion) > 0) {
-        echo "Registro borrado exitosamente.";
-    } else {
-        echo "No se encontró ningún registro para eliminar.";
-    }
-} else {
-    echo "Error al borrar el registro: " . mysqli_error($conexion);
+$stmt = $conexion->prepare($sql);
+if (!$stmt) {
+    echo "Error en la preparación: " . $conexion->error;
+    exit();
 }
 
+$stmt->bind_param('siii', $fecha, $_SESSION['id'], $carrera, $materia);
+
+$stmt->execute();
+
+if ($stmt->affected_rows > 0) {
+    echo "Registro borrado exitosamente.";
+} else {
+    echo "No se encontró ningún registro para eliminar.";
+}
+
+$stmt->close();
 ?>
